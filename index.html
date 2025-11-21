@@ -919,6 +919,7 @@
             
             // Load and display employees
             renderEmployeeTable();
+            updateSortIcons();
         }
 
         // Render employee table
@@ -1410,16 +1411,82 @@
             }
         }
 
-        // Sort table
-        function sortTable(column) {
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
-            
-            renderEmployeeTable();
+        // Sort table - FIXED VERSION
+function sortTable(column) {
+    // Update sort column and direction
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    
+    // Apply sorting
+    let employeesToShow = [...employees]; // Create a copy
+    
+    employeesToShow.sort((a, b) => {
+        let valueA, valueB;
+        
+        switch (sortColumn) {
+            case 'id':
+                valueA = a.id.toLowerCase();
+                valueB = b.id.toLowerCase();
+                break;
+            case 'name':
+                valueA = a.name.toLowerCase();
+                valueB = b.name.toLowerCase();
+                break;
+            case 'position':
+                valueA = a.position.toLowerCase();
+                valueB = b.position.toLowerCase();
+                break;
+            case 'department':
+                valueA = a.department.toLowerCase();
+                valueB = b.department.toLowerCase();
+                break;
+            case 'overallRating':
+                valueA = calculateOverallRating(a);
+                valueB = calculateOverallRating(b);
+                break;
+            default:
+                return 0;
+        }
+        
+        if (typeof valueA === 'string') {
+            return sortDirection === 'asc' 
+                ? valueA.localeCompare(valueB)
+                : valueB.localeCompare(valueA);
+        } else {
+            return sortDirection === 'asc' 
+                ? valueA - valueB
+                : valueB - valueA;
+        }
+    });
+    
+    renderEmployeeTable(employeesToShow);
+    
+    // Update sort icons
+    updateSortIcons();
+}
+
+// Add this function to update sort icons
+function updateSortIcons() {
+    // Remove all sort icons first
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.className = 'bi bi-arrow-down-up sort-icon';
+    });
+    
+    // Add correct icon for current sort column
+    const header = document.querySelector(`th[onclick="sortTable('${sortColumn}')"]`);
+    if (header) {
+        const icon = header.querySelector('.sort-icon');
+        if (icon) {
+            icon.className = sortDirection === 'asc' 
+                ? 'bi bi-arrow-up sort-icon' 
+                : 'bi bi-arrow-down sort-icon';
+        }
+    }
+}
         }
 
         // Export to Excel
