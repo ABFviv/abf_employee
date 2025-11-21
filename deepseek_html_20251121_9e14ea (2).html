@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK FACTORY - Employee Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --brand-red: #e74c3c;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+        }
+        
+        .login-card {
+            width: 400px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .login-logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .dashboard-container {
+            display: none;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-logo {
+            height: 60px;
+            margin-right: 20px;
+        }
+        
+        .header-brand {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+        
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+            margin: 0;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .table th:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+        
+        .rating-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .rating-excellent {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .rating-good {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .rating-average {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .rating-poor {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .filter-section {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .work-entry {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .toast {
+            min-width: 300px;
+        }
+        
+        .brand-red-text {
+            color: var(--brand-red);
+            font-weight: 700;
+        }
+        
+        .brand-gray-text {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .work-record-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .work-record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .work-record-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .work-record-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .work-record-rating {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .rating-positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .rating-neutral {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .rating-negative {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .work-record-note {
+            margin-top: 10px;
+        }
+        
+        .add-record-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+        
+        .tab-content {
+            min-height: 400px;
+        }
+        
+        .records-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .records-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .record-tabs {
+            margin-bottom: 15px;
+        }
+        
+        .record-tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .record-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .record-count {
+            background-color: #6c757d;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+        
+        .admin-only {
+            display: none;
+        }
+        
+        .supervisor-only {
+            display: none;
+        }
+        
+        .admin-and-supervisor-only {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="login-logo">
+                <h3>Employee Management System</h3>
+                <p class="text-muted">Please login to continue</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container" id="dashboardPage">
+        <div class="header">
+            <div class="header-brand">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="header-logo">
+                <div>
+                    <h4 class="header-title"><span class="brand-red-text">ASOBRICK</span> <span class="brand-gray-text">FACTORY</span></h4>
+                    <p class="header-subtitle">Employee Management System</p>
+                </div>
+            </div>
+            <div>
+                <span id="userInfo" class="me-3"></span>
+                <button class="btn btn-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchName" placeholder="Search by name">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchId" placeholder="Search by ID">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterPosition">
+                        <option value="">All Positions</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterDepartment">
+                        <option value="">All Departments</option>
+                        <option value="crushing-prep">Crushing & Preparation</option>
+                        <option value="cutting-setting">Cutting & Setting</option>
+                        <option value="klin">Klin</option>
+                        <option value="unsetting">Unsetting</option>
+                        <option value="mechanical">Mechanical</option>
+                        <option value="electrical-ac">Electrical & AC</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button class="btn btn-primary" id="filterBtn">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                    <button class="btn btn-secondary ms-2" id="resetBtn">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                    <button class="btn btn-success ms-2 admin-only" id="addEmployeeBtn">
+                        <i class="bi bi-person-plus"></i> Add Employee
+                    </button>
+                    <button class="btn btn-warning ms-2" id="testFirebaseBtn">
+                        <i class="bi bi-database-check"></i> Test Firebase
+                    </button>
+                    <button class="btn btn-success ms-2 admin-only" id="exportBtn">
+                        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                    </button>
+                    <button class="btn btn-info ms-2 admin-and-supervisor-only" id="printBtn">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Employee List
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('id')">ID <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                <th onclick="sortTable('name')">Name <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                <th onclick="sortTable('position')">Position <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                <th onclick="sortTable('department')">Department <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                <th onclick="sortTable('overallRating')">Overall Rating <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                <th>Daily Work</th>
+                                <th>Other Work</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Employee rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Records Page -->
+    <div class="dashboard-container" id="workRecordsPage" style="display: none;">
+        <div class="header">
+            <div class="header-brand">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="header-logo">
+                <div>
+                    <h4 class="header-title"><span class="brand-red-text">ASOBRICK</span> <span class="brand-gray-text">FACTORY</span></h4>
+                    <p class="header-subtitle">Work Records - <span id="currentEmployeeName"></span></p>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-light btn-sm" id="backToDashboardBtn">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </button>
+            </div>
+        </div>
+
+        <div class="record-tabs">
+            <div class="record-tab active" id="dailyWorkTab">
+                Daily Work Records <span class="record-count" id="dailyWorkCount">0</span>
+            </div>
+            <div class="record-tab" id="otherWorkTab">
+                Other Work Records <span class="record-count" id="otherWorkCount">0</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" id="recordsTitle">Daily Work Records</h5>
+                <button class="btn btn-sm btn-primary" id="addRecordBtn">
+                    <i class="bi bi-plus-circle"></i> Add Record
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="records-container" id="recordsContainer">
+                    <!-- Work records will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary add-record-btn" id="floatingAddBtn" style="display: none;">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
+
+    <!-- Add Daily Work Record Modal -->
+    <div class="modal fade" id="addDailyWorkModal" tabindex="-1" aria-labelledby="addDailyWorkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDailyWorkModalLabel">Add Daily Work Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dailyWorkForm">
+                        <div class="mb-3">
+                            <label for="dailyWorkDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="dailyWorkDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkCarts" class="form-label">Number of Carts</label>
+                            <input type="number" class="form-control" id="dailyWorkCarts" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkRating" class="form-label">Rating (-100 to 100)</label>
+                            <input type="range" class="form-range" id="dailyWorkRating" min="-100" max="100" value="0" required>
+                            <div class="d-flex justify-content-between">
+                                <span>-100</span>
+                                <span id="dailyWorkRatingValue">0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkNote" class="form-label">Note</label>
+                            <textarea class="form-control" id="dailyWorkNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveDailyWorkBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Other Work Record Modal -->
+    <div class="modal fade" id="addOtherWorkModal" tabindex="-1" aria-labelledby="addOtherWorkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addOtherWorkModalLabel">Add Other Work Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="otherWorkForm">
+                        <div class="mb-3">
+                            <label for="otherWorkDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="otherWorkDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkName" class="form-label">Name of Work</label>
+                            <input type="text" class="form-control" id="otherWorkName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkRating" class="form-label">Rating (-100 to 100)</label>
+                            <input type="range" class="form-range" id="otherWorkRating" min="-100" max="100" value="0" required>
+                            <div class="d-flex justify-content-between">
+                                <span>-100</span>
+                                <span id="otherWorkRatingValue">0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkNote" class="form-label">Note</label>
+                            <textarea class="form-control" id="otherWorkNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveOtherWorkBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Modal -->
+    <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeModalLabel">Add New Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="employeeForm">
+                        <input type="hidden" id="employeeId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeIdInput" class="form-label">Employee ID</label>
+                                <input type="text" class="form-control" id="employeeIdInput" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="employeeName" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employeePosition" class="form-label">Position</label>
+                                <input type="text" class="form-control" id="employeePosition" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeDepartment" class="form-label">Department</label>
+                                <select class="form-select" id="employeeDepartment" required>
+                                    <option value="">Select Department</option>
+                                    <option value="crushing-prep">Crushing & Preparation</option>
+                                    <option value="cutting-setting">Cutting & Setting</option>
+                                    <option value="klin">Klin</option>
+                                    <option value="unsetting">Unsetting</option>
+                                    <option value="mechanical">Mechanical</option>
+                                    <option value="electrical-ac">Electrical & AC</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveEmployeeBtn">Save Employee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container">
+        <div class="toast" id="notificationToast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Notification message will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            databaseURL: "https://abf6-96dcf-default-rtdb.firebaseio.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Data storage
+        let employees = [];
+        let currentUser = null;
+        let editingEmployeeId = null;
+        let currentEmployeeId = null;
+        let sortColumn = 'overallRating';
+        let sortDirection = 'desc';
+        let currentRecordType = 'daily';
+        
+        // User credentials
+        const users = {
+            admin: { password: 'admin2002', role: 'admin', department: 'all' },
+            himat: { password: 'himat6600', role: 'supervisor', department: 'cutting-setting' },
+            'hemn-prep': { password: 'hemn1212', role: 'supervisor', department: 'crushing-prep' },
+            samdar: { password: 'samdar7273', role: 'supervisor', department: 'unsetting' },
+            'hemn-klin': { password: 'hemn2626', role: 'supervisor', department: 'klin' },
+            sarezh: { password: 'sarezh1919', role: 'supervisor', department: 'electrical-ac' },
+            shalaw: { password: 'shalaw0198', role: 'supervisor', department: 'mechanical' }
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data from Firebase
+            loadDataFromFirebase();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Check if already logged in
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
+        });
+
+        // Firebase Data Functions
+        async function loadDataFromFirebase() {
+            try {
+                console.log('📥 Loading data from Firebase...');
+                const snapshot = await db.collection('employees').get();
+                employees = [];
+                snapshot.forEach(doc => {
+                    console.log('👤 Found employee:', doc.id, doc.data().name);
+                    employees.push({ id: doc.id, ...doc.data() });
+                });
+                
+                console.log(`✅ Loaded ${employees.length} employees from Firebase`);
+                
+                // If no data in Firebase, initialize with sample data
+                if (employees.length === 0) {
+                    console.log('📝 No data found, initializing sample data...');
+                    await initializeSampleData();
+                }
+                
+                renderEmployeeTable();
+            } catch (error) {
+                console.error('❌ Error loading data from Firebase:', error);
+                showNotification('Error loading data from database', 'danger');
+            }
+        }
+
+        async function saveEmployeeToFirebase(employee) {
+            try {
+                console.log('💾 Saving employee to Firebase:', employee);
+                await db.collection('employees').doc(employee.id).set(employee);
+                console.log('✅ Employee saved successfully to Firebase!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error saving employee to Firebase:', error);
+                return false;
+            }
+        }
+
+        async function initializeSampleData() {
+            const sampleEmployees = [
+                {
+                    id: 'EMP001',
+                    name: 'John Smith',
+                    position: 'Worker',
+                    department: 'crushing-prep',
+                    dailyWork: [
+                        { date: '2024-01-01', carts: '10', rate: '75', note: 'Good performance' }
+                    ],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'Machine Maintenance', rate: '65', note: 'Needs improvement' }
+                    ]
+                },
+                {
+                    id: 'EMP007',
+                    name: 'Mike Johnson',
+                    position: 'Mechanic',
+                    department: 'mechanical',
+                    dailyWork: [],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'Engine Repair', rate: '85', note: 'Excellent work' }
+                    ]
+                },
+                {
+                    id: 'EMP008',
+                    name: 'Sarah Wilson',
+                    position: 'Electrician',
+                    department: 'electrical-ac',
+                    dailyWork: [],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'AC Installation', rate: '90', note: 'Perfect installation' }
+                    ]
+                }
+            ];
+
+            try {
+                for (const employee of sampleEmployees) {
+                    await db.collection('employees').doc(employee.id).set(employee);
+                }
+                employees = sampleEmployees;
+                console.log('✅ Sample data initialized');
+            } catch (error) {
+                console.error('❌ Error initializing sample data:', error);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Filter buttons
+            document.getElementById('filterBtn').addEventListener('click', applyFilters);
+            document.getElementById('resetBtn').addEventListener('click', resetFilters);
+            
+            // Add employee button
+            document.getElementById('addEmployeeBtn').addEventListener('click', openAddEmployeeModal);
+            
+            // Test Firebase button
+            document.getElementById('testFirebaseBtn').addEventListener('click', checkFirebaseConnection);
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+            
+            // Print button
+            document.getElementById('printBtn').addEventListener('click', printData);
+            
+            // Save employee button
+            document.getElementById('saveEmployeeBtn').addEventListener('click', saveEmployee);
+            
+            // Back to dashboard button
+            document.getElementById('backToDashboardBtn').addEventListener('click', backToDashboard);
+            
+            // Record tabs
+            document.getElementById('dailyWorkTab').addEventListener('click', function() {
+                switchRecordType('daily');
+            });
+            
+            document.getElementById('otherWorkTab').addEventListener('click', function() {
+                switchRecordType('other');
+            });
+            
+            // Add work record buttons
+            document.getElementById('addRecordBtn').addEventListener('click', function() {
+                if (currentRecordType === 'daily') {
+                    openAddDailyWorkModal();
+                } else {
+                    openAddOtherWorkModal();
+                }
+            });
+            
+            // Save work record buttons
+            document.getElementById('saveDailyWorkBtn').addEventListener('click', saveDailyWorkRecord);
+            document.getElementById('saveOtherWorkBtn').addEventListener('click', saveOtherWorkRecord);
+            
+            // Rating range inputs
+            document.getElementById('dailyWorkRating').addEventListener('input', function() {
+                document.getElementById('dailyWorkRatingValue').textContent = this.value;
+            });
+            
+            document.getElementById('otherWorkRating').addEventListener('input', function() {
+                document.getElementById('otherWorkRatingValue').textContent = this.value;
+            });
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (users[username] && users[username].password === password) {
+                currentUser = {
+                    username: username,
+                    role: users[username].role,
+                    department: users[username].department
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showDashboard();
+                showNotification('Login successful', 'success');
+            } else {
+                showNotification('Invalid username or password', 'danger');
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showNotification('Logged out successfully', 'success');
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            
+            // Update user info
+            document.getElementById('userInfo').textContent = `Logged in as: ${currentUser.username} (${currentUser.role})`;
+            
+            // Show/hide admin-only elements
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(element => {
+                element.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+            });
+            
+            // Show/hide admin and supervisor elements
+            const adminAndSupervisorElements = document.querySelectorAll('.admin-and-supervisor-only');
+            adminAndSupervisorElements.forEach(element => {
+                element.style.display = (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 'inline-block' : 'none';
+            });
+            
+            // Load and display employees
+            renderEmployeeTable();
+        }
+
+        // Render employee table
+        function renderEmployeeTable(filteredEmployees = null) {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+            
+            let employeesToShow = filteredEmployees || employees;
+            
+            // If not admin, filter by department
+            if (currentUser.role !== 'admin') {
+                employeesToShow = employeesToShow.filter(emp => emp.department === currentUser.department);
+            }
+            
+            if (employeesToShow.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="8" class="text-center">No employees found</td>';
+                tbody.appendChild(row);
+                return;
+            }
+            
+            employeesToShow.forEach(employee => {
+                const row = document.createElement('tr');
+                
+                // Calculate overall rating
+                const overallRating = calculateOverallRating(employee);
+                
+                // Get rating class for styling
+                const ratingClass = getRatingClass(overallRating);
+                
+                // Format daily and other work for display
+                const dailyWorkCount = employee.dailyWork ? employee.dailyWork.length : 0;
+                const otherWorkCount = employee.otherWork ? employee.otherWork.length : 0;
+                
+                // For mechanical and electrical-ac departments, show N/A for daily work
+                let dailyWorkDisplay, otherWorkDisplay;
+                if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                    dailyWorkDisplay = 'N/A';
+                    otherWorkDisplay = otherWorkCount > 0 ? `${otherWorkCount} work records` : 'No work records';
+                } else {
+                    dailyWorkDisplay = dailyWorkCount > 0 ? `${dailyWorkCount} entries` : 'No entries';
+                    otherWorkDisplay = otherWorkCount > 0 ? `${otherWorkCount} entries` : 'No entries';
+                }
+                
+                // Format department name for display
+                let departmentDisplay = employee.department;
+                if (employee.department === 'crushing-prep') {
+                    departmentDisplay = 'Crushing & Preparation';
+                } else if (employee.department === 'cutting-setting') {
+                    departmentDisplay = 'Cutting & Setting';
+                }
+                
+                row.innerHTML = `
+                    <td>${employee.id}</td>
+                    <td>${employee.name}</td>
+                    <td>${employee.position}</td>
+                    <td>${departmentDisplay}</td>
+                    <td><span class="badge rating-badge ${ratingClass}">${overallRating.toFixed(1)}</span></td>
+                    <td>${dailyWorkDisplay}</td>
+                    <td>${otherWorkDisplay}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-employee-btn" data-id="${employee.id}">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                        <button class="btn btn-sm btn-info work-records-btn ms-1" data-id="${employee.id}">
+                            <i class="bi bi-clipboard-data"></i> Records
+                        </button>
+                        ${currentUser.role === 'admin' ? `
+                        <button class="btn btn-sm btn-warning edit-employee-btn ms-1" data-id="${employee.id}">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>` : ''}
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewEmployee(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.work-records-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewWorkRecords(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editEmployee(this.dataset.id);
+                });
+            });
+        }
+
+        // Calculate overall rating
+        function calculateOverallRating(employee) {
+            let totalRating = 0;
+            let count = 0;
+            
+            // For mechanical and electrical-ac, only use other work
+            if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    totalRating = employee.otherWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    count = employee.otherWork.length;
+                }
+            } else {
+                // For other departments, use both daily and other work
+                if (employee.dailyWork && employee.dailyWork.length > 0) {
+                    const dailySum = employee.dailyWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    totalRating += dailySum / employee.dailyWork.length;
+                    count++;
+                }
+                
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    const otherSum = employee.otherWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    totalRating += otherSum / employee.otherWork.length;
+                    count++;
+                }
+            }
+            
+            // Return average or 0 if no ratings
+            return count > 0 ? totalRating / count : 0;
+        }
+
+        // Get rating class for styling
+        function getRatingClass(rating) {
+            if (rating >= 50) return 'rating-excellent';
+            if (rating >= 20) return 'rating-good';
+            if (rating >= -20) return 'rating-average';
+            return 'rating-poor';
+        }
+
+        // Get rating class for work records
+        function getWorkRecordClass(rating) {
+            if (rating >= 50) return 'rating-positive';
+            if (rating >= -50) return 'rating-neutral';
+            return 'rating-negative';
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchName = document.getElementById('searchName').value.toLowerCase();
+            const searchId = document.getElementById('searchId').value.toLowerCase();
+            const filterDepartment = document.getElementById('filterDepartment').value;
+            
+            let filteredEmployees = employees;
+            
+            // Filter by name
+            if (searchName) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.name.toLowerCase().includes(searchName)
+                );
+            }
+            
+            // Filter by ID
+            if (searchId) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.id.toLowerCase().includes(searchId)
+                );
+            }
+            
+            // Filter by department
+            if (filterDepartment) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.department === filterDepartment
+                );
+            }
+            
+            renderEmployeeTable(filteredEmployees);
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('searchName').value = '';
+            document.getElementById('searchId').value = '';
+            document.getElementById('filterDepartment').value = '';
+            
+            renderEmployeeTable();
+        }
+
+        // Open add employee modal
+        function openAddEmployeeModal() {
+            editingEmployeeId = null;
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeModalLabel').textContent = 'Add New Employee';
+            document.getElementById('employeeId').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
+        }
+
+        // View employee
+        function viewEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            alert(`Employee Details:\nID: ${employee.id}\nName: ${employee.name}\nPosition: ${employee.position}\nDepartment: ${employee.department}\nOverall Rating: ${calculateOverallRating(employee).toFixed(1)}`);
+        }
+
+        // View work records
+        function viewWorkRecords(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            currentEmployeeId = id;
+            document.getElementById('currentEmployeeName').textContent = employee.name;
+            
+            // Show work records page
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'block';
+            
+            // For mechanical and electrical-ac, hide daily work tab
+            if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                document.getElementById('dailyWorkTab').style.display = 'none';
+                currentRecordType = 'other';
+            } else {
+                document.getElementById('dailyWorkTab').style.display = 'inline-block';
+                currentRecordType = 'daily';
+            }
+            
+            updateRecordTabs();
+            loadWorkRecords(employee);
+        }
+
+        // Edit employee
+        function editEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            editingEmployeeId = id;
+            document.getElementById('employeeId').value = employee.id;
+            document.getElementById('employeeIdInput').value = employee.id;
+            document.getElementById('employeeName').value = employee.name;
+            document.getElementById('employeePosition').value = employee.position;
+            document.getElementById('employeeDepartment').value = employee.department;
+            document.getElementById('employeeModalLabel').textContent = `Edit Employee: ${employee.name}`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
+        }
+
+        // Save employee
+        async function saveEmployee() {
+            const id = document.getElementById('employeeId').value;
+            const employeeIdInput = document.getElementById('employeeIdInput').value;
+            const name = document.getElementById('employeeName').value;
+            const position = document.getElementById('employeePosition').value;
+            const department = document.getElementById('employeeDepartment').value;
+            
+            if (!employeeIdInput || !name || !position || !department) {
+                showNotification('Please fill in all required fields', 'danger');
+                return;
+            }
+            
+            const employeeData = {
+                id: employeeIdInput,
+                name: name,
+                position: position,
+                department: department,
+                dailyWork: [],
+                otherWork: []
+            };
+            
+            // If editing, preserve existing work records
+            if (editingEmployeeId) {
+                const existingEmployee = employees.find(emp => emp.id === editingEmployeeId);
+                if (existingEmployee) {
+                    employeeData.dailyWork = existingEmployee.dailyWork || [];
+                    employeeData.otherWork = existingEmployee.otherWork || [];
+                }
+            }
+            
+            const success = await saveEmployeeToFirebase(employeeData);
+            
+            if (success) {
+                if (editingEmployeeId) {
+                    const index = employees.findIndex(emp => emp.id === editingEmployeeId);
+                    if (index !== -1) {
+                        employees[index] = employeeData;
+                    }
+                } else {
+                    employees.push(employeeData);
+                }
+                
+                renderEmployeeTable();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+                modal.hide();
+                showNotification(editingEmployeeId ? 'Employee updated successfully' : 'Employee added successfully', 'success');
+            } else {
+                showNotification('Error saving employee', 'danger');
+            }
+        }
+
+        // Back to dashboard
+        function backToDashboard() {
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+        }
+
+        // Switch record type
+        function switchRecordType(type) {
+            currentRecordType = type;
+            updateRecordTabs();
+            loadWorkRecords();
+        }
+
+        // Update record tabs
+        function updateRecordTabs() {
+            const dailyTab = document.getElementById('dailyWorkTab');
+            const otherTab = document.getElementById('otherWorkTab');
+            const recordsTitle = document.getElementById('recordsTitle');
+            
+            if (currentRecordType === 'daily') {
+                dailyTab.classList.add('active');
+                otherTab.classList.remove('active');
+                recordsTitle.textContent = 'Daily Work Records';
+            } else {
+                dailyTab.classList.remove('active');
+                otherTab.classList.add('active');
+                recordsTitle.textContent = 'Other Work Records';
+            }
+        }
+
+        // Load work records
+        function loadWorkRecords(employee = null) {
+            if (!employee) {
+                employee = employees.find(emp => emp.id === currentEmployeeId);
+                if (!employee) return;
+            }
+            
+            const recordsContainer = document.getElementById('recordsContainer');
+            recordsContainer.innerHTML = '';
+            
+            // Update record counts
+            const dailyCount = employee.dailyWork ? employee.dailyWork.length : 0;
+            const otherCount = employee.otherWork ? employee.otherWork.length : 0;
+            
+            document.getElementById('dailyWorkCount').textContent = dailyCount;
+            document.getElementById('otherWorkCount').textContent = otherCount;
+            
+            // Load records based on current type
+            if (currentRecordType === 'daily') {
+                if (employee.dailyWork && employee.dailyWork.length > 0) {
+                    employee.dailyWork.forEach((work, index) => {
+                        const recordDiv = document.createElement('div');
+                        recordDiv.className = 'work-record-card';
+                        
+                        const ratingClass = getWorkRecordClass(parseInt(work.rate));
+                        
+                        recordDiv.innerHTML = `
+                            <div class="work-record-header">
+                                <div class="work-record-title">Daily Work - ${work.carts} Carts</div>
+                                <div class="work-record-date">${work.date || 'No date'}</div>
+                            </div>
+                            <div class="work-record-rating ${ratingClass}">Rating: ${work.rate}</div>
+                            <div class="work-record-note">${work.note || 'No note'}</div>
+                        `;
+                        
+                        recordsContainer.appendChild(recordDiv);
+                    });
+                } else {
+                    recordsContainer.innerHTML = '<p class="text-muted">No daily work records found</p>';
+                }
+            } else {
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    employee.otherWork.forEach((work, index) => {
+                        const recordDiv = document.createElement('div');
+                        recordDiv.className = 'work-record-card';
+                        
+                        const ratingClass = getWorkRecordClass(parseInt(work.rate));
+                        
+                        recordDiv.innerHTML = `
+                            <div class="work-record-header">
+                                <div class="work-record-title">${work.name}</div>
+                                <div class="work-record-date">${work.date || 'No date'}</div>
+                            </div>
+                            <div class="work-record-rating ${ratingClass}">Rating: ${work.rate}</div>
+                            <div class="work-record-note">${work.note || 'No note'}</div>
+                        `;
+                        
+                        recordsContainer.appendChild(recordDiv);
+                    });
+                } else {
+                    recordsContainer.innerHTML = '<p class="text-muted">No other work records found</p>';
+                }
+            }
+        }
+
+        // Open add daily work modal
+        function openAddDailyWorkModal() {
+            document.getElementById('dailyWorkForm').reset();
+            document.getElementById('dailyWorkRatingValue').textContent = '0';
+            document.getElementById('dailyWorkDate').valueAsDate = new Date();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addDailyWorkModal'));
+            modal.show();
+        }
+
+        // Open add other work modal
+        function openAddOtherWorkModal() {
+            document.getElementById('otherWorkForm').reset();
+            document.getElementById('otherWorkRatingValue').textContent = '0';
+            document.getElementById('otherWorkDate').valueAsDate = new Date();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addOtherWorkModal'));
+            modal.show();
+        }
+
+        // Save daily work record
+        async function saveDailyWorkRecord() {
+            const date = document.getElementById('dailyWorkDate').value;
+            const carts = document.getElementById('dailyWorkCarts').value;
+            const rate = document.getElementById('dailyWorkRating').value;
+            const note = document.getElementById('dailyWorkNote').value;
+            
+            if (!date || !carts) {
+                showNotification('Please fill in all required fields', 'danger');
+                return;
+            }
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            if (!employee.dailyWork) {
+                employee.dailyWork = [];
+            }
+            
+            const workRecord = {
+                date,
+                carts,
+                rate,
+                note
+            };
+            
+            employee.dailyWork.push(workRecord);
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addDailyWorkModal'));
+                modal.hide();
+                showNotification('Daily work record added', 'success');
+            } else {
+                showNotification('Error saving work record', 'danger');
+            }
+        }
+
+        // Save other work record
+        async function saveOtherWorkRecord() {
+            const date = document.getElementById('otherWorkDate').value;
+            const name = document.getElementById('otherWorkName').value;
+            const rate = document.getElementById('otherWorkRating').value;
+            const note = document.getElementById('otherWorkNote').value;
+            
+            if (!date || !name) {
+                showNotification('Please fill in all required fields', 'danger');
+                return;
+            }
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            if (!employee.otherWork) {
+                employee.otherWork = [];
+            }
+            
+            const workRecord = {
+                date,
+                name,
+                rate,
+                note
+            };
+            
+            employee.otherWork.push(workRecord);
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addOtherWorkModal'));
+                modal.hide();
+                showNotification('Other work record added', 'success');
+            } else {
+                showNotification('Error saving work record', 'danger');
+            }
+        }
+
+        // Sort table
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            renderEmployeeTable();
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            // Create CSV content
+            let csvContent = "Employee ID,Name,Position,Department,Overall Rating,Daily Work Records,Other Work Records\n";
+            
+            employees.forEach(employee => {
+                const overallRating = calculateOverallRating(employee);
+                const dailyCount = employee.dailyWork ? employee.dailyWork.length : 0;
+                const otherCount = employee.otherWork ? employee.otherWork.length : 0;
+                
+                csvContent += `${employee.id},${employee.name},${employee.position},${employee.department},${overallRating.toFixed(1)},${dailyCount},${otherCount}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const filename = `employee_data_${dateStr}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Employee data exported to CSV successfully', 'success');
+        }
+
+        // Print data
+        function printData() {
+            let printContent = `
+                <div style="padding: 20px;">
+                    <h2 style="text-align: center; margin-bottom: 20px;">ASOBRICK FACTORY - Employee Report</h2>
+                    <p style="text-align: center; color: #666; margin-bottom: 30px;">Generated on: ${new Date().toLocaleDateString()}</p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">ID</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Name</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Position</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Department</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            employees.forEach(employee => {
+                const overallRating = calculateOverallRating(employee);
+                printContent += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.id}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.position}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.department}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${overallRating.toFixed(1)}</td>
+                    </tr>
+                `;
+            });
+            
+            printContent += `
+                        </tbody>
+                    </table>
+                    <p style="text-align: center; margin-top: 30px; color: #666; font-size: 12px;">
+                        Generated by ASOBRICK FACTORY Employee Management System
+                    </p>
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Employee Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showNotification('Print dialog opened', 'success');
+        }
+
+        // Test Firebase connection
+        async function checkFirebaseConnection() {
+            try {
+                console.log('🧪 Testing Firebase connection...');
+                
+                const testData = {
+                    testTime: new Date().toISOString(),
+                    message: 'Firebase test successful'
+                };
+                
+                await db.collection('tests').doc('connection-test').set(testData);
+                console.log('✅ Write test passed');
+                
+                const doc = await db.collection('tests').doc('connection-test').get();
+                console.log('✅ Read test passed:', doc.data());
+                
+                const snapshot = await db.collection('employees').get();
+                console.log(`✅ Found ${snapshot.size} employees in database`);
+                
+                showNotification(`Firebase connected! Found ${snapshot.size} employees`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Firebase test failed:', error);
+                showNotification('Firebase connection failed: ' + error.message, 'danger');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const toast = document.getElementById('notificationToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            toast.className = 'toast';
+            if (type === 'success') {
+                toast.classList.add('bg-success', 'text-white');
+            } else if (type === 'danger') {
+                toast.classList.add('bg-danger', 'text-white');
+            } else if (type === 'info') {
+                toast.classList.add('bg-info', 'text-white');
+            }
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+    </script>
+</body>
+</html>
