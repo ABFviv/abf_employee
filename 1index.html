@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK FACTORY - سیستەمی بەڕێوبردنی کارمەند</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #c62828; /* Dark Red - Factory Color */
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --brand-red: #c62828;
+            --accent-color: #d32f2f;
+            --light-red: #ffebee;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #c62828, #2c3e50);
+        }
+        
+        .login-card {
+            width: 400px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .login-logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .dashboard-container {
+            display: none;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #8e0000);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-logo {
+            height: 60px;
+            margin-left: 20px;
+        }
+        
+        .header-brand {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+        
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: #ffcdd2;
+            margin: 0;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #b71c1c;
+            border-color: #b71c1c;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .table th {
+            background-color: var(--light-red);
+            font-weight: 600;
+            cursor: pointer;
+            text-align: right;
+        }
+        
+        .table th:hover {
+            background-color: #ffcdd2;
+        }
+        
+        .sort-icon {
+            margin-right: 5px;
+            font-size: 0.8em;
+        }
+        
+        .rating-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .rating-excellent {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .rating-good {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .rating-average {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .rating-poor {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .filter-section {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .modal-header {
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            color: white;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .work-entry {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1050;
+        }
+        
+        .toast {
+            min-width: 300px;
+        }
+        
+        .brand-red-text {
+            color: var(--brand-red);
+            font-weight: 700;
+        }
+        
+        .brand-gray-text {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .work-record-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .work-record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .work-record-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .work-record-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .work-record-rating {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .rating-positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .rating-neutral {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .rating-negative {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .work-record-note {
+            margin-top: 10px;
+        }
+        
+        .add-record-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+        
+        .tab-content {
+            min-height: 400px;
+        }
+        
+        .records-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-left: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .records-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .records-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .record-tabs {
+            margin-bottom: 15px;
+        }
+        
+        .record-tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            display: inline-block;
+            margin-left: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .record-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .record-count {
+            background-color: #6c757d;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+        
+        .admin-only {
+            display: none;
+        }
+        
+        .supervisor-only {
+            display: none;
+        }
+        
+        .admin-and-supervisor-only {
+            display: none;
+        }
+        
+        .edit-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .edit-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .edit-disabled:hover {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+        }
+        
+        .red-accent {
+            color: var(--primary-color);
+        }
+        
+        .bg-light-red {
+            background-color: var(--light-red);
+        }
+        
+        .position-badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .project-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .project-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .project-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .project-rating {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .project-details {
+            margin-top: 10px;
+        }
+        
+        .project-employees {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        /* New styles for employee selection */
+        .employee-selection-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            padding: 10px;
+            background-color: white;
+        }
+        
+        .employee-checkbox {
+            margin-left: 8px;
+        }
+        
+        .employee-checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            cursor: pointer;
+        }
+        
+        .employee-checkbox-label:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="login-logo">
+                <h3 class="red-accent">سیستەمی بەڕێوبردنی کارمەند</h3>
+                <p class="text-muted">تکایە بچۆ ژوورەوە بۆ بەردەوامبوون</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">ناوی بەکارهێنەر</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">وشەی تێپەڕ</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">چوونە ژوورەوە</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container" id="dashboardPage">
+        <div class="header">
+            <div class="header-brand">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="header-logo">
+                <div>
+                    <h4 class="header-title"><span class="brand-red-text">ASOBRICK</span> <span class="brand-gray-text">FACTORY</span></h4>
+                    <p class="header-subtitle">سیستەمی بەڕێوبردنی کارمەند</p>
+                </div>
+            </div>
+            <div>
+                <span id="userInfo" class="me-3"></span>
+                <button class="btn btn-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> چوونەدەرەوە
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchName" placeholder="گەڕان بەپێی ناو">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchId" placeholder="گەڕان بەپێی ژمارەی کارمەند">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterPosition">
+                        <option value="">سەرجەم پیشەکان</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterDepartment">
+                        <option value="">سەرجەم بەشەکان</option>
+                        <option value="crushing-prep">هاڕین و ئامادەکردن</option>
+                        <option value="cutting-setting">بڕین و بارکردن</option>
+                        <option value="klin">فڕن</option>
+                        <option value="unsetting">داگرتن</option>
+                        <option value="mechanical">میکانیک</option>
+                        <option value="electrical-ac">کارەبا</option>
+                        <option value="engineering" class="admin-only">ئەندازیاریی</option>
+                        <option value="management" class="admin-only">لێپرسراوەکان</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button class="btn btn-primary" id="filterBtn">
+                        <i class="bi bi-funnel"></i> دیاریی بکە
+                    </button>
+                    <button class="btn btn-secondary ms-2" id="resetBtn">
+                        <i class="bi bi-arrow-clockwise"></i> گەڕاندنەوە
+                    </button>
+                    <button class="btn btn-success ms-2 admin-only" id="addEmployeeBtn">
+                        <i class="bi bi-person-plus"></i> زیادکردنی کارمەند
+                    </button>
+                    <button class="btn btn-warning ms-2" id="testFirebaseBtn">
+                        <i class="bi bi-database-check"></i> Test Firebase
+                    </button>
+                    <button class="btn btn-success ms-2 admin-only" id="exportBtn">
+                        <i class="bi bi-file-earmark-excel"></i> بینێرە بۆ ئێکزڵ
+                    </button>
+                    <button class="btn btn-info ms-2 admin-and-supervisor-only" id="printBtn">
+                        <i class="bi bi-printer"></i> پرینت
+                    </button>
+                    <button class="btn btn-primary ms-2 admin-and-supervisor-only" id="projectsBtn">
+                        <i class="bi bi-briefcase"></i> پڕۆژە
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                لیستی کارمەندەکان
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('id')"><i class="bi bi-arrow-down-up sort-icon"></i> ژمارەی کارمەند</th>
+                                <th onclick="sortTable('name')"><i class="bi bi-arrow-down-up sort-icon"></i> ناوی کارمەند</th>
+                                <th onclick="sortTable('position')"><i class="bi bi-arrow-down-up sort-icon"></i> پیشە</th>
+                                <th onclick="sortTable('department')"><i class="bi bi-arrow-down-up sort-icon"></i> بەش</th>
+                                <th onclick="sortTable('overallRating')"><i class="bi bi-arrow-down-up sort-icon"></i> هەڵسەنگاندنی گشتی</th>
+                                <th>کاری ڕۆژانە</th>
+                                <th>کارەکانی دیکە</th>
+                                <th>دانان</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Employee rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Records Page -->
+    <div class="dashboard-container" id="workRecordsPage" style="display: none;">
+        <div class="header">
+            <div class="header-brand">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="header-logo">
+                <div>
+                    <h4 class="header-title"><span class="brand-red-text">ASOBRICK</span> <span class="brand-gray-text">FACTORY</span></h4>
+                    <p class="header-subtitle">تۆماری کارەکان - <span id="currentEmployeeName"></span></p>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-light btn-sm" id="backToDashboardBtn">
+                    <i class="bi bi-arrow-left"></i> گەڕانەوە بۆ پەڕەی سەرەکی
+                </button>
+                <button class="btn btn-info btn-sm ms-2" id="exportRecordsBtn">
+                    <i class="bi bi-file-earmark-excel"></i> بینێرە بۆ ئێکزڵ
+                </button>
+                <button class="btn btn-secondary btn-sm ms-2" id="printRecordsBtn">
+                    <i class="bi bi-printer"></i> پرینت
+                </button>
+            </div>
+        </div>
+
+        <div class="record-tabs">
+            <div class="record-tab active" id="dailyWorkTab">
+                تۆماری کاری ڕۆژانە <span class="record-count" id="dailyWorkCount">0</span>
+            </div>
+            <div class="record-tab" id="otherWorkTab">
+                تۆماری کارەکانی دیکە <span class="record-count" id="otherWorkCount">0</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" id="recordsTitle">تۆماری کاری ڕۆژانە</h5>
+                <button class="btn btn-sm btn-primary" id="addRecordBtn">
+                    <i class="bi bi-plus-circle"></i> زیادکردنی تۆمار
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="records-container" id="recordsContainer">
+                    <!-- Work records will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary add-record-btn" id="floatingAddBtn" style="display: none;">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
+
+    <!-- Projects Page -->
+    <div class="dashboard-container" id="projectsPage" style="display: none;">
+        <div class="header">
+            <div class="header-brand">
+                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe" alt="ASOBRICK FACTORY" class="header-logo">
+                <div>
+                    <h4 class="header-title"><span class="brand-red-text">ASOBRICK</span> <span class="brand-gray-text">FACTORY</span></h4>
+                    <p class="header-subtitle">بەڕێوبردنی پڕۆژەکان</p>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-light btn-sm" id="backToDashboardFromProjectsBtn">
+                    <i class="bi bi-arrow-left"></i> گەڕانەوە بۆ پەڕەی سەرەکی
+                </button>
+                <button class="btn btn-success btn-sm ms-2 admin-only" id="addProjectBtn">
+                    <i class="bi bi-plus-circle"></i> زیادکردنی پڕۆژەی نوێ
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                لیستی پڕۆژەکان
+            </div>
+            <div class="card-body">
+                <div class="records-container" id="projectsContainer">
+                    <!-- Projects will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Daily Work Record Modal -->
+    <div class="modal fade" id="addDailyWorkModal" tabindex="-1" aria-labelledby="addDailyWorkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDailyWorkModalLabel">زیادکردنی تۆماری کاری ڕۆژانە</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dailyWorkForm">
+                        <div class="mb-3">
+                            <label for="dailyWorkDate" class="form-label">بەروار</label>
+                            <input type="date" class="form-control" id="dailyWorkDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkCarts" class="form-label">ژمارەی عەرەبانەکان</label>
+                            <input type="number" class="form-control" id="dailyWorkCarts" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkRating" class="form-label">هەڵسەنگاندن (-100 بۆ 100)</label>
+                            <input type="range" class="form-range" id="dailyWorkRating" min="-100" max="100" value="0" required>
+                            <div class="d-flex justify-content-between">
+                                <span>-100</span>
+                                <span id="dailyWorkRatingValue">0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dailyWorkNote" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="dailyWorkNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشتگەستبوونەوە</button>
+                    <button type="button" class="btn btn-primary" id="saveDailyWorkBtn">تۆمارکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Other Work Record Modal -->
+    <div class="modal fade" id="addOtherWorkModal" tabindex="-1" aria-labelledby="addOtherWorkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addOtherWorkModalLabel">زیادکردنی تۆماری کارەکانی دیکە</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="otherWorkForm">
+                        <div class="mb-3">
+                            <label for="otherWorkDate" class="form-label">بەروار</label>
+                            <input type="date" class="form-control" id="otherWorkDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkName" class="form-label">ناوی کار</label>
+                            <input type="text" class="form-control" id="otherWorkName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkRating" class="form-label">هەڵسەنگاندن (-100 بۆ 100)</label>
+                            <input type="range" class="form-range" id="otherWorkRating" min="-100" max="100" value="0" required>
+                            <div class="d-flex justify-content-between">
+                                <span>-100</span>
+                                <span id="otherWorkRatingValue">0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherWorkNote" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="otherWorkNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشتگەستبوونەوە</button>
+                    <button type="button" class="btn btn-primary" id="saveOtherWorkBtn">تۆمارکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Modal -->
+    <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeModalLabel">زیادکردنی کارمەندی نوێ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="employeeForm">
+                        <input type="hidden" id="employeeId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeIdInput" class="form-label">ژمارەی کارمەند</label>
+                                <input type="text" class="form-control" id="employeeIdInput" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeName" class="form-label">ناوی کارمەند</label>
+                                <input type="text" class="form-control" id="employeeName" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employeePosition" class="form-label">پیشە</label>
+                                <!-- Changed from select to input for free text entry -->
+                                <input type="text" class="form-control" id="employeePosition" placeholder="پیشە بنووسە" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employeeDepartment" class="form-label">بەش</label>
+                                <select class="form-select" id="employeeDepartment" required>
+                                    <option value="">بەش هەڵبژێرە</option>
+                                    <option value="crushing-prep">هاڕین و ئامادەکردن</option>
+                                    <option value="cutting-setting">بڕین و بارکردن</option>
+                                    <option value="klin">فڕن</option>
+                                    <option value="unsetting">داگرتن</option>
+                                    <option value="mechanical">میکانیک</option>
+                                    <option value="electrical-ac">کارەبا</option>
+                                    <option value="engineering">ئەندازیاریی</option>
+                                    <option value="management">لێپرسراوەکان</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveEmployeeBtn">تۆماردکردنی کارمەند</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Work Record Modal -->
+    <div class="modal fade" id="editWorkRecordModal" tabindex="-1" aria-labelledby="editWorkRecordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editWorkRecordModalLabel">دەستکاری کردنی تۆماری کار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editWorkRecordForm">
+                        <input type="hidden" id="editRecordType">
+                        <input type="hidden" id="editRecordIndex">
+                        <div class="mb-3">
+                            <label for="editWorkDate" class="form-label">بەروار</label>
+                            <input type="date" class="form-control" id="editWorkDate" required>
+                        </div>
+                        <div class="mb-3" id="editCartsContainer">
+                            <label for="editWorkCarts" class="form-label">ژمارەی عەرەبانەکان</label>
+                            <input type="number" class="form-control" id="editWorkCarts" min="1" required>
+                        </div>
+                        <div class="mb-3" id="editNameContainer" style="display: none;">
+                            <label for="editWorkName" class="form-label">ناوی کار</label>
+                            <input type="text" class="form-control" id="editWorkName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWorkRating" class="form-label">هەڵسەنگاندن (-100 بۆ 100)</label>
+                            <input type="range" class="form-range" id="editWorkRating" min="-100" max="100" value="0" required>
+                            <div class="d-flex justify-content-between">
+                                <span>-100</span>
+                                <span id="editWorkRatingValue">0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWorkNote" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="editWorkNote" rows="3"></textarea>
+                        </div>
+                        <div class="edit-info" id="editTimeInfo">
+                            <!-- Edit time information will be shown here -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشتگەستبوونەوە</button>
+                    <button type="button" class="btn btn-primary" id="saveEditWorkRecordBtn">گۆڕانگاری</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Employee Confirmation Modal -->
+    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteEmployeeModalLabel">سڕینەوەی کارمەند</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>دڵنیایت لە سڕینەوەی ئەم کارمەندە؟ ئەم کارە ناکرێتەوە وەک خۆی.</p>
+                    <p><strong>ناوی کارمەند:</strong> <span id="deleteEmployeeName"></span></p>
+                    <p><strong>ژمارەی کارمەند:</strong> <span id="deleteEmployeeId"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشتگەستبوونەوە</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteEmployeeBtn">سڕینەوە</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProjectModalLabel">زیادکردنی پڕۆژەی نوێ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="projectForm">
+                        <input type="hidden" id="projectId">
+                        <div class="mb-3">
+                            <label for="projectName" class="form-label">ناوی پڕۆژە</label>
+                            <input type="text" class="form-control" id="projectName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectDepartment" class="form-label">هەڵبژاردنی بەش</label>
+                            <select class="form-select" id="projectDepartment" required>
+                                <option value="">بەش هەڵبژێرە</option>
+                                <option value="crushing-prep">هاڕین و ئامادەکردن</option>
+                                <option value="cutting-setting">بڕین و بارکردن</option>
+                                <option value="klin">فڕن</option>
+                                <option value="unsetting">داگرتن</option>
+                                <option value="mechanical">میکانیک</option>
+                                <option value="electrical-ac">کارەبا</option>
+                                <option value="engineering">ئەندازیاریی</option>
+                                <option value="management">لێپرسراوەکان</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectEmployees" class="form-label">هەڵبژاردنی کارمەند</label>
+                            <!-- Replaced multiple select with checkbox list -->
+                            <div class="employee-selection-container" id="projectEmployeesContainer">
+                                <!-- Employee checkboxes will be populated here -->
+                            </div>
+                            <div class="form-text">کلیک بکە بۆ هەڵبژاردنی چەند کارمەند</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectRating" class="form-label">هەڵسەنگاندنی پڕۆژە</label>
+                            <input type="number" class="form-control" id="projectRating" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectDetails" class="form-label">وردەکاری پڕۆژە</label>
+                            <textarea class="form-control" id="projectDetails" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشتگەستبوونەوە</button>
+                    <button type="button" class="btn btn-primary" id="saveProjectBtn">تۆمارکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container">
+        <div class="toast" id="notificationToast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">ئاگادارکردنەوە</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Notification message will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Firebase configuration for Firestore
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Data storage
+        let employees = [];
+        let projects = [];
+        let currentUser = null;
+        let editingEmployeeId = null;
+        let currentEmployeeId = null;
+        let sortColumn = 'overallRating';
+        let sortDirection = 'desc';
+        let currentRecordType = 'daily';
+        let employeeToDelete = null;
+        
+        // User credentials
+        const users = {
+            admin: { password: 'admin2002', role: 'admin', department: 'all' },
+            himat: { password: 'himat6600', role: 'supervisor', department: 'cutting-setting' },
+            'hemn-prep': { password: 'hemn1212', role: 'supervisor', department: 'crushing-prep' },
+            samdar: { password: 'samdar7273', role: 'supervisor', department: 'unsetting' },
+            'hemn-klin': { password: 'hemn2626', role: 'supervisor', department: 'klin' },
+            sarezh: { password: 'sarezh1919', role: 'supervisor', department: 'electrical-ac' },
+            shalaw: { password: 'shalaw0198', role: 'supervisor', department: 'mechanical' }
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Always start from fresh login page for maximum security
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('projectsPage').style.display = 'none';
+            
+            // Clear any previous login data
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            
+            // Clear login form
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            
+            // Load data from Firebase
+            loadDataFromFirebase();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize position dropdown
+            initializePositionDropdown();
+        });
+
+        // Initialize position dropdown
+        function initializePositionDropdown() {
+            const filterPosition = document.getElementById('filterPosition');
+            
+            // We'll populate this dynamically based on existing employees
+            // This will be called after employees are loaded
+        }
+
+        // Firebase Data Functions
+        async function loadDataFromFirebase() {
+            try {
+                console.log('📥 Loading data from Firebase...');
+                
+                // Load employees
+                const employeesSnapshot = await db.collection('employees').get();
+                employees = [];
+                employeesSnapshot.forEach(doc => {
+                    console.log('👤 Found employee:', doc.id, doc.data().name);
+                    employees.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Load projects
+                const projectsSnapshot = await db.collection('projects').get();
+                projects = [];
+                projectsSnapshot.forEach(doc => {
+                    console.log('📋 Found project:', doc.id, doc.data().name);
+                    projects.push({ id: doc.id, ...doc.data() });
+                });
+                
+                console.log(`✅ Loaded ${employees.length} employees and ${projects.length} projects from Firebase`);
+                
+                // If no data in Firebase, initialize with sample data
+                if (employees.length === 0) {
+                    console.log('📝 No data found, initializing sample data...');
+                    await initializeSampleData();
+                }
+                
+                // Update position dropdown with unique positions from employees
+                updatePositionDropdown();
+                
+                renderEmployeeTable();
+            } catch (error) {
+                console.error('❌ Error loading data from Firebase:', error);
+                showNotification('هەڵە لە بارکردنی داتا لە بنکەی دراوە', 'danger');
+            }
+        }
+
+        // Update position dropdown with unique positions from employees
+        function updatePositionDropdown() {
+            const filterPosition = document.getElementById('filterPosition');
+            const positions = [...new Set(employees.map(emp => emp.position))];
+            
+            // Clear existing options except the first one
+            while (filterPosition.children.length > 1) {
+                filterPosition.removeChild(filterPosition.lastChild);
+            }
+            
+            // Add unique positions
+            positions.forEach(position => {
+                const option = document.createElement('option');
+                option.value = position;
+                option.textContent = position;
+                filterPosition.appendChild(option);
+            });
+        }
+
+        async function saveEmployeeToFirebase(employee) {
+            try {
+                console.log('💾 Saving employee to Firebase:', employee);
+                await db.collection('employees').doc(employee.id).set(employee);
+                console.log('✅ Employee saved successfully to Firebase!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error saving employee to Firebase:', error);
+                return false;
+            }
+        }
+
+        async function saveProjectToFirebase(project) {
+            try {
+                console.log('💾 Saving project to Firebase:', project);
+                await db.collection('projects').doc(project.id).set(project);
+                console.log('✅ Project saved successfully to Firebase!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error saving project to Firebase:', error);
+                return false;
+            }
+        }
+
+        async function deleteEmployeeFromFirebase(employeeId) {
+            try {
+                console.log('🗑️ Deleting employee from Firebase:', employeeId);
+                await db.collection('employees').doc(employeeId).delete();
+                console.log('✅ Employee deleted successfully from Firebase!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error deleting employee from Firebase:', error);
+                return false;
+            }
+        }
+
+        async function deleteProjectFromFirebase(projectId) {
+            try {
+                console.log('🗑️ Deleting project from Firebase:', projectId);
+                await db.collection('projects').doc(projectId).delete();
+                console.log('✅ Project deleted successfully from Firebase!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error deleting project from Firebase:', error);
+                return false;
+            }
+        }
+
+        async function initializeSampleData() {
+            const sampleEmployees = [
+                {
+                    id: 'EMP001',
+                    name: 'ئەحمەد محەممەد',
+                    position: 'کارپێکەر',
+                    department: 'crushing-prep',
+                    dailyWork: [
+                        { date: '2024-01-01', carts: '10', rate: '75', note: 'کاری باش', createdAt: new Date().toISOString() }
+                    ],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'چاککردنی مەکینە', rate: '65', note: 'پێویستی بە باشترکردن هەیە', createdAt: new Date().toISOString() }
+                    ]
+                },
+                {
+                    id: 'EMP007',
+                    name: 'حوسێن عەلی',
+                    position: 'تەکنیککاری میکانیک',
+                    department: 'mechanical',
+                    dailyWork: [],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'چاککردنی ئەنژین', rate: '85', note: 'کاری نایاب', createdAt: new Date().toISOString() }
+                    ]
+                },
+                {
+                    id: 'EMP008',
+                    name: 'سارا عەبدوڵڵا',
+                    position: 'تەکنیککاری کارەبا',
+                    department: 'electrical-ac',
+                    dailyWork: [],
+                    otherWork: [
+                        { date: '2024-01-01', name: 'دامەزراندنی AC', rate: '90', note: 'دامەزراندنی بێ کەموکوڕی', createdAt: new Date().toISOString() }
+                    ]
+                }
+            ];
+
+            try {
+                for (const employee of sampleEmployees) {
+                    await db.collection('employees').doc(employee.id).set(employee);
+                }
+                employees = sampleEmployees;
+                console.log('✅ Sample data initialized');
+            } catch (error) {
+                console.error('❌ Error initializing sample data:', error);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Filter buttons
+            document.getElementById('filterBtn').addEventListener('click', applyFilters);
+            document.getElementById('resetBtn').addEventListener('click', resetFilters);
+            
+            // Add employee button
+            document.getElementById('addEmployeeBtn').addEventListener('click', openAddEmployeeModal);
+            
+            // Test Firebase button
+            document.getElementById('testFirebaseBtn').addEventListener('click', checkFirebaseConnection);
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+            
+            // Print button
+            document.getElementById('printBtn').addEventListener('click', printData);
+            
+            // Save employee button
+            document.getElementById('saveEmployeeBtn').addEventListener('click', saveEmployee);
+            
+            // Back to dashboard button
+            document.getElementById('backToDashboardBtn').addEventListener('click', backToDashboard);
+            
+            // Back to dashboard from projects button
+            document.getElementById('backToDashboardFromProjectsBtn').addEventListener('click', backToDashboardFromProjects);
+            
+            // Record tabs
+            document.getElementById('dailyWorkTab').addEventListener('click', function() {
+                switchRecordType('daily');
+            });
+            
+            document.getElementById('otherWorkTab').addEventListener('click', function() {
+                switchRecordType('other');
+            });
+            
+            // Add work record buttons
+            document.getElementById('addRecordBtn').addEventListener('click', function() {
+                if (currentRecordType === 'daily') {
+                    openAddDailyWorkModal();
+                } else {
+                    openAddOtherWorkModal();
+                }
+            });
+            
+            // Save work record buttons
+            document.getElementById('saveDailyWorkBtn').addEventListener('click', saveDailyWorkRecord);
+            document.getElementById('saveOtherWorkBtn').addEventListener('click', saveOtherWorkRecord);
+            
+            // Rating range inputs
+            document.getElementById('dailyWorkRating').addEventListener('input', function() {
+                document.getElementById('dailyWorkRatingValue').textContent = this.value;
+            });
+            
+            document.getElementById('otherWorkRating').addEventListener('input', function() {
+                document.getElementById('otherWorkRatingValue').textContent = this.value;
+            });
+            
+            document.getElementById('editWorkRating').addEventListener('input', function() {
+                document.getElementById('editWorkRatingValue').textContent = this.value;
+            });
+            
+            // Save edited work record button
+            document.getElementById('saveEditWorkRecordBtn').addEventListener('click', saveEditedWorkRecord);
+            
+            // Export and print records buttons
+            document.getElementById('exportRecordsBtn').addEventListener('click', exportRecordsToExcel);
+            document.getElementById('printRecordsBtn').addEventListener('click', printRecords);
+            
+            // Projects button
+            document.getElementById('projectsBtn').addEventListener('click', showProjectsPage);
+            
+            // Add project button
+            document.getElementById('addProjectBtn').addEventListener('click', openAddProjectModal);
+            
+            // Save project button
+            document.getElementById('saveProjectBtn').addEventListener('click', saveProject);
+            
+            // Confirm delete employee button
+            document.getElementById('confirmDeleteEmployeeBtn').addEventListener('click', confirmDeleteEmployee);
+            
+            // Department change for project employees
+            document.getElementById('projectDepartment').addEventListener('change', updateProjectEmployeesCheckboxes);
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (users[username] && users[username].password === password) {
+                currentUser = {
+                    username: username,
+                    role: users[username].role,
+                    department: users[username].department
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showDashboard();
+                showNotification('چوونەژوورەوە سەرکەوتوو بوو', 'success');
+            } else {
+                showNotification('ناوی بەکارهێنەر یاخوود وشەی تێپەڕ هەڵەیە', 'danger');
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('projectsPage').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showNotification('چوونەوە دەرەوە سەرکەوتوو بوو', 'success');
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('projectsPage').style.display = 'none';
+            
+            // Update user info
+            document.getElementById('userInfo').textContent = `لە ژوورەوەیت وەک: ${currentUser.username} (${currentUser.role})`;
+            
+            // Show/hide admin-only elements
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(element => {
+                element.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+            });
+            
+            // Show/hide admin and supervisor elements
+            const adminAndSupervisorElements = document.querySelectorAll('.admin-and-supervisor-only');
+            adminAndSupervisorElements.forEach(element => {
+                element.style.display = (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 'inline-block' : 'none';
+            });
+            
+            // Load and display employees
+            renderEmployeeTable();
+            
+            // Initialize sort icons
+            updateSortIcons();
+        }
+
+        // Show projects page
+        function showProjectsPage() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('projectsPage').style.display = 'block';
+            
+            loadProjects();
+        }
+
+        // Back to dashboard from projects
+        function backToDashboardFromProjects() {
+            document.getElementById('projectsPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+        }
+
+        // Render employee table
+        function renderEmployeeTable(filteredEmployees = null) {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+            
+            let employeesToShow = filteredEmployees || employees;
+            
+            // If not admin, filter by department
+            if (currentUser.role !== 'admin') {
+                employeesToShow = employeesToShow.filter(emp => emp.department === currentUser.department);
+            }
+            
+            // Apply sorting
+            employeesToShow = sortEmployees(employeesToShow);
+            
+            if (employeesToShow.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="8" class="text-center">هیچ کارمەندێک نەدۆزرایەوە</td>';
+                tbody.appendChild(row);
+                return;
+            }
+            
+            employeesToShow.forEach(employee => {
+                const row = document.createElement('tr');
+                
+                // Calculate overall rating
+                const overallRating = calculateOverallRating(employee);
+                
+                // Get rating class for styling
+                const ratingClass = getRatingClass(overallRating);
+                
+                // Format daily and other work for display
+                const dailyWorkCount = employee.dailyWork ? employee.dailyWork.length : 0;
+                const otherWorkCount = employee.otherWork ? employee.otherWork.length : 0;
+                
+                // For mechanical and electrical-ac departments, show N/A for daily work
+                let dailyWorkDisplay, otherWorkDisplay;
+                if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                    dailyWorkDisplay = 'N/A';
+                    otherWorkDisplay = otherWorkCount > 0 ? `${otherWorkCount} تۆماری کار` : 'هیچ تۆماری کارێک نییە';
+                } else {
+                    dailyWorkDisplay = dailyWorkCount > 0 ? `${dailyWorkCount} تۆمار` : 'هیچ تۆمارێک نییە';
+                    otherWorkDisplay = otherWorkCount > 0 ? `${otherWorkCount} تۆمار` : 'هیچ تۆمارێک نییە';
+                }
+                
+                // Format department name for display
+                let departmentDisplay = employee.department;
+                if (employee.department === 'crushing-prep') {
+                    departmentDisplay = 'هاڕین و ئامادەکردن';
+                } else if (employee.department === 'cutting-setting') {
+                    departmentDisplay = 'بڕین و بارکردن';
+                } else if (employee.department === 'klin') {
+                    departmentDisplay = 'فڕن';
+                } else if (employee.department === 'unsetting') {
+                    departmentDisplay = 'داگرتن';
+                } else if (employee.department === 'mechanical') {
+                    departmentDisplay = 'میکانیک';
+                } else if (employee.department === 'electrical-ac') {
+                    departmentDisplay = 'کارەبا';
+                } else if (employee.department === 'engineering') {
+                    departmentDisplay = 'ئەندازیاریی';
+                } else if (employee.department === 'management') {
+                    departmentDisplay = 'لێپرسراوەکان';
+                }
+                
+                row.innerHTML = `
+                    <td>${employee.id}</td>
+                    <td>${employee.name}</td>
+                    <td><span class="position-badge">${employee.position}</span></td>
+                    <td>${departmentDisplay}</td>
+                    <td><span class="badge rating-badge ${ratingClass}">${overallRating.toFixed(1)}</span></td>
+                    <td>${dailyWorkDisplay}</td>
+                    <td>${otherWorkDisplay}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-employee-btn" data-id="${employee.id}">
+                            <i class="bi bi-eye"></i> سەیرکردن
+                        </button>
+                        <button class="btn btn-sm btn-info work-records-btn ms-1" data-id="${employee.id}">
+                            <i class="bi bi-clipboard-data"></i> تۆمارەکان
+                        </button>
+                        ${currentUser.role === 'admin' ? `
+                        <button class="btn btn-sm btn-warning edit-employee-btn ms-1" data-id="${employee.id}">
+                            <i class="bi bi-pencil"></i> چاککردن
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-employee-btn ms-1" data-id="${employee.id}">
+                            <i class="bi bi-trash"></i> سڕینەوە
+                        </button>
+                        ` : ''}
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewEmployee(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.work-records-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewWorkRecords(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editEmployee(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteEmployee(this.dataset.id);
+                });
+            });
+        }
+
+        // Delete employee
+        function deleteEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            employeeToDelete = employee;
+            
+            document.getElementById('deleteEmployeeName').textContent = employee.name;
+            document.getElementById('deleteEmployeeId').textContent = employee.id;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+            modal.show();
+        }
+
+        // Confirm delete employee
+        async function confirmDeleteEmployee() {
+            if (!employeeToDelete) return;
+            
+            const success = await deleteEmployeeFromFirebase(employeeToDelete.id);
+            
+            if (success) {
+                employees = employees.filter(emp => emp.id !== employeeToDelete.id);
+                renderEmployeeTable();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteEmployeeModal'));
+                modal.hide();
+                showNotification('کارمەند بەسەرکەوتووی سڕدرایەوە', 'success');
+                employeeToDelete = null;
+            } else {
+                showNotification('هەڵە لە سڕینەوەی کارمەند', 'danger');
+            }
+        }
+
+        // Sort employees function
+        function sortEmployees(employeesToSort) {
+            return [...employeesToSort].sort((a, b) => {
+                let valueA, valueB;
+                
+                switch (sortColumn) {
+                    case 'id':
+                        valueA = a.id.toLowerCase();
+                        valueB = b.id.toLowerCase();
+                        break;
+                    case 'name':
+                        valueA = a.name.toLowerCase();
+                        valueB = b.name.toLowerCase();
+                        break;
+                    case 'position':
+                        valueA = a.position.toLowerCase();
+                        valueB = b.position.toLowerCase();
+                        break;
+                    case 'department':
+                        valueA = a.department.toLowerCase();
+                        valueB = b.department.toLowerCase();
+                        break;
+                    case 'overallRating':
+                        valueA = calculateOverallRating(a);
+                        valueB = calculateOverallRating(b);
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (typeof valueA === 'string') {
+                    return sortDirection === 'asc' 
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                } else {
+                    return sortDirection === 'asc' 
+                        ? valueA - valueB
+                        : valueB - valueA;
+                }
+            });
+        }
+
+        // Sort table function
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            renderEmployeeTable();
+            updateSortIcons();
+        }
+
+        // Update sort icons
+        function updateSortIcons() {
+            // Remove all sort icons first
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'bi bi-arrow-down-up sort-icon';
+            });
+            
+            // Add correct icon for current sort column
+            const headers = document.querySelectorAll('th[onclick]');
+            headers.forEach(header => {
+                const onclickAttr = header.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(`sortTable('${sortColumn}')`)) {
+                    const icon = header.querySelector('.sort-icon');
+                    if (icon) {
+                        icon.className = sortDirection === 'asc' 
+                            ? 'bi bi-arrow-up sort-icon' 
+                            : 'bi bi-arrow-down sort-icon';
+                    }
+                }
+            });
+        }
+
+        // Calculate overall rating
+        function calculateOverallRating(employee) {
+            let totalRating = 0;
+            let count = 0;
+            
+            // For mechanical and electrical-ac, only use other work
+            if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    totalRating = employee.otherWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    count = employee.otherWork.length;
+                }
+            } else {
+                // For other departments, use both daily and other work
+                if (employee.dailyWork && employee.dailyWork.length > 0) {
+                    const dailySum = employee.dailyWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    totalRating += dailySum / employee.dailyWork.length;
+                    count++;
+                }
+                
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    const otherSum = employee.otherWork.reduce((sum, work) => sum + parseInt(work.rate), 0);
+                    totalRating += otherSum / employee.otherWork.length;
+                    count++;
+                }
+            }
+            
+            // Return average or 0 if no ratings
+            return count > 0 ? totalRating / count : 0;
+        }
+
+        // Get rating class for styling
+        function getRatingClass(rating) {
+            if (rating >= 50) return 'rating-excellent';
+            if (rating >= 20) return 'rating-good';
+            if (rating >= -20) return 'rating-average';
+            return 'rating-poor';
+        }
+
+        // Get rating class for work records
+        function getWorkRecordClass(rating) {
+            if (rating >= 50) return 'rating-positive';
+            if (rating >= -50) return 'rating-neutral';
+            return 'rating-negative';
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchName = document.getElementById('searchName').value.toLowerCase();
+            const searchId = document.getElementById('searchId').value.toLowerCase();
+            const filterDepartment = document.getElementById('filterDepartment').value;
+            const filterPosition = document.getElementById('filterPosition').value;
+            
+            let filteredEmployees = employees;
+            
+            // Filter by name
+            if (searchName) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.name.toLowerCase().includes(searchName)
+                );
+            }
+            
+            // Filter by ID
+            if (searchId) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.id.toLowerCase().includes(searchId)
+                );
+            }
+            
+            // Filter by department
+            if (filterDepartment) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.department === filterDepartment
+                );
+            }
+            
+            // Filter by position
+            if (filterPosition) {
+                filteredEmployees = filteredEmployees.filter(emp => 
+                    emp.position === filterPosition
+                );
+            }
+            
+            renderEmployeeTable(filteredEmployees);
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('searchName').value = '';
+            document.getElementById('searchId').value = '';
+            document.getElementById('filterDepartment').value = '';
+            document.getElementById('filterPosition').value = '';
+            
+            renderEmployeeTable();
+        }
+
+        // Open add employee modal
+        function openAddEmployeeModal() {
+            editingEmployeeId = null;
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeModalLabel').textContent = 'زیادکردنی کارمەندی نوێ';
+            document.getElementById('employeeId').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
+        }
+
+        // View employee
+        function viewEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            alert(`وردەکاری کارمەند:\nژمارەی کارمەند: ${employee.id}\nناو: ${employee.name}\nپیشە: ${employee.position}\nبەش: ${employee.department}\nهەڵسەنگاندنی گشتی: ${calculateOverallRating(employee).toFixed(1)}`);
+        }
+
+        // View work records
+        function viewWorkRecords(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            currentEmployeeId = id;
+            document.getElementById('currentEmployeeName').textContent = employee.name;
+            
+            // Show work records page
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('workRecordsPage').style.display = 'block';
+            
+            // For mechanical and electrical-ac, hide daily work tab
+            if (employee.department === 'mechanical' || employee.department === 'electrical-ac') {
+                document.getElementById('dailyWorkTab').style.display = 'none';
+                currentRecordType = 'other';
+            } else {
+                document.getElementById('dailyWorkTab').style.display = 'inline-block';
+                currentRecordType = 'daily';
+            }
+            
+            updateRecordTabs();
+            loadWorkRecords(employee);
+        }
+
+        // Edit employee
+        function editEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            editingEmployeeId = id;
+            document.getElementById('employeeId').value = employee.id;
+            document.getElementById('employeeIdInput').value = employee.id;
+            document.getElementById('employeeName').value = employee.name;
+            document.getElementById('employeePosition').value = employee.position;
+            document.getElementById('employeeDepartment').value = employee.department;
+            document.getElementById('employeeModalLabel').textContent = `دەستکاری کردنی کارمەند: ${employee.name}`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
+        }
+
+        // Save employee
+        async function saveEmployee() {
+            const id = document.getElementById('employeeId').value;
+            const employeeIdInput = document.getElementById('employeeIdInput').value;
+            const name = document.getElementById('employeeName').value;
+            const position = document.getElementById('employeePosition').value;
+            const department = document.getElementById('employeeDepartment').value;
+            
+            if (!employeeIdInput || !name || !position || !department) {
+                showNotification('تکایە هەموو خانە پێویستەکان پڕبکەرەوە', 'danger');
+                return;
+            }
+            
+            const employeeData = {
+                id: employeeIdInput,
+                name: name,
+                position: position,
+                department: department,
+                dailyWork: [],
+                otherWork: []
+            };
+            
+            // If editing, preserve existing work records
+            if (editingEmployeeId) {
+                const existingEmployee = employees.find(emp => emp.id === editingEmployeeId);
+                if (existingEmployee) {
+                    employeeData.dailyWork = existingEmployee.dailyWork || [];
+                    employeeData.otherWork = existingEmployee.otherWork || [];
+                }
+            }
+            
+            const success = await saveEmployeeToFirebase(employeeData);
+            
+            if (success) {
+                if (editingEmployeeId) {
+                    const index = employees.findIndex(emp => emp.id === editingEmployeeId);
+                    if (index !== -1) {
+                        employees[index] = employeeData;
+                    }
+                } else {
+                    employees.push(employeeData);
+                }
+                
+                // Update position dropdown
+                updatePositionDropdown();
+                
+                renderEmployeeTable();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+                modal.hide();
+                showNotification(editingEmployeeId ? 'کارمەند بەسەرکەوتووی نوێ بووەوە' : 'کارمەند بەسەرکەوتووی نوێ بووەوە', 'success');
+            } else {
+                showNotification('هەڵە لە تۆمارکردنی کارمەند', 'danger');
+            }
+        }
+
+        // Back to dashboard
+        function backToDashboard() {
+            document.getElementById('workRecordsPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+        }
+
+        // Switch record type
+        function switchRecordType(type) {
+            currentRecordType = type;
+            updateRecordTabs();
+            loadWorkRecords();
+        }
+
+        // Update record tabs
+        function updateRecordTabs() {
+            const dailyTab = document.getElementById('dailyWorkTab');
+            const otherTab = document.getElementById('otherWorkTab');
+            const recordsTitle = document.getElementById('recordsTitle');
+            
+            if (currentRecordType === 'daily') {
+                dailyTab.classList.add('active');
+                otherTab.classList.remove('active');
+                recordsTitle.textContent = 'تۆماری کاری ڕۆژانە';
+            } else {
+                dailyTab.classList.remove('active');
+                otherTab.classList.add('active');
+                recordsTitle.textContent = 'تۆماری کارەکانی دیکە';
+            }
+        }
+
+        // Load work records
+        function loadWorkRecords(employee = null) {
+            if (!employee) {
+                employee = employees.find(emp => emp.id === currentEmployeeId);
+                if (!employee) return;
+            }
+            
+            const recordsContainer = document.getElementById('recordsContainer');
+            recordsContainer.innerHTML = '';
+            
+            // Update record counts
+            const dailyCount = employee.dailyWork ? employee.dailyWork.length : 0;
+            const otherCount = employee.otherWork ? employee.otherWork.length : 0;
+            
+            document.getElementById('dailyWorkCount').textContent = dailyCount;
+            document.getElementById('otherWorkCount').textContent = otherCount;
+            
+            // Load records based on current type
+            if (currentRecordType === 'daily') {
+                if (employee.dailyWork && employee.dailyWork.length > 0) {
+                    employee.dailyWork.forEach((work, index) => {
+                        const recordDiv = document.createElement('div');
+                        recordDiv.className = 'work-record-card';
+                        
+                        const ratingClass = getWorkRecordClass(parseInt(work.rate));
+                        
+                        recordDiv.innerHTML = `
+                            <div class="work-record-header">
+                                <div class="work-record-title">کاری ڕۆژانە - ${work.carts} عەرەبانە</div>
+                                <div class="work-record-date">${work.date || 'بەروار نییە'}</div>
+                            </div>
+                            <div class="work-record-rating ${ratingClass}">هەڵسەنگاندن: ${work.rate}</div>
+                            <div class="work-record-note">${work.note || 'تێبینی نییە'}</div>
+                            <div class="edit-info">
+                                دروستکراوە: ${formatDate(work.createdAt)} 
+                                ${work.lastEditedAt ? ` | کۆتا چاککردن: ${formatDate(work.lastEditedAt)}` : ''}
+                            </div>
+                            ${(currentUser.role === 'admin' || currentUser.role === 'supervisor') ? `
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-warning edit-record-btn" data-index="${index}" data-type="daily">
+                                    <i class="bi bi-pencil"></i> چاککردن
+                                </button>
+                                ${currentUser.role === 'admin' ? `
+                                <button class="btn btn-sm btn-danger delete-record-btn ms-1" data-index="${index}" data-type="daily">
+                                    <i class="bi bi-trash"></i> سڕینەوە
+                                </button>
+                                ` : ''}
+                            </div>
+                            ` : ''}
+                        `;
+                        
+                        recordsContainer.appendChild(recordDiv);
+                    });
+                } else {
+                    recordsContainer.innerHTML = '<p class="text-muted">هیچ تۆماری کاری ڕۆژانە نییە</p>';
+                }
+            } else {
+                if (employee.otherWork && employee.otherWork.length > 0) {
+                    employee.otherWork.forEach((work, index) => {
+                        const recordDiv = document.createElement('div');
+                        recordDiv.className = 'work-record-card';
+                        
+                        const ratingClass = getWorkRecordClass(parseInt(work.rate));
+                        
+                        recordDiv.innerHTML = `
+                            <div class="work-record-header">
+                                <div class="work-record-title">${work.name}</div>
+                                <div class="work-record-date">${work.date || 'بەروار نییە'}</div>
+                            </div>
+                            <div class="work-record-rating ${ratingClass}">هەڵسەنگاندن: ${work.rate}</div>
+                            <div class="work-record-note">${work.note || 'تێبینی نییە'}</div>
+                            <div class="edit-info">
+                                دروستکراوە: ${formatDate(work.createdAt)} 
+                                ${work.lastEditedAt ? ` | کۆتا چاککردن: ${formatDate(work.lastEditedAt)}` : ''}
+                            </div>
+                            ${(currentUser.role === 'admin' || currentUser.role === 'supervisor') ? `
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-warning edit-record-btn" data-index="${index}" data-type="other">
+                                    <i class="bi bi-pencil"></i> چاککردن
+                                </button>
+                                ${currentUser.role === 'admin' ? `
+                                <button class="btn btn-sm btn-danger delete-record-btn ms-1" data-index="${index}" data-type="other">
+                                    <i class="bi bi-trash"></i> سڕینەوە
+                                </button>
+                                ` : ''}
+                            </div>
+                            ` : ''}
+                        `;
+                        
+                        recordsContainer.appendChild(recordDiv);
+                    });
+                } else {
+                    recordsContainer.innerHTML = '<p class="text-muted">هیچ تۆماری کاری دیکە نییە</p>';
+                }
+            }
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-record-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const type = this.dataset.type;
+                    editWorkRecord(index, type);
+                });
+            });
+            
+            document.querySelectorAll('.delete-record-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const type = this.dataset.type;
+                    deleteWorkRecord(index, type);
+                });
+            });
+        }
+
+        // Edit work record
+        function editWorkRecord(index, type) {
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            const workRecords = type === 'daily' ? employee.dailyWork : employee.otherWork;
+            const record = workRecords[index];
+            
+            if (!record) return;
+            
+            // Check if the record was created more than 2 hours ago for supervisors
+            if (currentUser.role === 'supervisor') {
+                const createdAt = new Date(record.createdAt);
+                const now = new Date();
+                const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+                
+                if (hoursDiff > 2) {
+                    showNotification('ئەم تۆمارە ناتواندرێت دەستکاری بکرێت بەهۆی تێپەڕبوونی زیاتر لە ٢ کاتژمێر', 'danger');
+                    return;
+                }
+            }
+            
+            // Populate the edit form
+            document.getElementById('editRecordType').value = type;
+            document.getElementById('editRecordIndex').value = index;
+            document.getElementById('editWorkDate').value = record.date;
+            document.getElementById('editWorkRating').value = record.rate;
+            document.getElementById('editWorkRatingValue').textContent = record.rate;
+            document.getElementById('editWorkNote').value = record.note || '';
+            
+            // Show/hide appropriate fields based on record type
+            if (type === 'daily') {
+                document.getElementById('editCartsContainer').style.display = 'block';
+                document.getElementById('editNameContainer').style.display = 'none';
+                document.getElementById('editWorkCarts').value = record.carts;
+            } else {
+                document.getElementById('editCartsContainer').style.display = 'none';
+                document.getElementById('editNameContainer').style.display = 'block';
+                document.getElementById('editWorkName').value = record.name;
+            }
+            
+            // Update edit time info for supervisors
+            if (currentUser.role === 'supervisor') {
+                const createdAt = new Date(record.createdAt);
+                const now = new Date();
+                const timeLeft = Math.max(0, 120 - Math.floor((now - createdAt) / (1000 * 60)));
+                document.getElementById('editTimeInfo').innerHTML = `
+                    <i class="bi bi-clock"></i> 
+                    دروستکراوە: ${formatDate(record.createdAt)} | 
+                    کاتێکی ماوە بۆ چاککردن: ${timeLeft} خولەک
+                `;
+            } else {
+                document.getElementById('editTimeInfo').innerHTML = `
+                    <i class="bi bi-clock"></i> 
+                    دروستکراوە: ${formatDate(record.createdAt)} 
+                    ${record.lastEditedAt ? ` | کۆتا چاککردن: ${formatDate(record.lastEditedAt)}` : ''}
+                `;
+            }
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('editWorkRecordModal'));
+            modal.show();
+        }
+
+        // Save edited work record
+        async function saveEditedWorkRecord() {
+            const type = document.getElementById('editRecordType').value;
+            const index = parseInt(document.getElementById('editRecordIndex').value);
+            const date = document.getElementById('editWorkDate').value;
+            const rate = document.getElementById('editWorkRating').value;
+            const note = document.getElementById('editWorkNote').value;
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            const workRecords = type === 'daily' ? employee.dailyWork : employee.otherWork;
+            const record = workRecords[index];
+            
+            if (!record) return;
+            
+            // Check if the record was created more than 2 hours ago for supervisors
+            if (currentUser.role === 'supervisor') {
+                const createdAt = new Date(record.createdAt);
+                const now = new Date();
+                const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+                
+                if (hoursDiff > 2) {
+                    showNotification('ئەم تۆمارە ناتواندرێت دەستکاری بکرێت بەهۆی تێپەڕبوونی زیاتر لە ٢ کاتژمێر', 'danger');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editWorkRecordModal'));
+                    modal.hide();
+                    return;
+                }
+            }
+            
+            // Update the record
+            record.date = date;
+            record.rate = rate;
+            record.note = note;
+            record.lastEditedAt = new Date().toISOString();
+            
+            if (type === 'daily') {
+                record.carts = document.getElementById('editWorkCarts').value;
+            } else {
+                record.name = document.getElementById('editWorkName').value;
+            }
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editWorkRecordModal'));
+                modal.hide();
+                showNotification('تۆماری کار بەسەرکەوتووی جێبەجێ کرا', 'success');
+            } else {
+                showNotification('هەڵە لە نوێکردنەوەی تۆماری کار', 'danger');
+            }
+        }
+
+        // Delete work record
+        async function deleteWorkRecord(index, type) {
+            if (!confirm('دڵنیایت لە سڕینەوەی تۆمار؟')) {
+                return;
+            }
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            const workRecords = type === 'daily' ? employee.dailyWork : employee.otherWork;
+            const record = workRecords[index];
+            
+            if (!record) return;
+            
+            // Remove the record
+            workRecords.splice(index, 1);
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                showNotification('تۆماری کار بەسەرکەوتووی جێبەجێ کرا', 'success');
+            } else {
+                showNotification('هەڵە لە سڕینەوەی تۆماری کار', 'danger');
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Open add daily work modal
+        function openAddDailyWorkModal() {
+            document.getElementById('dailyWorkForm').reset();
+            document.getElementById('dailyWorkRatingValue').textContent = '0';
+            document.getElementById('dailyWorkDate').valueAsDate = new Date();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addDailyWorkModal'));
+            modal.show();
+        }
+
+        // Open add other work modal
+        function openAddOtherWorkModal() {
+            document.getElementById('otherWorkForm').reset();
+            document.getElementById('otherWorkRatingValue').textContent = '0';
+            document.getElementById('otherWorkDate').valueAsDate = new Date();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addOtherWorkModal'));
+            modal.show();
+        }
+
+        // Save daily work record
+        async function saveDailyWorkRecord() {
+            const date = document.getElementById('dailyWorkDate').value;
+            const carts = document.getElementById('dailyWorkCarts').value;
+            const rate = document.getElementById('dailyWorkRating').value;
+            const note = document.getElementById('dailyWorkNote').value;
+            
+            if (!date || !carts) {
+                showNotification('تکایە هەموو خانە پێویستەکان پڕبکەرەوە', 'danger');
+                return;
+            }
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            if (!employee.dailyWork) {
+                employee.dailyWork = [];
+            }
+            
+            const workRecord = {
+                date,
+                carts,
+                rate,
+                note,
+                createdAt: new Date().toISOString()
+            };
+            
+            employee.dailyWork.push(workRecord);
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addDailyWorkModal'));
+                modal.hide();
+                showNotification('تۆماری کار بەسەرکەوتووی جێبەجێ کرا', 'success');
+            } else {
+                showNotification('هەڵە لە تۆمارکردنی تۆماری کار', 'danger');
+            }
+        }
+
+        // Save other work record
+        async function saveOtherWorkRecord() {
+            const date = document.getElementById('otherWorkDate').value;
+            const name = document.getElementById('otherWorkName').value;
+            const rate = document.getElementById('otherWorkRating').value;
+            const note = document.getElementById('otherWorkNote').value;
+            
+            if (!date || !name) {
+                showNotification('تکایە هەموو خانە پێویستەکان پڕبکەرەوە', 'danger');
+                return;
+            }
+            
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            if (!employee.otherWork) {
+                employee.otherWork = [];
+            }
+            
+            const workRecord = {
+                date,
+                name,
+                rate,
+                note,
+                createdAt: new Date().toISOString()
+            };
+            
+            employee.otherWork.push(workRecord);
+            
+            const success = await saveEmployeeToFirebase(employee);
+            
+            if (success) {
+                loadWorkRecords(employee);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addOtherWorkModal'));
+                modal.hide();
+                showNotification('تۆماری کار بەسەرکەوتووی جێبەجێ کرا', 'success');
+            } else {
+                showNotification('هەڵە لە تۆمارکردنی تۆماری کار', 'danger');
+            }
+        }
+
+        // Export records to Excel
+        function exportRecordsToExcel() {
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            // Create CSV content
+            let csvContent = "بەروار,جۆری کار,وردەکاری,هەڵسەنگاندن,تێبینی\n";
+            
+            // Add daily work records
+            if (employee.dailyWork && employee.dailyWork.length > 0) {
+                employee.dailyWork.forEach(work => {
+                    csvContent += `${work.date},کاری ڕۆژانە,${work.carts} عەرەبانە,${work.rate},"${work.note || ''}"\n`;
+                });
+            }
+            
+            // Add other work records
+            if (employee.otherWork && employee.otherWork.length > 0) {
+                employee.otherWork.forEach(work => {
+                    csvContent += `${work.date},کارەکانی دیکە,${work.name},${work.rate},"${work.note || ''}"\n`;
+                });
+            }
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const filename = `employee_records_${employee.id}_${new Date().toISOString().split('T')[0]}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('تۆماری کار بەسەرکەوتووی نێردرا بۆ CSV', 'success');
+        }
+
+        // Print records
+        function printRecords() {
+            const employee = employees.find(emp => emp.id === currentEmployeeId);
+            if (!employee) return;
+            
+            let printContent = `
+                <div style="padding: 20px;">
+                    <h2 style="text-align: center; margin-bottom: 20px;">ASOBRICK FACTORY - تۆماری کارەکانی ${employee.name}</h2>
+                    <p style="text-align: center; color: #666; margin-bottom: 30px;">دروستکراوە لە: ${new Date().toLocaleDateString()}</p>
+                    <div style="margin-bottom: 20px;">
+                        <p><strong>ژمارەی کارمەند:</strong> ${employee.id}</p>
+                        <p><strong>ناو:</strong> ${employee.name}</p>
+                        <p><strong>پیشە:</strong> ${employee.position}</p>
+                        <p><strong>بەش:</strong> ${employee.department}</p>
+                        <p><strong>هەڵسەنگاندنی گشتی:</strong> ${calculateOverallRating(employee).toFixed(1)}</p>
+                    </div>
+            `;
+            
+            // Add daily work records
+            if (employee.dailyWork && employee.dailyWork.length > 0) {
+                printContent += `
+                    <h3 style="margin-bottom: 15px;">تۆماری کاری ڕۆژانە</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">بەروار</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">ژمارەی عەرەبانە</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">هەڵسەنگاندن</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">تێبینی</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                employee.dailyWork.forEach(work => {
+                    printContent += `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.date}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.carts}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.rate}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.note || ''}</td>
+                        </tr>
+                    `;
+                });
+                
+                printContent += `
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Add other work records
+            if (employee.otherWork && employee.otherWork.length > 0) {
+                printContent += `
+                    <h3 style="margin-bottom: 15px;">تۆماری کارەکانی دیکە</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">بەروار</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">ناوی کار</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">هەڵسەنگاندن</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">تێبینی</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                employee.otherWork.forEach(work => {
+                    printContent += `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.date}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.name}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.rate}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${work.note || ''}</td>
+                        </tr>
+                    `;
+                });
+                
+                printContent += `
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            printContent += `
+                    <p style="text-align: center; margin-top: 30px; color: #666; font-size: 12px;">
+                        دروستکراوە لەلایەن سیستەمی بەڕێوبردنی کارمەندانی ASOBRICK FACTORY
+                    </p>
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>تۆماری کارەکانی ${employee.name}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; direction: rtl; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                            th { background-color: #f2f2f2; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showNotification('پەنجەرەی پرینت کردن کرایەوە', 'success');
+        }
+
+        // Open add project modal
+        function openAddProjectModal() {
+            document.getElementById('projectForm').reset();
+            document.getElementById('addProjectModalLabel').textContent = 'زیادکردنی پڕۆژەی نوێ';
+            document.getElementById('projectId').value = '';
+            
+            // Update employees checkboxes based on default department
+            updateProjectEmployeesCheckboxes();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addProjectModal'));
+            modal.show();
+        }
+
+        // Update project employees checkboxes
+        function updateProjectEmployeesCheckboxes() {
+            const department = document.getElementById('projectDepartment').value;
+            const employeesContainer = document.getElementById('projectEmployeesContainer');
+            
+            // Clear existing checkboxes
+            employeesContainer.innerHTML = '';
+            
+            if (!department) {
+                employeesContainer.innerHTML = '<p class="text-muted">تکایە یەکەم بەشێک هەڵبژێرە</p>';
+                return;
+            }
+            
+            // Filter employees by selected department
+            const departmentEmployees = employees.filter(emp => emp.department === department);
+            
+            if (departmentEmployees.length === 0) {
+                employeesContainer.innerHTML = '<p class="text-muted">هیچ کارمەندێک لەم بەشەدا نییە</p>';
+                return;
+            }
+            
+            // Add employees as checkboxes
+            departmentEmployees.forEach(employee => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'employee-checkbox-label';
+                
+                checkboxDiv.innerHTML = `
+                    <input type="checkbox" class="employee-checkbox" id="emp-${employee.id}" value="${employee.id}">
+                    <label for="emp-${employee.id}">${employee.name} (${employee.id})</label>
+                `;
+                
+                employeesContainer.appendChild(checkboxDiv);
+            });
+        }
+
+        // Save project
+        async function saveProject() {
+            const name = document.getElementById('projectName').value;
+            const department = document.getElementById('projectDepartment').value;
+            
+            // Get selected employees from checkboxes
+            const selectedCheckboxes = document.querySelectorAll('.employee-checkbox:checked');
+            const selectedEmployees = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+            
+            const rating = document.getElementById('projectRating').value;
+            const details = document.getElementById('projectDetails').value;
+            
+            if (!name || !department || selectedEmployees.length === 0 || !rating) {
+                showNotification('تکایە هەموو خانە پێویستەکان پڕبکەرەوە', 'danger');
+                return;
+            }
+            
+            const projectId = document.getElementById('projectId').value || `PROJ${Date.now()}`;
+            
+            const projectData = {
+                id: projectId,
+                name: name,
+                department: department,
+                employeeIds: selectedEmployees,
+                rating: parseInt(rating),
+                details: details,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Add project record to each employee's other work
+            selectedEmployees.forEach(employeeId => {
+                const employee = employees.find(emp => emp.id === employeeId);
+                if (employee) {
+                    if (!employee.otherWork) {
+                        employee.otherWork = [];
+                    }
+                    
+                    const projectRecord = {
+                        date: new Date().toISOString().split('T')[0],
+                        name: `پڕۆژە: ${name}`,
+                        rate: rating,
+                        note: details,
+                        createdAt: new Date().toISOString(),
+                        projectId: projectId
+                    };
+                    
+                    employee.otherWork.push(projectRecord);
+                    
+                    // Save employee with new project record
+                    saveEmployeeToFirebase(employee);
+                }
+            });
+            
+            const success = await saveProjectToFirebase(projectData);
+            
+            if (success) {
+                // Update local projects array
+                const existingIndex = projects.findIndex(proj => proj.id === projectId);
+                if (existingIndex !== -1) {
+                    projects[existingIndex] = projectData;
+                } else {
+                    projects.push(projectData);
+                }
+                
+                loadProjects();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addProjectModal'));
+                modal.hide();
+                showNotification('پڕۆژە بەسەرکەوتووی تۆمارکرا', 'success');
+            } else {
+                showNotification('هەڵە لە تۆمارکردنی پڕۆژە', 'danger');
+            }
+        }
+
+        // Load projects
+        function loadProjects() {
+            const projectsContainer = document.getElementById('projectsContainer');
+            projectsContainer.innerHTML = '';
+            
+            if (projects.length === 0) {
+                projectsContainer.innerHTML = '<p class="text-muted">هیچ پڕۆژەیەک نییە</p>';
+                return;
+            }
+            
+            projects.forEach(project => {
+                const projectDiv = document.createElement('div');
+                projectDiv.className = 'project-card';
+                
+                const ratingClass = getWorkRecordClass(parseInt(project.rating));
+                
+                // Get employee names
+                const employeeNames = project.employeeIds.map(id => {
+                    const employee = employees.find(emp => emp.id === id);
+                    return employee ? employee.name : 'کارمەندی نەناسراو';
+                });
+                
+                projectDiv.innerHTML = `
+                    <div class="project-header">
+                        <div class="project-title">${project.name}</div>
+                        <div class="project-date">${formatDate(project.createdAt)}</div>
+                    </div>
+                    <div class="project-rating ${ratingClass}">هەڵسەنگاندن: ${project.rating}</div>
+                    <div class="project-details"><strong>وردەکاری:</strong> ${project.details || 'وردەکاری نییە'}</div>
+                    <div class="project-employees"><strong>کارمەندان:</strong> ${employeeNames.join(', ')}</div>
+                    ${currentUser.role === 'admin' ? `
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-warning edit-project-btn" data-id="${project.id}">
+                            <i class="bi bi-pencil"></i> چاککردن
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-project-btn ms-1" data-id="${project.id}">
+                            <i class="bi bi-trash"></i> سڕینەوە
+                        </button>
+                    </div>
+                    ` : ''}
+                `;
+                
+                projectsContainer.appendChild(projectDiv);
+            });
+            
+            // Add event listeners to project buttons
+            document.querySelectorAll('.edit-project-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Edit project functionality would go here
+                    showNotification('چاککردنی پڕۆژە لەم وەشانەدا پشتگیری ناکرێت', 'info');
+                });
+            });
+            
+            document.querySelectorAll('.delete-project-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const projectId = this.dataset.id;
+                    deleteProject(projectId);
+                });
+            });
+        }
+
+        // Delete project - FIXED: Now also removes project records from employees
+        async function deleteProject(projectId) {
+            if (!confirm('دڵنیایت لە سڕینەوەی پڕۆژە؟')) {
+                return;
+            }
+            
+            const project = projects.find(proj => proj.id === projectId);
+            if (!project) return;
+            
+            // Remove project records from employees' other work
+            project.employeeIds.forEach(employeeId => {
+                const employee = employees.find(emp => emp.id === employeeId);
+                if (employee && employee.otherWork) {
+                    // Filter out project records
+                    employee.otherWork = employee.otherWork.filter(work => 
+                        !work.projectId || work.projectId !== projectId
+                    );
+                    
+                    // Save updated employee
+                    saveEmployeeToFirebase(employee);
+                }
+            });
+            
+            const success = await deleteProjectFromFirebase(projectId);
+            
+            if (success) {
+                projects = projects.filter(proj => proj.id !== projectId);
+                loadProjects();
+                showNotification('پڕۆژە بەسەرکەوتووی سڕدرایەوە', 'success');
+            } else {
+                showNotification('هەڵە لە سڕینەوەی پڕۆژە', 'danger');
+            }
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            // Create CSV content
+            let csvContent = "ژمارەی کارمەند,ناوی کارمەند,پیشە,بەش,هەڵسەنگاندنی گشتی,تۆماری کاری ڕۆژانە,تۆماری کارەکانی دیکە\n";
+            
+            employees.forEach(employee => {
+                const overallRating = calculateOverallRating(employee);
+                const dailyCount = employee.dailyWork ? employee.dailyWork.length : 0;
+                const otherCount = employee.otherWork ? employee.otherWork.length : 0;
+                
+                csvContent += `${employee.id},${employee.name},${employee.position},${employee.department},${overallRating.toFixed(1)},${dailyCount},${otherCount}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const filename = `employee_data_${dateStr}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('داتای کارمەندەکان بەسەرکەوتووی نێردرا بۆ CSV', 'success');
+        }
+
+        // Print data
+        function printData() {
+            let printContent = `
+                <div style="padding: 20px;">
+                    <h2 style="text-align: center; margin-bottom: 20px;">ASOBRICK FACTORY - ڕاپۆرتی کارmەند</h2>
+                    <p style="text-align: center; color: #666; margin-bottom: 30px;">دروستکراوە لە: ${new Date().toLocaleDateString()}</p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">ژمارەی کارمەند</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">ناو</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">پیشە</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">بەش</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">هەڵسەنگاندن</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            employees.forEach(employee => {
+                const overallRating = calculateOverallRating(employee);
+                printContent += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.id}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.position}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${employee.department}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${overallRating.toFixed(1)}</td>
+                    </tr>
+                `;
+            });
+            
+            printContent += `
+                        </tbody>
+                    </table>
+                    <p style="text-align: center; margin-top: 30px; color: #666; font-size: 12px;">
+                        دروستکراوە لەلایەن سیستەمی بەڕێوبردنی کارمەندانی ASOBRICK FACTORY
+                    </p>
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>ڕاپۆرتی کارمەند</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; direction: rtl; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                            th { background-color: #f2f2f2; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showNotification('پەنجەرەی پرینت کردن کرایەوە', 'success');
+        }
+
+        // Test Firebase connection
+        async function checkFirebaseConnection() {
+            try {
+                console.log('🧪 Testing Firebase connection...');
+                
+                const testData = {
+                    testTime: new Date().toISOString(),
+                    message: 'Firebase test successful'
+                };
+                
+                await db.collection('tests').doc('connection-test').set(testData);
+                console.log('✅ Write test passed');
+                
+                const doc = await db.collection('tests').doc('connection-test').get();
+                console.log('✅ Read test passed:', doc.data());
+                
+                const snapshot = await db.collection('employees').get();
+                console.log(`✅ Found ${snapshot.size} employees in database`);
+                
+                showNotification(`Firebase connected! Found ${snapshot.size} employees`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Firebase test failed:', error);
+                showNotification('Firebase connection failed: ' + error.message, 'danger');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const toast = document.getElementById('notificationToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            toast.className = 'toast';
+            if (type === 'success') {
+                toast.classList.add('bg-success', 'text-white');
+            } else if (type === 'danger') {
+                toast.classList.add('bg-danger', 'text-white');
+            } else if (type === 'info') {
+                toast.classList.add('bg-info', 'text-white');
+            }
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+    </script>
+</body>
+</html>
