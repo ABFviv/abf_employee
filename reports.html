@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - ڕاپۆرتی ڕۆژانە</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+
+    <link rel="stylesheet" href="reports.css">
+</head>
+
+<body>
+    <div class="toast-container position-fixed top-0 start-0 p-3"></div>
+
+    <div class="container-fluid">
+        <div class="header-bar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="bi bi-grid-3x3-gap-fill fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="m-0 fw-bold" style="letter-spacing: 0.5px;">ASOBRICK REPORTS</h5>
+                    <div style="font-size: 0.65rem; opacity: 0.8; font-weight: 600;">ئامادەکردنی ڕاپۆڕتی ڕۆژانە</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-header" onclick="showDashboard()" id="dashboardNavBtn" style="display:none;">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>داشبۆرد</span>
+                </button>
+                <button class="btn btn-header" onclick="goBackHistory()" id="historyBackBtn" style="display:none;">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>گەڕانەوە</span>
+                </button>
+                <div class="user-badge" id="userInfo">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span>User</span>
+                </div>
+                <button class="btn btn-header" onclick="window.location.href='dashboard.html'">
+                    <i class="bi bi-house-door-fill fs-5"></i>
+                    <span>سەرەکی</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboardSection" class="view-section active-view">
+            <div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                <div class="card shadow-lg border-0" style="max-width: 600px; width: 100%;">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-file-earmark-text" style="font-size: 4rem; color: #7b1fa2;"></i>
+                        </div>
+                        <h3 class="fw-bold mb-4" style="color: #2c3e50;">ڕاپۆرتی ڕۆژانە</h3>
+                        <p class="text-muted mb-4">یەکێکیان هەڵبژێرە</p>
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-lg" onclick="showReportView()"
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 15px; font-weight: 600; border-radius: 10px;">
+                                <i class="bi bi-file-earmark-plus-fill me-2"></i>
+                                دروستکردنی ڕاپۆرتی نوێ
+                                <br>
+                                <small style="opacity: 0.9;"></small>
+                            </button>
+                            <button class="btn btn-lg" onclick="showHistory()"
+                                style="background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%); color: white; padding: 15px; font-weight: 600; border-radius: 10px;">
+                                <i class="bi bi-clock-history me-2"></i>
+                                بینینی مێژووی ڕاپۆرتەکان
+                                <br>
+                                <small style="opacity: 0.9;"></small>
+                            </button>
+                            <button class="btn btn-lg" id="btnAdminPending" onclick="showPendingReportsModal()"
+                                style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 15px; font-weight: 600; border-radius: 10px; display: none;">
+                                <i class="bi bi-list-check me-2"></i>
+                                ڕاپۆرتە چاوەڕوانکراوەکان
+                                <br>
+                                <small style="opacity: 0.9; font-size: 0.8rem;">(Pending Reports)</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reportSection" class="view-section">
+            <div class="control-panel" id="reportControlPanel">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="control-label"><i class="bi bi-diagram-3 me-1"></i> Department</label>
+                        <select class="form-select" id="departmentSelect">
+                            <option value="unsetting">داگرتن (Unsetting)</option>
+                            <option value="setting">بارکردن (Setting)</option>
+                            <option value="crushing-prep">هاڕین (Crushing)</option>
+                            <option value="preparation">ئامادەکردن (Preparation)</option>
+                            <option value="klin">فڕن (Kiln)</option>
+                            <option value="cutting">بڕین (Cutting)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="control-label"><i class="bi bi-calendar3 me-1"></i> بەروار</label>
+                        <input type="date" class="form-control" id="reportDate">
+                    </div>
+
+
+
+                    <div class="col-md-3">
+                        <button id="btnGenerateReport" class="btn btn-generate w-100" onclick="startNewReport()">
+                            <i class="bi bi-file-earmark-plus-fill me-2"></i> دروستکردنی ڕاپۆڕت
+                        </button>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display:none;"
+                        onchange="handleImageUpload(event)">
+                </div>
+
+            </div>
+            <div class="report-paper" id="reportContainer" style="display:none;">
+                <div id="tableWrapper"></div>
+
+                <div class="no-print text-center mt-4 pt-3 border-top" id="actionButtonsContainer">
+                    <!-- Dynamic Buttons will be rendered here -->
+                    <button class="btn btn-primary px-4" onclick="saveReport('draft')"><i class="bi bi-save me-1"></i>
+                        Save Draft</button>
+                    <button class="btn btn-secondary px-4 ms-2" onclick="window.print()"><i
+                            class="bi bi-printer me-1"></i>
+                        Print A4</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="historySection" class="view-section">
+            <div class="control-panel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3">
+                            <i class="bi bi-clock-history fs-5 text-primary"></i>
+                        </div>
+                        <h5 class="fw-bold m-0 text-dark"> مێژووی ڕاپۆڕتەکان</h5>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center" id="adminHistoryControls"></div>
+                </div>
+
+                <!-- BREADCRUMB -->
+                <div class="history-breadcrumb d-none" id="historyBreadcrumb">
+                    <span onclick="loadHistoryFolders('root')">سەرەکی</span>
+                </div>
+
+                <!-- SEARCH -->
+                <div class="history-search-container">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" id="historySearch" class="form-control" placeholder="گەڕان بەپێی بەش، بەروار..."
+                        onkeyup="filterHistoryItems(this.value)">
+                </div>
+
+                <!-- CONTENT AREA -->
+                <div id="historyContent" class="folder-grid">
+                    <!-- Dynamic Folders/Files go here -->
+                </div>
+
+                <div id="historyLoading" class="text-center py-5" style="display:none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BATCH PRINT MODAL -->
+        <div class="modal fade" id="batchPrintModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="bi bi-printer-fill me-2"></i> چاپکردنی گشتی</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center p-4">
+                        <label class="form-label fw-bold mb-3">بەروارێک دیاری بکە بۆ چاپکردن:</label>
+                        <input type="date" id="batchPrintDate" class="form-control form-control-lg text-center mx-auto"
+                            style="max-width: 250px;">
+                        <p class="text-muted small mt-3">سەرجەم ڕاپۆرتە پەسەندکراوەکانی ئەم ڕۆژە ئامادە دەکرێن.</p>
+                    </div>
+                    <!-- Progress Bar inside Modal -->
+                    <div id="batchPrintProgress" class="px-4 pb-3" style="display:none;">
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                style="width: 100%"></div>
+                        </div>
+                        <small class="text-muted d-block mt-2" id="batchStatusText">Processing...</small>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                        <button type="button" class="btn btn-primary px-4 fw-bold" onclick="executeBatchPrint()">
+                            <i class="bi bi-printer me-2"></i> چاپکردن
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- PENDING REPORTS MODAL -->
+        <div class="modal fade" id="pendingReportsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-list-check me-2"></i> ڕاپۆرتە چاوەڕوانکراوەکان
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>بەروار</th>
+                                        <th>بەش</th>
+                                        <th> لێپرسراو</th>
+                                        <th class="text-center">کردارەکان</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingReportsList">
+                                    <!-- Pending reports will be listed here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="pendingLoading" class="text-center py-5" style="display:none;">
+                            <div class="spinner-border text-warning" role="status"></div>
+                            <p class="mt-2 text-muted">...</p>
+                        </div>
+                        <div id="noPendingMessage" class="text-center py-5" style="display:none;">
+                            <i class="bi bi-check2-circle fs-1 text-success"></i>
+                            <p class="mt-2 fw-bold">هیچ ڕاپۆرتێکی چاوەڕوانکراو نییە</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+                authDomain: "abf6-96dcf.firebaseapp.com",
+                projectId: "abf6-96dcf",
+                storageBucket: "abf6-96dcf.firebasestorage.app",
+                messagingSenderId: "405357996484",
+                appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const originalCollection = db.collection.bind(db);
+            db.collection = function (path) {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+                if (line === 'line1') {
+                    const parts = path.split('/');
+                    parts[0] = parts[0] + '_line1';
+                    return originalCollection(parts.join('/'));
+                }
+                return originalCollection(path);
+            };
+
+            // --- CENTRAL EMPLOYEE CONFIGURATION ---
+            // Edit these lists to change who appears in the dropdowns for each department
+            const REPORT_CONFIG = {
+                unsetting: ["بەرزان", "هاوبەش", "ئاسۆ عوسمان", "هۆشیار", "کۆسرەت", "محمد موستەفا", "ئاسۆ احمد", "هەوراز", "محمد ئیبراهیم ",],
+                setting: ["ئارا", "مەولود", "اسماعیل", "محمد ستار", "ئەژوان", "سامی", "بادینان", "هاڕوون", "ئامانج", "محمد نعمان", "پەیڕەو ", "هۆشیمان", "نەهروان",],
+                crushing: ["نادر", "هەرێم", "ئوسامە"],
+                preparation: ["شەماڵ", "کاروان"],
+                klin: ["زانا", "جەبار", "دیارکۆ", "شکار", "هاوڕی", "دروست", "لوقمان", "دێرین", "محمد", "ئومێد", "سیروان"],
+                cutting: ["ئەژوان", "سامی", "بادینان", "هاڕوون", "ئامانج", "محمد نعمان", "پەیڕەو ", "هۆشیمان", "نەهروان", "ئارا", "مەولود", "اسماعیل", "محمد ستار",]
+            };
+
+            // --- FOLDER DISPLAY ORDER ---
+            // Reorder this list to change which folder appears first, second, etc.
+            const DEPARTMENT_ORDER = [
+                'crushing-prep', // هاڕین
+                'preparation',   // ئامادەکردن
+                'cutting',       // بڕین
+                'setting',       // بارکردن
+                'klin',      // فڕن
+                'unsetting'     // داگرتن
+            ];
+
+            // --- ROLE BASED ACCESS CONTROL ---
+            const USER_PERMISSIONS = {
+                'himat': ['cutting', 'setting'], // بڕین and بارکردن
+                'hemn': ['crushing-prep', 'preparation'], // هاڕین and ئامادەکردن
+                'kiln': ['klin'], // فڕن
+                'samdar': ['unsetting'], // داگرتن
+                'kilnemp': ['klin'],
+                'cutemp': ['cutting', 'setting']
+                // Admin/Managers (not listed) get all access
+            };
+
+            const cuttingTasks = [
+                "1- چێکی سەرجەم خشتەکان بە ڤێرنە",
+                "2- چێکی سەرجەم سیمەکان",
+                "3- کاتی گۆڕینی سیمەکان",
+                "4- چێکی ڤاکیۆم ئاو بەتاڵکردن+ پلەی گەرمی",
+                "5- چێکی ئێسکاڤیدەر و بۆکسفیدەر + چەورکردن",
+                "٦- چێکی ئێکسترودەر و ڕۆتەیتەر",
+                "٧- چێکی گریپەر فريمەکان و ستاکەر",
+                "٨ - چێکی موبەریدە و سپلێتی بۆردی کارەبایی",
+                "٩- پاکردنەوەی هۆپەری میکسەر",
+                "١٠ - پاکردنەوەی ژووری ڤاکیۆم + گۆڕینی فلتەر",
+                "١١- ئێکستروژن",
+                "١٢- چێکی ترانسێرکاری دخوول تەنها شەفتی ڕۆژ",
+                "١٣ - چێکی ترانسێرکاری خروج تەنها شەفتی ڕۆژ",
+                "١٤ - فلتەری ڕۆنی ڤاکیۆم",
+                "١٥- چێکی ئێلیڤەیتەر + گەراجی فرەیمەکان",
+                "١٦- چێکی گەراجی عەرەبانەکانی درایەر",
+                "١٧- چەورکردن زنجیرەکان",
+                "١٨ - پاکردنەوەی پولییەکان",
+                "١٩ - پاکردنەوەی بۆکسفیدەر",
+                "٢٠- تێستی قالپ",
+                "٢١- ئاوڕشێن کردنی سایلۆ",
+                "٢٢ - گۆڕینی سکراپەر",
+                "٢٣ - کارەبا بڕان"
+            ];
+
+            // User Full Names for Signatures
+            const USER_FULL_NAMES = {
+                'hemn': 'هێمن جبار حسن',
+                'himat': 'هیمەت جمعە مورشید',
+                'kiln': 'هێمن حسن صالح',
+                'samdar': 'سامدار محمود محمد',
+                'admin': 'سعید برزۆ جلوند',
+                'cutemp': 'هیمەت جمعە مورشید',
+                'kilnemp': 'هێمن حسن صالح'
+            };
+
+            function getUserFullName(username) {
+                return USER_FULL_NAMES[username] || username;
+            }
+
+            function formatDept(dept) {
+                const names = {
+                    'unsetting': 'داگرتن (Unsetting)',
+                    'setting': 'بارکردن (Setting)',
+                    'crushing-prep': 'هاڕین (Crushing)',
+                    'preparation': 'ئامادەکردن (Preparation)',
+                    'klin': 'فڕن (Kiln)',
+                    'cutting': 'بڕین (Cutting)'
+                };
+                return names[dept] || dept;
+            }
+
+            let currentUser = null;
+            let employees = [];
+            let currentReportId = null;
+            let isFromHistory = false;
+
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const stored = JSON.parse(localStorage.getItem('currentUser'));
+                if (!stored) window.location.href = 'index.html';
+                currentUser = stored;
+
+                // RESTRICTED USERS
+                const username = currentUser.username.toLowerCase();
+                if (username === 'shalaw' || username === 'sarezh' || username === 'unemp') {
+                    alert('Access Denied');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                document.getElementById('userInfo').querySelector('span').innerText = currentUser.username;
+
+                // HR & Manager Restriction: History View Only
+                if (currentUser.role === 'hr' || currentUser.role === 'manager') {
+                    // LOCK "Create New Report" button visually
+                    const createBtn = document.querySelector('button[onclick="showReportView()"]');
+                    if (createBtn) {
+                        createBtn.disabled = true;
+                        createBtn.style.opacity = '0.5';
+                        createBtn.style.cursor = 'not-allowed';
+                        createBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i> دروستکردنی ڕاپۆرتی نوێ (قوفڵدراوە)';
+                        createBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); alert('تەنها بۆ بینینە - View Only'); };
+                    }
+
+                    // Hide controls inside the generation view just in case they get there
+                    const cp = document.querySelector('.control-panel');
+                    if (cp) cp.style.display = 'none';
+
+                    // We do NOT hide choiceSection now, so they can see the locked button.
+                } else {
+                    if (document.getElementById('reportDate')) document.getElementById('reportDate').valueAsDate = new Date();
+                }
+
+                // Access Control: Only admin and HR (and supervisors) can access reports
+                const allowedRoles = ['admin', 'hr', 'supervisor', 'employee'];
+
+                // Show Admin Pending button if admin
+                if (currentUser.role === 'admin' || currentUser.username === 'admin') {
+                    const adminPendingBtn = document.getElementById('btnAdminPending');
+                    if (adminPendingBtn) adminPendingBtn.style.display = 'block';
+                }
+
+                if (!allowedRoles.includes(currentUser.role)) {
+                    document.querySelector('.container-fluid').innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center;">
+                        <i class="bi bi-lock-fill" style="font-size: 5rem; color: #e74c3c; margin-bottom: 20px;"></i>
+                        <h2 style="color: #2c3e50; margin-bottom: 10px;">بەردەست نییە</h2>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">Not Available</h3>
+                        <p style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 30px;">تۆ ڕێگەت نییە بۆ ئەم بەشە</p>
+                        <button class="btn btn-primary btn-lg" onclick="window.location.href='index.html'">
+                            <i class="bi bi-arrow-right me-2"></i> گەڕانەوە بۆ لاپەڕەی سەرەکی
+                        </button>
+                    </div>
+                `;
+                    return; // Stop further execution for unauthorized users
+                }
+
+                // Date must be selected manually now
+                // document.getElementById('reportDate').valueAsDate = new Date();
+
+                // Show dashboard on initial load
+                showDashboard();
+
+                const deptSelect = document.getElementById('departmentSelect');
+                const toggleCtrls = () => {
+                    const needsTimeControls = ['unsetting', 'klin', 'cutting'].includes(deptSelect.value);
+                    const els = document.querySelectorAll('.unsetting-ctrl');
+                    els.forEach(el => el.style.display = needsTimeControls ? 'block' : 'none');
+                };
+                deptSelect.addEventListener('change', toggleCtrls);
+                toggleCtrls();
+
+                // DYNAMIC DATE UPDATE FOR ADMINS
+                const dateInput = document.getElementById('reportDate');
+                if (dateInput) {
+                    dateInput.addEventListener('change', (e) => {
+                        const newDate = e.target.value;
+                        const headerDateEl = document.getElementById('reportHeaderDate');
+                        if (headerDateEl) {
+                            headerDateEl.innerText = `بەروار: ${newDate}`;
+                        }
+                    });
+                }
+
+                // ✨ SESSION CACHING ✨ - Cache employee data to reduce redundant reads
+                // Saves 50+ reads per page refresh after initial load
+                const cachedEmployees = sessionStorage.getItem('reports_cached_employees');
+                const cacheTimestamp = sessionStorage.getItem('reports_cache_timestamp');
+                const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes (longer since employees rarely change)
+
+                const now = Date.now();
+                const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION;
+
+                if (cacheValid && cachedEmployees) {
+                    employees = JSON.parse(cachedEmployees);
+                    console.log('✅ Using cached employees - NO FIREBASE READS!');
+                } else {
+                    console.log('📡 Fetching employees from Firebase...');
+                    let employeesQuery = db.collection('employees');
+                    // Role-Based Filtering to reduce reads
+                    if (currentUser && currentUser.role !== 'admin' && currentUser.username !== 'admin' && currentUser.role !== 'manager') {
+                        const allowedDepts = USER_PERMISSIONS[currentUser.username];
+                        if (allowedDepts && allowedDepts.length > 0) {
+                            employeesQuery = employeesQuery.where('department', 'in', allowedDepts);
+                        } else if (currentUser.department) {
+                            employeesQuery = employeesQuery.where('department', '==', currentUser.department);
+                        }
+                    }
+                    const snap = await employeesQuery.get();
+                    snap.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
+
+                    // Save to cache
+                    sessionStorage.setItem('reports_cached_employees', JSON.stringify(employees));
+                    sessionStorage.setItem('reports_cache_timestamp', now.toString());
+                    console.log(`✅ Cached ${employees.length} employees`);
+                }
+
+                // Apply Permissions
+                updateDashboardPermissions();
+            });
+
+            function updateDashboardPermissions() {
+                if (!currentUser) return;
+                // Admin and Manager can see everything
+                if (currentUser.role === 'admin' || currentUser.role === 'manager' || currentUser.username === 'admin') {
+                    return; // No filtering needed
+                }
+
+                const allowedDepts = USER_PERMISSIONS[currentUser.username];
+                if (allowedDepts) {
+                    const select = document.getElementById('departmentSelect');
+                    const options = Array.from(select.options);
+
+                    // Hide or remove unauthorized options
+                    options.forEach(opt => {
+                        if (!allowedDepts.includes(opt.value)) {
+                            opt.style.display = 'none'; // Simple hide
+                            opt.disabled = true;
+                        }
+                    });
+
+                    // Set value to first allowed option if current selection is invalid
+                    if (!allowedDepts.includes(select.value)) {
+                        const firstAllowed = options.find(opt => allowedDepts.includes(opt.value));
+                        if (firstAllowed) select.value = firstAllowed.value;
+                    }
+                }
+            }
+
+            // --- NAVIGATION ---
+            function showHistory(preserveState = false) {
+                document.getElementById('dashboardSection').classList.remove('active-view');
+                document.getElementById('reportSection').classList.remove('active-view');
+                document.getElementById('historySection').classList.add('active-view');
+
+                // Explicitly hide report container in case it wasn't caught by parent
+                const reportContainer = document.getElementById('reportContainer');
+                if (reportContainer) {
+                    reportContainer.style.display = 'none';
+                }
+
+                // Show dashboard button in header
+                const dashboardBtn = document.getElementById('dashboardNavBtn');
+                if (dashboardBtn) dashboardBtn.style.display = 'flex';
+
+                if (!preserveState) {
+                    loadHistoryData();
+                } else {
+                    updateBackBtnVisibility();
+                }
+            }
+
+            function showReportView() {
+                document.getElementById('dashboardSection').classList.remove('active-view');
+                document.getElementById('historySection').classList.remove('active-view');
+                document.getElementById('reportSection').classList.add('active-view');
+                // Show dashboard button in header
+                const dashboardBtn = document.getElementById('dashboardNavBtn');
+                if (dashboardBtn) dashboardBtn.style.display = 'flex';
+
+                // Ensure Generate Button is VISIBLE (reset state)
+                const genBtn = document.getElementById('btnGenerateReport');
+                if (genBtn) genBtn.style.display = 'block';
+
+                // Ensure Control Panel is VISIBLE (reset state)
+                const cp = document.getElementById('reportControlPanel');
+                if (cp) cp.style.display = 'block';
+
+                updateBackBtnVisibility();
+            }
+
+            function showDashboard() {
+                document.getElementById('reportSection').classList.remove('active-view');
+                document.getElementById('historySection').classList.remove('active-view');
+                document.getElementById('dashboardSection').classList.add('active-view');
+                // Hide the report paper when on dashboard
+                const reportContainer = document.getElementById('reportContainer');
+                if (reportContainer) {
+                    reportContainer.style.display = 'none';
+                }
+                // Hide dashboard button in header when on dashboard
+                const dashboardBtn = document.getElementById('dashboardNavBtn');
+                if (dashboardBtn) dashboardBtn.style.display = 'none';
+
+                isFromHistory = false;
+                updateBackBtnVisibility();
+            }
+
+            function goBackHistory() {
+                // Case 1: In Report View -> Go back to History List
+                if (document.getElementById('reportSection').classList.contains('active-view')) {
+                    showHistory(true); // Preserve history state (don't reload to root)
+                    return;
+                }
+
+                // Case 2: In History View -> Go up one level
+                if (currentHistoryPath.length > 0) {
+                    currentHistoryPath.pop();
+                    renderHistoryState();
+                } else {
+                    // If at root of history, maybe go to dashboard? Or just stay at root?
+                    // Per user request "if i back it will go to folder again" implying hierarchy.
+                    // If already at root folders, let's keep it there or hide button.
+                    // The updateBackBtnVisibility handles hiding if at root.
+                }
+            }
+
+            function updateBackBtnVisibility() {
+                const btn = document.getElementById('historyBackBtn');
+                if (!btn) return;
+
+                // Scenario 1: Inside a Report View opened from History
+                if (document.getElementById('reportSection').classList.contains('active-view')) {
+                    if (isFromHistory) {
+                        btn.style.display = 'flex';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                    return;
+                }
+
+                // Scenario 2: Inside History View
+                if (document.getElementById('historySection').classList.contains('active-view')) {
+                    if (currentHistoryPath.length > 0) {
+                        btn.style.display = 'flex';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                    return;
+                }
+
+                // Default: Hide
+                btn.style.display = 'none';
+            }
+
+
+            // --- APPROVAL WORKFLOW HELPERS ---
+            function renderActionButtons(status = 'draft') {
+                const container = document.getElementById('actionButtonsContainer');
+                container.innerHTML = '';
+
+                const role = currentUser.role || 'supervisor'; // default if not set
+                const btnClass = "btn px-4 mx-1 fw-bold";
+
+                // Standard Cancel/Close (Always visible or handled by "Back" button? Back handles it)
+                // Print Button (Always visible)
+                const printBtn = `<button class="btn btn-secondary px-4 ms-2" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print A4</button>`;
+
+                let btns = '';
+
+                if (role === 'admin' || role === 'hr') {
+                    if (status === 'pending_admin') {
+                        btns += `<button class="${btnClass} btn-outline-danger" onclick="saveReport('draft', true)"><i class="bi bi-x-circle"></i> Reject / Return</button>`;
+                        btns += `<button class="${btnClass} btn-success" onclick="saveReport('approved')"><i class="bi bi-check-circle"></i> Approve</button>`;
+                    } else if (status === 'approved') {
+                        btns += `<span class="badge bg-success p-2">Approved</span>`;
+                        btns += `<button class="${btnClass} btn-outline-danger" onclick="saveReport('draft', true)"><i class="bi bi-x-circle"></i> Reject / Return</button>`;
+                        btns += `<button class="${btnClass} btn-primary" onclick="saveReport('approved')"><i class="bi bi-pencil-square"></i> Update</button>`;
+                    } else {
+                        // Admin viewing a draft? Just observing.
+                        btns += `<span class="badge bg-warning text-dark p-2">Draft Mode</span>`;
+                    }
+                }
+                else if (role === 'manager') {
+                    if (status === 'approved') {
+                        btns += `<span class="badge bg-success p-2">Ready to Print</span>`;
+                    } else {
+                        btns += `<span class="badge bg-secondary p-2">Status: ${status}</span>`;
+                    }
+                }
+                else {
+                    // Supervisor (default)
+                    if (status === 'draft' || !status) {
+                        btns += `<button class="${btnClass} btn-primary" onclick="saveReport('draft')"><i class="bi bi-save"></i> Save Draft</button>`;
+
+                        // RESTRICTED: Hide 'Submit to Admin' for specific users
+                        const restrictedUsers = ['cutemp', 'kilnemp'];
+                        const username = currentUser.username ? currentUser.username.toLowerCase() : '';
+
+                        if (!restrictedUsers.includes(username)) {
+                            btns += `<button class="${btnClass} btn-success" onclick="saveReport('pending_admin')"><i class="bi bi-send"></i> Submit to Admin</button>`;
+                        }
+                    } else if (status === 'pending_admin') {
+                        btns += `<span class="badge bg-secondary p-2"><i class="bi bi-lock"></i> Submitted - Pending Approval</span>`;
+                    } else if (status === 'approved') {
+                        btns += `<span class="badge bg-success p-2"><i class="bi bi-check-all"></i> Approved</span>`;
+                    }
+                }
+
+                let rejectionNote = '';
+                if (currentReportData && currentReportData.rejectionReason && (status === 'draft' || status === 'pending_admin')) {
+                    rejectionNote = `
+                        <div class="alert alert-danger mb-3 text-start shadow-sm border-start border-4 border-danger">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                                <div>
+                                    <div class="fw-bold text-uppercase small" style="letter-spacing: 1px;">هۆکاری ڕەتکردنەوە / Rejection Reason</div>
+                                    <div class="mt-1 fs-5">${currentReportData.rejectionReason}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = rejectionNote + btns + printBtn;
+            }
+
+            function updateInputsState(status) {
+                const role = currentUser.role || 'supervisor';
+                // Disable inputs if:
+                // 1. Status is 'approved' (no one can edit approved reports)
+                // 2. Status is 'pending_admin' (submitted reports cannot be edited by anyone, including admin)
+                // 3. User is manager (read-only role)
+                const disable = (status === 'approved') ||
+                    (status === 'pending_admin') ||
+                    (role === 'manager'); // Manager mostly views
+
+                // Disable all inputs in the table wrapper
+                const inputs = document.getElementById('tableWrapper').querySelectorAll('input, select, textarea');
+                inputs.forEach(el => el.disabled = disable);
+            }
+
+            // Report Header Template with Logos (Refined: Big & Bold)
+            const REPORT_HEADER_TEMPLATE = (deptName, dateValue) => `
+        <div class="report-header-refined mb-3 pb-2 border-bottom" style="border-color: #000 !important; border-width: 2px !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <!-- Left Logo: Medium-Large -->
+                <div class="logo-md">
+                    <img src="halabja-logo.png" style="height: 110px; width: auto;" onerror="this.src='logo.png'; this.style.height='110px';">
+                </div>
+
+                <!-- Center: Bold & Clear -->
+                <div class="text-center px-4">
+                     <div class="text-uppercase fw-bold" style="font-size: 0.85rem; letter-spacing: 3px; color: #000;">
+                        ASO BRICK FACTORY
+                    </div>
+                    <h1 class="m-0 fw-black header-title-main" style="font-family: 'Segoe UI', sans-serif; font-size: 2.5rem; line-height: 1.1; font-weight: 900; color: #000;">
+                        ${deptName}
+                    </h1>
+                     <div class="fw-bold" style="font-size: 1.1rem; color: #000;">ڕاپۆڕتی ڕۆژانە</div>
+                     ${dateValue ? `<div id="reportHeaderDate" class="fw-bold mt-1" style="font-size: 1rem; color: #000;">بەروار: ${dateValue}</div>` : ''}
+                </div>
+
+                <!-- Right Logo: Medium-Large -->
+                <div class="logo-md">
+                    <img src="aso-brick-logo.png" style="height: 110px; width: auto;" onerror="this.src='logo.png'; this.style.height='110px';">
+                </div>
+            </div>
+        </div>
+        <style>
+            @media print {
+                /* Inherits global print settings, overrides here are redundant but safe */
+                .header-title-main {
+                    font-size: 2.2rem !important; /* Bigger title */
+                }
+                .report-header-refined {
+                    border-bottom: 2px solid #000 !important;
+                    margin-bottom: 10px !important;
+                }
+                .report-header-refined img {
+                    max-height: 110px !important; /* FORCE BIG LOGO */
+                    height: 110px !important;
+                    width: auto !important;
+                }
+                
+                /* --- GLOBAL PRINT IMPROVEMENTS --- */
+                body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                /* Make all data VERY visible */
+                input, select, textarea, .form-control {
+                    font-weight: 800 !important;
+                    color: #000 !important;
+                    text-shadow: none !important;
+                    border: none !important; /* Remove inner boxes when printing */
+                }
+                /* Make table text sharper */
+                .report-table th, .report-table td {
+                    border: 1px solid #777 !important;
+                    color: #000 !important;
+                }
+                .report-table th {
+                     font-weight: 900 !important;
+                     background-color: #eee !important; /* Light gray definition */
+                }
+            }
+        </style>
+        `;
+
+            const SIGNATURE_TEMPLATE = `
+        <div class="mt-2 pt-1 signature-section">
+            <div class="d-flex justify-content-between px-4">
+                <div class="text-center">
+                    <p class="mb-0 fw-bold text-secondary" style="letter-spacing:0.5px; font-size:0.6rem;">نێرنرداروە لەلایەن لێپرسراوی بەش</p>
+                    <p class="print-submitted-by fw-bold text-dark" style="font-family:'Segoe UI',sans-serif; min-width:140px; border-bottom:1px solid #ddd; padding-bottom:2px; font-size:0.85rem; margin-bottom: 0;">...</p>
+                </div>
+                <div class="text-center">
+                    <p class="mb-0 fw-bold text-secondary" style="letter-spacing:0.5px; font-size:0.6rem;">قبووڵکراوە لەلایەن بەڕێوبەری بەرهەم</p>
+                    <p class="print-approved-by fw-bold text-dark" style="font-family:'Segoe UI',sans-serif; min-width:140px; border-bottom:1px solid #ddd; padding-bottom:2px; font-size:0.85rem; margin-bottom: 0;">...</p>
+                </div>
+            </div>
+        </div>
+        `;
+
+            function updatePrintFooter(data) {
+                if (!data) {
+                    document.querySelectorAll('.print-submitted-by').forEach(el => el.innerText = '-');
+                    document.querySelectorAll('.print-approved-by').forEach(el => el.innerText = '-');
+                    return;
+                }
+
+                // Update ALL signature placeholders (both global and per-page)
+                // Convert usernames to full Kurdish names
+                const sub = data.supervisor ? getUserFullName(data.supervisor) : '-';
+                const app = data.approvedBy ? getUserFullName(data.approvedBy) : '-';
+
+                document.querySelectorAll('.print-submitted-by').forEach(el => el.innerText = sub);
+                document.querySelectorAll('.print-approved-by').forEach(el => el.innerText = app);
+            }
+
+            // --- HISTORY FOLDER LOGIC ---
+            let allHistoryReports = [];
+            let currentHistoryPath = []; // ['setting', '2023-12']
+
+            async function loadHistoryData() {
+                document.getElementById('reportSection').classList.remove('active-view');
+                document.getElementById('historySection').classList.add('active-view');
+                document.getElementById('historyLoading').style.display = 'none'; // No loading needed effectively
+                document.getElementById('historyContent').innerHTML = '';
+                document.getElementById('historyBreadcrumb').classList.add('d-none');
+
+                // Admin & HR/Manager Controls
+                const adminControls = document.getElementById('adminHistoryControls');
+                let controlsHtml = '';
+
+                if (currentUser && (['admin', 'hr', 'manager'].includes(currentUser.role) || currentUser.username === 'admin')) {
+                    controlsHtml += `
+                    <button class="btn btn-sm btn-dark fw-bold me-2" onclick="promptBatchPrint()">
+                        <i class="bi bi-printer-fill me-1"></i> چاپکردنی گشتی (بەپێی بەروار)
+                    </button>
+                `;
+                }
+
+                adminControls.innerHTML = controlsHtml;
+
+                // Reset Path and Render Root
+                currentHistoryPath = [];
+                renderHistoryState();
+            }
+
+            async function renderHistoryState() {
+                const container = document.getElementById('historyContent');
+                const breadcrumb = document.getElementById('historyBreadcrumb');
+                container.innerHTML = '';
+                // Reset container styles to default
+                container.style.display = '';
+                container.style.flexWrap = '';
+                container.style.gap = '';
+                container.style.justifyContent = '';
+
+                updateBackBtnVisibility();
+
+                // Breadcrumb UI
+                if (currentHistoryPath.length > 0) {
+                    breadcrumb.classList.remove('d-none');
+                    let bcHtml = `<span onclick="resetHistoryPath()">سەرەتا</span>`;
+                    currentHistoryPath.forEach((step, index) => {
+                        const isLast = index === currentHistoryPath.length - 1;
+                        let name = step;
+                        if (index === 0) name = formatDept(step); // Dept Name
+                        // Index 1 is Year, Index 2 is Month (YYYY-MM)
+                        if (index === 2) {
+                            const monthsList = ['ڕێبەندان (01)', 'ڕەشەمێ (02)', 'نەورۆز (03)', 'گوڵان (04)', 'جۆزەردان (05)', 'پووشپەڕ (06)', 'گەلاوێژ (07)', 'خەرمانان (08)', 'ڕەزبەر (09)', 'گەڵاڕێزان (10)', 'سەرماوەز (11)', 'بەفرانبار (12)'];
+                            const mIdx = parseInt(step.split('-')[1]) - 1;
+                            name = monthsList[mIdx] || step;
+                        }
+                        // Index 3 is Day
+                        if (index === 3) name = "ڕۆژی " + step;
+                        bcHtml += ` / <span class="${isLast ? 'active' : ''}" onclick="navigateToHistoryStep(${index})">${name}</span>`;
+                    });
+                    breadcrumb.innerHTML = bcHtml;
+                } else {
+                    breadcrumb.classList.add('d-none');
+                }
+
+                // --- LEVEL 0: ROOT (DEPARTMENTS) ---
+                if (currentHistoryPath.length === 0) {
+                    // Show all departments statically
+                    let depts = [...DEPARTMENT_ORDER]; // Use the predefined order
+
+                    // Filter based on Permissions
+                    if (currentUser && currentUser.role !== 'admin' && currentUser.username !== 'admin' && currentUser.role !== 'manager' && currentUser.role !== 'hr') {
+                        if (USER_PERMISSIONS[currentUser.username]) {
+                            depts = depts.filter(d => USER_PERMISSIONS[currentUser.username].includes(d));
+                        }
+                    }
+
+                    depts.forEach(dept => {
+                        const html = `
+                        <div class="folder-item" onclick="openHistoryFolder('${dept}')">
+                            <div class="folder-icon"><i class="bi bi-folder-fill"></i></div>
+                            <div class="folder-name">${formatDept(dept)}</div>
+                            <div class="folder-meta text-muted">Select to view years</div>
+                        </div>
+                    `;
+                        container.innerHTML += html;
+                    });
+                    return;
+                }
+
+                // --- LEVEL 1: YEARS (Within Department) ---
+                if (currentHistoryPath.length === 1) {
+                    // Static Years List (e.g., 2024, 2025, 2026) -> Can be dynamic if needed, but static is safer for 0 reads
+                    // We will show a range of years, maybe from 2024 to current year + 1
+                    const currentYear = new Date().getFullYear();
+                    const years = [];
+                    for (let y = currentYear; y >= 2025; y--) {
+                        years.push(y.toString());
+                    }
+
+                    years.forEach(year => {
+                        const html = `
+                         <div class="folder-item" onclick="openHistoryFolder('${year}')">
+                            <div class="folder-icon text-warning"><i class="bi bi-folder-fill"></i></div>
+                            <div class="folder-name">${year}</div>
+                            <div class="folder-meta text-muted">Select to view months</div>
+                        </div>
+                    `;
+                        container.innerHTML += html;
+                    });
+                    return;
+                }
+
+                // --- LEVEL 2: MONTHS (Within Department > Year) ---
+                if (currentHistoryPath.length === 2) {
+                    // Static Months List (01 - 12)
+                    const months = [
+                        { id: '01', name: 'ڕێبەندان (01)' }, { id: '02', name: 'ڕەشەمێ (02)' }, { id: '03', name: 'نەورۆز (03)' },
+                        { id: '04', name: 'گوڵان (04)' }, { id: '05', name: 'جۆزەردان (05)' }, { id: '06', name: 'پووشپەڕ (06)' },
+                        { id: '07', name: 'گەلاوێژ (07)' }, { id: '08', name: 'خەرمانان (08)' }, { id: '09', name: 'ڕەزبەر (09)' },
+                        { id: '10', name: 'گەڵاڕێزان (10)' }, { id: '11', name: 'سەرماوەز (11)' }, { id: '12', name: 'بەفرانبار (12)' }
+                    ];
+
+                    months.forEach(m => {
+                        const html = `
+                         <div class="folder-item" onclick="openHistoryFolder('${currentHistoryPath[1]}-${m.id}')">
+                            <div class="folder-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="bi bi-calendar-event-fill"></i></div>
+                            <div class="folder-name">${m.name}</div>
+                            <div class="folder-meta text-muted">Open to view days</div>
+                        </div>
+                    `;
+                        container.innerHTML += html;
+                    });
+                    return;
+                }
+                if (currentHistoryPath.length === 3) {
+                    const [dept, year, monthStr] = currentHistoryPath; // monthStr is "YYYY-MM"
+
+                    for (let day = 1; day <= 31; day++) {
+                        const dayStr = day.toString().padStart(2, '0');
+                        const fullDate = `${monthStr}-${dayStr}`;
+
+                        const html = `
+                             <div class="folder-item" onclick="openHistoryFolder('${dayStr}')" style="width: 100px; height: 100px; min-width: 100px; padding: 10px;">
+                                <div class="folder-icon" style="font-size: 1.5rem; margin-bottom: 5px;"><i class="bi bi-calendar-date"></i></div>
+                                <div class="folder-name" style="font-size: 0.9rem;">${dayStr}</div>
+                                <div class="folder-meta text-muted" style="font-size: 0.7rem;">Show</div>
+                            </div>
+                        `;
+                        container.innerHTML += html;
+                    }
+                    container.style.display = 'flex';
+                    container.style.flexWrap = 'wrap';
+                    container.style.gap = '10px';
+                    container.style.justifyContent = 'center';
+                    return;
+                }
+
+                // --- LEVEL 4: REPORT LIST (Within Dept > Year > Month > Day) ---
+                if (currentHistoryPath.length === 4) {
+                    const [selectedDept, selectedYear, selectedMonthStr, selectedDay] = currentHistoryPath;
+                    const fullDate = `${selectedMonthStr}-${selectedDay}`;
+
+                    document.getElementById('historyLoading').style.display = 'block';
+
+                    try {
+                        let query = db.collection('dailyReports')
+                            .where('date', '==', fullDate);
+
+                        const snapshot = await query.get();
+
+                        document.getElementById('historyLoading').style.display = 'none';
+
+                        if (snapshot.empty) {
+                            container.innerHTML = `<p class="text-muted text-center w-100 py-5">هیچ ڕاپۆڕتێک دروست نەکراوە بۆ ${fullDate}.</p>`;
+                            return;
+                        }
+
+                        let reports = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            // Filter locally by department
+                            if (data.department === selectedDept) {
+                                reports.push({ id: doc.id, ...data });
+                            }
+                        });
+
+                        if (reports.length === 0) {
+                            container.innerHTML = `<p class="text-muted text-center w-100 py-5">No reports found for ${fullDate} in this department.</p>`;
+                            return;
+                        }
+
+                        // Sort in Memory (Client-side)
+                        reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                        // Client-side filtering for Manager/HR (Approved Only)
+                        if (currentUser && (currentUser.role === 'manager' || currentUser.role === 'hr')) {
+                            reports = reports.filter(r => r.status === 'approved');
+                        }
+
+                        reports.forEach(r => {
+                            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.username === 'admin');
+                            const deleteBtn = isAdmin ? `<button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2 rounded-circle border-0" onclick="event.stopPropagation(); deleteReport('${r.id}')" style="width:30px; height:30px; display:flex; align-items:center; justify-content:center;"><i class="bi bi-trash-fill"></i></button>` : '';
+                            const statusClass = getStatusColor(r.status);
+
+                            const html = `
+                            <div class="folder-item position-relative" style="border-top: 5px solid var(--bs-${statusClass})" onclick="loadReportWrapper('${r.id}')">
+                                ${deleteBtn}
+                                <div class="file-icon" style="color: var(--bs-${statusClass})"><i class="bi bi-file-earmark-check-fill"></i></div>
+                                <div class="folder-name">${r.date}</div>
+                                <div class="folder-meta text-truncate w-100 px-2">${r.supervisor || 'Unknown'}</div>
+                                <span class="status-badge bg-${statusClass} bg-opacity-10 text-${statusClass}">${r.status ? r.status : 'DRAFT'}</span>
+                            </div>
+                        `;
+                            container.innerHTML += html;
+                        });
+
+                        // Also update global cache for viewing functions to work
+                        allHistoryReports = reports;
+
+                    } catch (e) {
+                        console.error(e);
+                        document.getElementById('historyLoading').style.display = 'none';
+                        container.innerHTML = `<p class="text-danger text-center w-100 py-5">Error loading reports: ${e.message}</p>`;
+                    }
+                }
+            }
+
+            function loadReportWrapper(id) {
+                const report = allHistoryReports.find(r => r.id === id);
+                if (report) loadReportForView(report, id);
+            }
+
+            function resetHistoryPath() {
+                currentHistoryPath = [];
+                renderHistoryState();
+            }
+
+            function navigateToHistoryStep(index) {
+                currentHistoryPath = currentHistoryPath.slice(0, index + 1);
+                renderHistoryState();
+            }
+
+            function openHistoryFolder(folderName) {
+                currentHistoryPath.push(folderName);
+                renderHistoryState();
+            }
+
+            function filterHistoryItems(query) {
+                query = query.toLowerCase();
+                const items = document.querySelectorAll('.folder-item');
+                items.forEach(item => {
+                    const text = item.innerText.toLowerCase();
+                    item.style.display = text.includes(query) ? 'block' : 'none';
+                });
+            }
+
+            function getStatusColor(s) {
+                if (s === 'approved') return 'success';
+                if (s === 'pending_admin') return 'warning';
+                return 'secondary';
+            }
+
+            function formatDept(d) {
+                if (d === 'unsetting') return 'داگرتن';
+                if (d === 'setting') return 'بارکردن';
+                if (d === 'crushing-prep') return 'هاڕین';
+                if (d === 'preparation') return 'ئامادەکردن';
+                if (d === 'klin') return 'فڕن';
+                if (d === 'cutting') return 'بڕین';
+                return d;
+            }
+
+            function fillReportData(data) {
+                // IDs that trigger a full re-render/regeneration. We MUST NOT call their onchange() 
+                // during filling, because we handled regeneration manually in loadReportForView.
+                // Calling them here causes a race condition that wipes data.
+                const dangerousInputs = [
+                    'k_rows_setting',
+                    'set_s1_count_input', 'set_s2_count_input', 'set_s3_count_input',
+                    'cut_s1_rows', 'cut_s2_rows', 'cut_s3_rows',
+                    'cut_s1_rows', 'cut_s2_rows', 'cut_s3_rows',
+                    's1_hours_input', 's2_hours_input', 's3_hours_input'
+                ];
+
+                if (data.tableData) {
+                    for (const [key, value] of Object.entries(data.tableData)) {
+                        const el = document.getElementById(key);
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                el.checked = value;
+                            } else if (el.tagName === 'SELECT') {
+                                let optionExists = Array.from(el.options).some(opt => opt.value === value);
+                                if (optionExists) {
+                                    el.value = value;
+                                } else if (value && value !== "") {
+                                    const newOption = new Option(value, value, true, true);
+                                    el.add(newOption);
+                                }
+                            } else {
+                                // TIME FORMAT FIX: Ensure H:MM is converted to HH:MM (e.g. 8:00 -> 08:00)
+                                if (el.type === 'time' && value && typeof value === 'string') {
+                                    if (value.length === 4 && value.indexOf(':') === 1) {
+                                        el.value = "0" + value;
+                                    } else {
+                                        el.value = value;
+                                    }
+                                } else {
+                                    el.value = value;
+                                }
+                            }
+
+                            // --- Logic to Reveal Notes if they have Data ---
+                            // Supports both "_note" (Setting/Kiln) and "note" (Cutting)
+                            if ((el.id.includes('_note') || el.id.includes('note')) && value && value.trim() !== '') {
+                                const noteRow = el.closest('.note-row');
+                                if (noteRow) {
+                                    noteRow.classList.add('visible');
+                                    noteRow.style.display = 'flex'; // Ensure flex display for visibility
+                                }
+                            }
+
+                            // Safe Trigger: Only trigger onchange if it's not a layout controller
+                            if (el.onchange && !dangerousInputs.includes(key)) {
+                                el.onchange();
+                            }
+                        }
+                    }
+                }
+                showToast('Report Loaded', 'success');
+            }
+
+            let currentReportData = null; // Track current report data
+
+            function loadReportForView(data, id) {
+                currentReportId = id;
+                currentReportData = data; // Store data for status checks
+                isFromHistory = true;
+
+                showReportView();
+
+
+                // Hide Generate Button in History View
+                const genBtn = document.getElementById('btnGenerateReport');
+                if (genBtn) genBtn.style.display = 'none';
+
+                // CONTROL PANEL VISIBILITY LOGIC
+                const cp = document.getElementById('reportControlPanel');
+                if (cp) {
+                    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.username === 'admin');
+
+                    if (isAdmin) {
+                        // For Admin: Show panel but restrict Department
+                        cp.style.display = 'block';
+                        const deptSelect = document.getElementById('departmentSelect');
+                        if (deptSelect) {
+                            deptSelect.value = data.department;
+                            deptSelect.disabled = true; // Lock department to avoid layout breaks
+                        }
+                    } else {
+                        // For others: Hide completely (Original Behavior)
+                        cp.style.display = 'none';
+                    }
+                }
+
+                if (!cp || cp.style.display === 'none') {
+                    // Fallback if panel is hidden: ensure correct value is set anyway
+                    document.getElementById('departmentSelect').value = data.department;
+                }
+
+                document.getElementById('reportDate').value = data.date;
+
+                // 1. Generate HTML (Default Layout)
+                generateReport();
+
+                // 2. REGENERATE STRUCTURE for dynamic tables (Kiln, Setting, Cutting)
+                // We need to set the specific "row count" inputs and trigger generation 
+                // BEFORE filling the rest of the data, otherwise those rows won't exist.
+
+                let needsRegen = false;
+
+                if (needsRegen) {
+                    generateReport();
+                }
+
+                // 3. Fill Data
+                setTimeout(() => {
+                    fillReportData(data);
+
+                    // 4. Update Approval UI
+                    const status = data.status || 'draft';
+                    renderActionButtons(status);
+                    updateInputsState(status);
+                    updatePrintFooter(data);
+
+                    // Unsetting special case: it might need to recalc rows based on hours after fill
+                    if (data.department === 'unsetting') {
+                        // Re-apply signatures because generateReport wiped them out
+                        updatePrintFooter(data);
+                    }
+                }, 300);
+            }
+
+            async function deleteReport(id) {
+                if (!confirm('Are you sure you want to delete this report?')) return;
+                try {
+                    await db.collection('dailyReports').doc(id).delete();
+                    showToast('Report deleted', 'success');
+                    // Reload current view instead of resetting to root
+                    renderHistoryState();
+                } catch (e) {
+                    console.error(e);
+                    showToast('Error deleting report', 'danger');
+                }
+            }
+
+
+            // --- BATCH PRINTING BY DATE ---
+            function promptBatchPrint() {
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('batchPrintModal'));
+                document.getElementById('batchPrintDate').valueAsDate = new Date();
+                document.getElementById('batchPrintProgress').style.display = 'none';
+                modal.show();
+            }
+
+            async function executeBatchPrint() {
+                const dateInput = document.getElementById('batchPrintDate');
+                if (!dateInput.value) {
+                    alert("Please select a date.");
+                    return;
+                }
+                const date = dateInput.value;
+
+                // UI Feedback
+                const btn = document.querySelector('#batchPrintModal .btn-primary');
+                const progress = document.getElementById('batchPrintProgress');
+                const statusText = document.getElementById('batchStatusText');
+                btn.disabled = true;
+                progress.style.display = 'block';
+                statusText.innerText = "Fetching reports...";
+
+                try {
+                    // Fetch all approved reports for this date
+                    const snap = await db.collection('dailyReports')
+                        .where('date', '==', date)
+                        .where('status', '==', 'approved')
+                        .get();
+
+                    if (snap.empty) {
+                        alert("هیچ ڕاپۆرتێکی پەسەندکراو بۆ ئەم بەروارە نەدۆزرایەوە.");
+                        btn.disabled = false;
+                        progress.style.display = 'none';
+                        return;
+                    }
+
+                    statusText.innerText = `Found ${snap.size} reports. Preparing...`;
+
+                    const reports = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Sort by department priority
+                    const priority = ['cutting', 'setting', 'preparation', 'crushing-prep', 'klin', 'unsetting'];
+                    reports.sort((a, b) => {
+                        let idxA = priority.indexOf(a.department);
+                        let idxB = priority.indexOf(b.department);
+                        if (idxA === -1) idxA = 99;
+                        if (idxB === -1) idxB = 99;
+                        return idxA - idxB;
+                    });
+
+                    // Save current state
+                    const oldDept = document.getElementById('departmentSelect').value;
+                    const oldDate = document.getElementById('reportDate').value;
+                    const oldVisible = document.getElementById('reportContainer').style.display;
+
+                    const wrapper = document.getElementById('tableWrapper');
+                    let batchHtml = '';
+
+                    for (let i = 0; i < reports.length; i++) {
+                        const r = reports[i];
+                        statusText.innerText = `Preparing: ${formatDept(r.department)} (${i + 1}/${reports.length})...`;
+
+                        document.getElementById('departmentSelect').value = r.department;
+                        document.getElementById('reportDate').value = r.date;
+
+                        // Restore Layout structure logic
+                        if (r.tableData) {
+                            if (r.department === 'klin' && r.tableData['k_rows_setting']) {
+                                const el = document.getElementById('k_rows_setting'); if (el) el.value = r.tableData['k_rows_setting'];
+                            }
+                            if (r.department === 'setting') {
+                                ['set_s1_count_input', 'set_s2_count_input', 'set_s3_count_input'].forEach(id => {
+                                    const el = document.getElementById(id); if (el && r.tableData[id]) el.value = r.tableData[id];
+                                });
+                            }
+                            if (r.department === 'cutting') {
+                                ['cut_s1_rows', 'cut_s2_rows', 'cut_s3_rows'].forEach(id => {
+                                    const el = document.getElementById(id); if (el && r.tableData[id]) el.value = r.tableData[id];
+                                });
+                            }
+                        }
+
+                        // Render & Fill
+                        generateReport();
+                        fillReportData(r);
+                        updatePrintFooter(r);
+
+                        if (r.department === 'unsetting') {
+                            generateReport(true);
+                            fillReportData(r);
+                            updatePrintFooter(r);
+                        }
+
+                        // --- ROBUST HTML CAPTURE ---
+                        // 1. Inputs (Text, Number, Date, Time)
+                        wrapper.querySelectorAll('input, select, textarea').forEach(el => {
+                            if (el.tagName === 'INPUT') {
+                                if (el.type === 'checkbox' || el.type === 'radio') {
+                                    if (el.checked) el.setAttribute('checked', 'checked');
+                                    else el.removeAttribute('checked');
+                                } else {
+                                    el.setAttribute('value', el.value);
+                                }
+                            } else if (el.tagName === 'TEXTAREA') {
+                                el.textContent = el.value; // Store validation in textContent
+                                el.innerHTML = el.value; // Backup
+                            } else if (el.tagName === 'SELECT') {
+                                const val = el.value;
+                                Array.from(el.options).forEach(opt => {
+                                    if (opt.value === val) opt.setAttribute('selected', 'selected');
+                                    else opt.removeAttribute('selected');
+                                });
+                            }
+                        });
+
+                        batchHtml += `<div style="display:block; width:100%; page-break-after:always;">${wrapper.innerHTML}</div>`;
+
+                        // Small delay to allow browser to breathe
+                        await new Promise(r => setTimeout(r, 50));
+                    }
+
+                    statusText.innerText = "Rendering print view...";
+
+                    // Hide Modal
+                    bootstrap.Modal.getInstance(document.getElementById('batchPrintModal')).hide();
+
+                    // Show Content
+                    const originalWrapperHtml = wrapper.innerHTML;
+                    wrapper.innerHTML = batchHtml;
+                    document.getElementById('reportContainer').style.display = 'block';
+
+                    // Print
+                    setTimeout(() => {
+                        window.print();
+
+                        // Restore
+                        setTimeout(() => {
+                            wrapper.innerHTML = originalWrapperHtml;
+                            document.getElementById('departmentSelect').value = oldDept;
+                            document.getElementById('reportDate').value = oldDate;
+                            document.getElementById('reportContainer').style.display = oldVisible;
+                            if (currentReportData) fillReportData(currentReportData); else showDashboard();
+
+                            btn.disabled = false;
+                            showToast("Batch printing complete", "success");
+                        }, 500);
+                    }, 1000);
+
+                } catch (e) {
+                    console.error(e);
+                    showToast("Error in batch print", "danger");
+                    btn.disabled = false;
+                    progress.style.display = 'none';
+                }
+            }
+
+            // --- REPORT GENERATION ---
+            function generateReport(preserveState = false, overrides = {}) {
+                const departmentSelect = document.getElementById('departmentSelect');
+                if (!departmentSelect) return;
+                const dept = departmentSelect.value;
+                const wrapper = document.getElementById('tableWrapper');
+
+                document.getElementById('reportContainer').style.display = 'block';
+
+                // Pass overrides down to specific renderers
+                if (dept === 'unsetting') renderUnsettingTable(wrapper, preserveState);
+                else if (dept === 'setting') renderSettingTable(wrapper, preserveState, overrides);
+                else if (dept === 'crushing-prep') renderCrushingTable(wrapper);
+                else if (dept === 'preparation') renderPreparationTable(wrapper);
+                else if (dept === 'klin') renderKilnTable(wrapper, preserveState, overrides);
+                else if (dept === 'cutting') renderCuttingTable(wrapper, preserveState, overrides);
+            }
+
+            // ====================================================================
+            // === CUTTING (بڕین) REPORT - PAGE BREAK PER SHIFT ===================
+            // ====================================================================
+
+
+            // --- AUTO-SAVE LOGIC ---
+            function debounce(func, wait) {
+                let timeout;
+                return function (...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            const debouncedSaveReport = debounce(() => {
+                saveReport('draft', false, true); // silent=true
+            }, 2000);
+
+            function attachAutoSaveListeners() {
+                const dept = document.getElementById('departmentSelect').value;
+                if (['cutting', 'setting'].includes(dept)) {
+                    const inputs = document.querySelectorAll('#tableWrapper input, #tableWrapper textarea, #tableWrapper select');
+                    inputs.forEach(el => {
+                        el.addEventListener('input', debouncedSaveReport);
+                        el.addEventListener('change', debouncedSaveReport);
+                    });
+                    console.log('Auto-save listeners attached for ' + dept);
+                }
+            }
+
+            function renderCuttingTable(wrapper, preserveState = false, overrides = {}) {
+                let savedData = {};
+                if (preserveState) {
+                    const existingInputs = wrapper.querySelectorAll('input, select, textarea');
+                    existingInputs.forEach(el => {
+                        if (el.id) {
+                            savedData[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+                        }
+                    });
+                } else {
+                    // Logic to ensure display totals start at 0 if not preserving state
+                    setTimeout(() => {
+                        ['s1', 's2', 's3'].forEach(s => {
+                            const disp = document.getElementById(`cut_${s}_count_display`);
+                            if (disp) disp.innerText = "0";
+                        });
+                    }, 0);
+                }
+
+                const dateValue = document.getElementById('reportDate').value;
+                const shifts = [
+                    { id: 's1', name: 'شیفتی یەکەم (24:00 - 08:00)', defStart: '08:00' },
+                    { id: 's2', name: 'شیفتی دووەم (08:00 - 16:00)', defStart: '16:00' },
+                    { id: 's3', name: 'شیفتی سێیەم (16:00 - 24:00)', defStart: '24:00' }
+                ];
+
+                // Row count is fixed at 72 as per user request
+                const shiftRows = { 's1': 72, 's2': 72, 's3': 72 };
+
+                // Filter Employees from Code Config
+                const cuttingEmps = REPORT_CONFIG.cutting || [];
+                let empOptions = `<option value="">Select...</option>`;
+                cuttingEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+
+                const shiftHeaderColors = {
+                    's1': '#1e88e5', // Blue
+                    's2': '#fb8c00', // Orange
+                    's3': '#43a047'  // Green
+                };
+
+                const shiftLightColors = {
+                    's1': '#f0f7ff', // Light Blue
+                    's2': '#fff9f0', // Light Orange
+                    's3': '#f1fdf4'  // Light Green
+                };
+
+                let allHtml = '';
+
+                shifts.forEach((shift) => {
+                    const totalCarts = shiftRows[shift.id];
+                    const halfCarts = Math.ceil(totalCarts / 2);
+                    const shiftColor = shiftHeaderColors[shift.id];
+                    const shiftLightColor = shiftLightColors[shift.id];
+
+                    // --- 1. Tasks Column (Left) ---
+                    let tasksHtml = '';
+                    cuttingTasks.forEach((task, index) => {
+                        const rowIdBase = `cut_${shift.id}_r${index}`;
+                        // Task #3 (index 2): time input only (no checkbox)
+                        if (index === 2) {
+                            tasksHtml += `
+                        <tr style="background: ${index % 2 === 0 ? '#fff' : '#f9f9f9'};">
+                            <td class="task-text" style="background: ${shiftLightColor} !important; font-weight: 600; color: #334155;">${task}</td>
+                            <td style="width: 70px; background:#fff3cd;">
+                                <input type="time" id="${rowIdBase}_time" class="time-input" style="width:100%; font-size:0.75rem; text-align:center; border:none; background:transparent;">
+                            </td>
+                        </tr>
+                        `;
+                        } else {
+                            tasksHtml += `
+                        <tr style="background: ${index % 2 === 0 ? '#fff' : '#f9f9f9'};">
+                            <td class="task-text" style="background: ${shiftLightColor} !important; font-weight: 600; color: #334155;">${task}</td>
+                            <td style="width: 30px; background:#fff;"><input type="checkbox" id="${rowIdBase}_check"></td>
+                        </tr>
+                        `;
+                        }
+                    });
+
+                    // --- 2. Carts Columns (Right: 1-36 and 37-72) ---
+                    let cartsCol1 = '';
+                    let cartsCol2 = '';
+
+                    // ADDED: Prepend Check Row for Shift 2 and 3 at the very beginning
+                    if (shift.id === 's2' || shift.id === 's3') {
+                        cartsCol1 += `
+                    <tr class="cut-check-row">
+                        <td style="background:#ffe8a1;"></td>
+                        <td style="background:#fff8e1; width: 40%; vertical-align: middle;">
+                            <span style="font-size:0.6rem; font-weight:bold; color:#c05621; display:block; text-align:center;">کاتی چێک (سەرەتا)</span>
+                        </td>
+                        <td style="background:#fff8e1;">
+                            <input type="time" id="cut_${shift.id}_start_check_time" class="time-input" style="width:100%; font-size:0.75rem; text-align:center; font-weight:bold; color:#c05621; border:none; background:transparent;">
+                        </td>
+                    </tr>`;
+                    }
+
+                    for (let i = 1; i <= halfCarts; i++) {
+                        // Left Cart Column
+                        cartsCol1 += `
+                        <tr id="cut_${shift.id}_c${i}_row">
+                            <td style="width:25px; background:#f0f0f0; color:#555; cursor:pointer; user-select:none; text-align:center; white-space:nowrap; padding: 2px 0;" title="کلیک بکە بۆ نیشانکردن" onclick="toggleCartFlag('cut_${shift.id}_c${i}')">
+                                <span id="cut_${shift.id}_c${i}_dot" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#ccc; margin-left:3px; vertical-align:middle;"></span>${i}
+                                <input type="checkbox" id="cut_${shift.id}_c${i}_flagged" style="display:none;">
+                            </td>
+                            <td><input type="time" id="cut_${shift.id}_c${i}_time" class="time-input" style="font-size:0.75rem;"></td>
+                            <td id="cut_${shift.id}_c${i}_notd"><input type="text" id="cut_${shift.id}_c${i}_no" placeholder="ژمارە" class="fw-bold text-primary"></td>
+                        </tr>`;
+
+                        // After every 8 carts, add a check row with only time (highlighted)
+                        if (i % 8 === 0) {
+                            const checkGroup = i / 8;
+                            cartsCol1 += `
+                        <tr class="cut-check-row">
+                            <td style="background:#ffe8a1;"></td>
+                            <td style="background:#fff8e1; width: 40%; vertical-align: middle;">
+                                <span style="font-size:0.6rem; font-weight:bold; color:#c05621; display:block; text-align:center;">کاتی چێک</span>
+                            </td>
+                            <td style="background:#fff8e1;">
+                                <input type="time" id="cut_${shift.id}_c${checkGroup}_left_check_time" class="time-input" style="width:100%; font-size:0.75rem; text-align:center; font-weight:bold; color:#c05621; border:none; background:transparent;">
+                            </td>
+                        </tr>`;
+                        }
+
+                        // Right Cart Column
+                        let j = i + halfCarts;
+                        if (j <= totalCarts) {
+                            cartsCol2 += `
+                            <tr id="cut_${shift.id}_c${j}_row">
+                                <td style="width:25px; background:#f0f0f0; color:#555; cursor:pointer; user-select:none; text-align:center; white-space:nowrap; padding: 2px 0;" title="کلیک بکە بۆ نیشانکردن" onclick="toggleCartFlag('cut_${shift.id}_c${j}')">
+                                    <span id="cut_${shift.id}_c${j}_dot" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#ccc; margin-left:3px; vertical-align:middle;"></span>${j}
+                                    <input type="checkbox" id="cut_${shift.id}_c${j}_flagged" style="display:none;">
+                                </td>
+                                <td><input type="time" id="cut_${shift.id}_c${j}_time" class="time-input" style="font-size:0.75rem;"></td>
+                                <td id="cut_${shift.id}_c${j}_notd"><input type="text" id="cut_${shift.id}_c${j}_no" placeholder="ژمارە" class="fw-bold text-primary"></td>
+                            </tr>`;
+
+                            // After every 8 carts in this column, add a check row
+                            if (j % 8 === 0) {
+                                const checkGroupRight = j / 8;
+                                cartsCol2 += `
+                            <tr class="cut-check-row">
+                                <td style="background:#ffe8a1;"></td>
+                                <td style="background:#fff8e1; width: 40%; vertical-align: middle;">
+                                    <span style="font-size:0.6rem; font-weight:bold; color:#c05621; display:block; text-align:center;">کاتی چێک</span>
+                                </td>
+                                 <td style="background:#fff8e1;">
+                                    <input type="time" id="cut_${shift.id}_c${checkGroupRight}_right_check_time" class="time-input" style="width:100%; font-size:0.75rem; text-align:center; font-weight:bold; color:#c05621; border:none; background:transparent;">
+                                </td>
+                            </tr>`;
+                            }
+                        }
+                    }
+
+                    // --- 3. Dynamic Shift Notes ---
+                    let notesHtml = `
+                <div class="mt-2" id="cut_${shift.id}_notes_container">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <strong style="font-size:0.8rem;">تێبینیەکان (Notes):</strong>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2 add-note-btn" style="font-size:0.7rem;" onclick="addNoteField('${shift.id}')">+ Add Note</button>
+                    </div>
+                `;
+
+                    // Create 6 hidden note inputs (first one visible, rest hidden)
+                    for (let i = 1; i <= 6; i++) {
+                        const isHidden = i > 1 ? 'style="display:none;"' : '';
+                        notesHtml += `
+                        <div class="note-row d-flex align-items-start mb-1" id="cut_${shift.id}_note_row_${i}" ${isHidden}>
+                            <span class="text-muted small me-1" style="width:12px; font-size:0.6rem; padding-top:2px;">${i}.</span>
+                            <textarea id="cut_${shift.id}_note${i}" class="form-control form-control-sm p-1 border-bottom border-0 rounded-0" placeholder="..." style="font-size:0.75rem; background: #fdfdfd; min-height:18px; line-height:1; height:18px;"></textarea>
+                        </div>`;
+                    }
+                    notesHtml += '</div>';
+
+                    // --- WRAP EACH SHIFT IN A PAGE-BREAK CONTAINER ---
+                    let shiftHtml = REPORT_HEADER_TEMPLATE('بەشی بڕین', dateValue);
+                    shiftHtml += `
+                <div class="page-break-container">
+                    <div class="text-center mb-1 border-bottom pb-1 d-flex justify-content-between align-items-center">
+                        <div style="width:100px;"></div>
+                        <div class="d-flex align-items-center gap-1 no-print">
+                            <span class="small" style="font-weight:700; color:#c62828;">عەرەبانەی دەرکەوتوو: <span id="cut_${shift.id}_count_display">0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="cut-header" style="background-color: ${shiftColor} !important;">
+                        <span>${shift.name}</span>
+                        
+                        <div class="emp-selects">
+                            <i class="bi bi-people-fill text-white" style="font-size:0.8rem; padding:0 3px;"></i>
+                            <select id="cut_${shift.id}_emp1" style="border:none; border-radius:4px;">${empOptions}</select>
+                            <select id="cut_${shift.id}_emp2" style="border:none; border-radius:4px;">${empOptions}</select>
+                        </div>
+                    </div>
+                    
+                    <div class="p-1 mb-2 bg-white">
+                        <div class="cut-grid-container">
+                            
+                            <div class="cut-tasks-col">
+                                <table class="report-table" style="background: #fafafa; border: 1px solid #aaa;">
+                                    <thead style="background-color: ${shiftColor}; color: white;">
+                                        <tr><th style="background: transparent; color: white; text-align: right !important; padding-right: 5px;">کارەکان</th><th style="background: transparent; color: white;">✓</th></tr>
+                                    </thead>
+                                    <tbody>${tasksHtml}</tbody>
+                                </table>
+
+                                <div class="mt-2 p-1 border rounded bg-light" style="border: 1px solid #aaa !important;">
+                                    <table class="report-table" style="font-size:0.65rem">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th style="width: 30%">ژمارەی سایلۆ</th>
+                                                <th style="width: 35%">خشت/عەرەبانە</th>
+                                                <th style="width: 35%">جۆری خشت</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><input type="number" id="cut_${shift.id}_silo"></td>
+                                                <td><input type="number" id="cut_${shift.id}_total_brick"></td>
+                                                <td>
+                                                    <select id="cut_${shift.id}_type" style="font-size:0.65rem">
+                                                        <option value="">-</option>
+                                                        <option value="بلۆکی 20" selected>بلۆکی 20</option>
+                                                        <option value="بلۆکی 10">بلۆکی 10</option>
+                                                        <option value="بلۆکی 15">بلۆکی 15</option>
+                                                        <option value="بلۆکی 20">بلۆکی 20</option>
+                                                        <option value="بلۆکی 24">بلۆکی 24</option>
+                                                        <option value="10 قواطع">10 قواطع</option>
+                                        <option value="15 قواطع">15 قواطع</option>
+                                        <option value="20 قواطع">15 قواطع</option>
+                                        <option value="24 قواطع">24 قواطع</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr class="table-secondary">
+                                                <th>کێشی ١ (Kg)</th>
+                                                <th>کێشی ٢ (Kg)</th>
+                                                <th style="background-color: #ffebee; color: #c62828;">خشتی بەفیڕۆچوو</th>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="number" step="0.1" id="cut_${shift.id}_w1" placeholder="کێشی ١"></td>
+                                                <td><input type="number" step="0.1" id="cut_${shift.id}_scrap" placeholder="کێشی ٢"></td>
+                                                <td><input type="number" id="cut_${shift.id}_waste_brick" style="background-color: #fffde7;" placeholder="ژمارەی خشتی بەفیڕۆچوو"></td>
+                                            </tr>
+                                            <!-- NEW TOTALS ROW -->
+                                            <tr class="table-info border-top border-dark">
+                                                <td class="fw-bold small text-end" style="font-size: 0.65rem !important;">کۆی عەرەبانە:</td>
+                                                <td colspan="2"><input type="number" id="cut_${shift.id}_total_filled" readonly class="fw-bold" style="color:#1e88e5; text-align: center; background: transparent;"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="cut-carts-col">
+                                <table class="cart-list-table">
+                                    <thead class="table-light"><tr><th>#</th><th>کات</th><th>ژمارەی عەرەبانە</th></tr></thead>
+                                    <tbody>${cartsCol1}</tbody>
+                                </table>
+                                
+                                <table class="cart-list-table">
+                                    <thead class="table-light"><tr><th>#</th><th>کات</th><th>ژمارەی عەرەبانە</th></tr></thead>
+                                    <tbody>${cartsCol2}</tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        ${notesHtml}
+                        
+                        <!-- Per-Shift Signature -->
+                        ${SIGNATURE_TEMPLATE}
+
+                    </div>
+                </div>
+                `;
+                    allHtml += shiftHtml;
+                });
+
+                wrapper.innerHTML = allHtml;
+
+                // After rendering, if we are loading data, trigger the total calculation
+                setTimeout(() => {
+                    ['s1', 's2', 's3'].forEach(s => {
+                        updateCuttingCount(s);
+                    });
+
+                    if (preserveState) {
+                        for (const [key, val] of Object.entries(savedData)) {
+                            const el = document.getElementById(key);
+                            if (el) {
+                                if (el.type === 'checkbox') el.checked = val;
+                                else el.value = val;
+                            }
+                        }
+                    }
+                    // Final recalculation after potential data fill
+                    ['s1', 's2', 's3'].forEach(s => {
+                        updateCuttingCount(s);
+                    });
+                    attachCuttingEventListeners();
+                    attachAutoSaveListeners();
+                }, 50);
+            }
+
+            // Toggle red flag on a cart row manually (click on the row number cell)
+            function toggleCartFlag(baseId) {
+                const checkbox = document.getElementById(`${baseId}_flagged`);
+                if (!checkbox) return;
+                checkbox.checked = !checkbox.checked;
+                applyCartFlag(baseId, checkbox.checked);
+            }
+
+            // Apply visual red flag to a cart row based on state
+            function applyCartFlag(baseId, flagged) {
+                const noTd = document.getElementById(`${baseId}_notd`);
+                const dot  = document.getElementById(`${baseId}_dot`);
+                if (noTd) noTd.style.backgroundColor = flagged ? '#ffcccc' : '';
+                if (dot)  dot.style.background = flagged ? '#e53935' : '#ccc';
+            }
+
+            // Update the display for "عەرەبانەی دەرکەوتوو" and the total field
+            function updateCuttingCount(shiftId) {
+                let count = 0;
+                for (let i = 1; i <= 72; i++) {
+                    const timeInput = document.getElementById(`cut_${shiftId}_c${i}_time`);
+                    const noInput   = document.getElementById(`cut_${shiftId}_c${i}_no`);
+                    if ((timeInput && timeInput.value) || (noInput && noInput.value)) {
+                        count++;
+                    }
+                }
+                const disp = document.getElementById(`cut_${shiftId}_count_display`);
+                if (disp) disp.innerText = count;
+                const totalField = document.getElementById(`cut_${shiftId}_total_filled`);
+                if (totalField) totalField.value = count;
+            }
+
+            // Real-time listener for cutting table inputs + restore flags after data load
+            function attachCuttingEventListeners() {
+                const wrapper = document.getElementById('tableWrapper');
+                if (!wrapper) return;
+
+                wrapper.querySelectorAll('input[id^="cut_"][id$="_time"], input[id^="cut_"][id$="_no"]').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const idParts = e.target.id.split('_');
+                        if (idParts.length >= 2) updateCuttingCount(idParts[1]);
+                    });
+                });
+
+                // Restore flag visuals for all rows (applies saved checkbox state)
+                ['s1','s2','s3'].forEach(s => {
+                    for (let i = 1; i <= 72; i++) {
+                        const baseId  = `cut_${s}_c${i}`;
+                        const checkbox = document.getElementById(`${baseId}_flagged`);
+                        if (checkbox) applyCartFlag(baseId, checkbox.checked);
+                    }
+                });
+            }
+
+            // Add note field function
+            window.addNoteField = function (shiftId) {
+                const container = document.getElementById(`cut_${shiftId}_notes_container`);
+                if (!container) return;
+
+                // Find the first hidden note field
+                for (let i = 1; i <= 6; i++) {
+                    const noteRow = document.getElementById(`cut_${shiftId}_note_row_${i}`);
+                    if (noteRow && noteRow.style.display === 'none') {
+                        noteRow.style.display = 'flex';
+                        const textarea = noteRow.querySelector('textarea');
+                        if (textarea) textarea.focus();
+                        return;
+                    }
+                }
+                // If all are visible, show a message
+                alert('هەموو تێبینیەکان بەکارهێنراون');
+            };
+
+            // ====================================================================
+            // === SETTING (بارکردن) REPORT =======================================
+            // ====================================================================
+            function renderSettingTable(wrapper, preserveState = false, overrides = {}) {
+                let savedData = {};
+                if (preserveState) {
+                    const existingInputs = wrapper.querySelectorAll('input, select, textarea');
+                    existingInputs.forEach(el => {
+                        if (el.id) savedData[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+                    });
+                }
+
+                const settingEmps = REPORT_CONFIG.setting || [];
+                let empOptions = `<option value="">Select...</option>`;
+                settingEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+
+                const dateValue = document.getElementById('reportDate').value;
+
+
+                const s1Count = 11;
+                const s2Count = 11;
+                const s3Count = 11;
+
+                const totalRows = s1Count + s2Count + s3Count;
+                let rowsHtml = '';
+
+
+                for (let i = 1; i <= totalRows; i++) {
+                    const timeId = `set_r${i}_time`;
+                    const rid = `set_r${i}`;
+
+                    // Values
+                    const valKilncar = (preserveState && savedData[`${rid}_kilncar`]) ? savedData[`${rid}_kilncar`] : '';
+                    const valTime = (preserveState && savedData[timeId]) ? savedData[timeId] : '';
+                    const valD1 = (preserveState && savedData[`${rid}_d1`]) ? savedData[`${rid}_d1`] : '';
+                    const valD2 = (preserveState && savedData[`${rid}_d2`]) ? savedData[`${rid}_d2`] : '';
+                    const valD3 = (preserveState && savedData[`${rid}_d3`]) ? savedData[`${rid}_d3`] : '';
+                    const valD4 = (preserveState && savedData[`${rid}_d4`]) ? savedData[`${rid}_d4`] : '';
+                    const valD5 = (preserveState && savedData[`${rid}_d5`]) ? savedData[`${rid}_d5`] : '';
+                    const valD6 = (preserveState && savedData[`${rid}_d6`]) ? savedData[`${rid}_d6`] : '';
+                    const valD7 = (preserveState && savedData[`${rid}_d7`]) ? savedData[`${rid}_d7`] : '';
+
+                    let rowClass = 'row-s3';
+                    if (i <= s1Count) rowClass = 'row-s1';
+                    else if (i <= s1Count + s2Count) rowClass = 'row-s2';
+                    else rowClass = 'row-s3';
+
+                    // Checkbox value needs to be tracked if preserving state
+                    const valFlagged = (preserveState && savedData[`${rid}_flagged`]) ? 'checked' : '';
+
+                    rowsHtml += `
+                <tr class="${rowClass} compact-rows" id="${rid}_row">
+                    <td style="width:5%; cursor:pointer; user-select:none; text-align:center;" title="کلیک بکە بۆ نیشانکردن" onclick="toggleSettingFlag('${rid}')">
+                        <span id="${rid}_dot" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#ccc; margin-left:2px; margin-bottom:1px;"></span>${i}
+                        <input type="checkbox" id="${rid}_flagged" style="display:none;" ${valFlagged}>
+                    </td>
+                    <td style="width:15%" id="${rid}_notd"><input type="number" id="${rid}_kilncar" value="${valKilncar}" class="fw-bold text-center" onchange="calcSettingTotals()" placeholder="-"></td>
+                    <td style="width:15%"><input type="time" id="${timeId}" value="${valTime}" class="time-input" style="text-align:center;"></td>
+
+                    <td><input type="number" id="${rid}_d1" value="${valD1}"></td>
+                    <td><input type="number" id="${rid}_d2" value="${valD2}"></td>
+                    <td><input type="number" id="${rid}_d3" value="${valD3}"></td>
+                    <td><input type="number" id="${rid}_d4" value="${valD4}"></td>
+                    <td><input type="number" id="${rid}_d5" value="${valD5}"></td>
+                    <td><input type="number" id="${rid}_d6" value="${valD6}"></td>
+                    <td><input type="number" id="${rid}_d7" value="${valD7}"></td>
+                </tr>
+                `;
+                }
+
+                const html = `
+             <div class="print-full-height" style="display: flex; flex-direction: column; min-height: 100%;">
+                ${REPORT_HEADER_TEMPLATE('بەشی بارکردن', dateValue)}
+                
+                <!-- Main content row -->
+                <div class="row g-0" style="flex: 1;">
+                    <div class="col-8 pe-2">
+                        <table class="table table-bordered table-sm set-table table-hover report-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" style="width:5%">#</th>
+                                    <th rowspan="2" style="width:15%; font-size:1.1rem; font-weight:900;">ژ. عەرەبانە<br>(Kilncar)</th>
+                                    <th rowspan="2" style="width:15%">کات<br>(Time)</th>
+                                    <th colspan="7" style="text-align:center;">ژمارەی عەرەبانەکان ناو درایەر (Dryer Carts)</th>
+                                </tr>
+                                <tr>
+                                    <th style="width:7%">1</th><th style="width:7%">2</th><th style="width:7%">3</th><th style="width:7%">4</th><th style="width:7%">5</th><th style="width:7%">6</th><th style="width:7%">7</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                    <div class="col-4">
+                     <div class="shift-box bg-s1">
+                        <div class="shift-header"><span> شیفتی یەکەم (24-08)</span></div>
+                        <div class="p-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <label class="mb-0" style="font-size:0.75rem;">ناوی کارمەند:</label>
+                                <select id="set_s1_emp" class="form-select form-select-sm p-0 px-1 flex-grow-1" style="background-position: left 0.5rem center; padding-left: 1.5rem; padding-right: 0.5rem;">${empOptions}</select>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                <label class="mb-0" style="font-size:0.75rem;">کرێکاری ڕۆژانە:</label>
+                                <input type="text" id="set_s1_worker" class="form-control form-control-sm p-0 px-1" style="font-size:0.7rem;" placeholder="ناوی کرێکاری ڕۆژانە...">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1 mb-1 align-items-center px-1" style="font-size:0.7rem;">
+                            <span>کێشی خشت:</span>
+                            <input type="number" id="set_s1_w1" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W1">
+                            <input type="number" id="set_s1_w2" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W2">
+                        </div>
+                        <div class="d-flex justify-content-between bg-white px-1 mx-1">
+                           <span style="font-size:1.1rem; font-weight:bold;">ژمارەی عەرەبانە:</span>
+                           <span id="set_s1_total" class="fw-bold text-primary" style="font-size:1.4rem;">0</span>
+                        </div>
+                     </div>
+
+                     <div class="shift-box bg-s2">
+                        <div class="shift-header"><span>شیفتی دووەم (08-16)</span></div>
+                        <div class="p-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <label class="mb-0" style="font-size:0.75rem;">ناوی کارمەند:</label>
+                                <select id="set_s2_emp" class="form-select form-select-sm p-0 px-1 flex-grow-1" style="background-position: left 0.5rem center; padding-left: 1.5rem; padding-right: 0.5rem;">${empOptions}</select>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                <label class="mb-0" style="font-size:0.75rem;">کرێکاری ڕۆژانە:</label>
+                                <input type="text" id="set_s2_worker" class="form-control form-control-sm p-0 px-1" style="font-size:0.7rem;" placeholder="ناوی کرێکار...">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1 mb-1 align-items-center px-1" style="font-size:0.7rem;">
+                            <span>کێش:</span>
+                            <input type="number" id="set_s2_w1" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W1">
+                            <input type="number" id="set_s2_w2" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W2">
+                        </div>
+                        <div class="d-flex justify-content-between bg-white px-1 mx-1">
+                           <span style="font-size:1.1rem; font-weight:bold;">ژ. عەرەبانە:</span>
+                           <span id="set_s2_total" class="fw-bold text-primary" style="font-size:1.4rem;">0</span>
+                        </div>
+                     </div>
+
+                     <div class="shift-box bg-s3">
+                        <div class="shift-header"><span>شیفتی سێیەم (16-24)</span></div>
+                        <div class="p-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <label class="mb-0" style="font-size:0.75rem;">ناوی کارمەند:</label>
+                                <select id="set_s3_emp" class="form-select form-select-sm p-0 px-1 flex-grow-1" style="background-position: left 0.5rem center; padding-left: 1.5rem; padding-right: 0.5rem;">${empOptions}</select>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                <label class="mb-0" style="font-size:0.75rem;">کرێکاری ڕۆژانە:</label>
+                                <input type="text" id="set_s3_worker" class="form-control form-control-sm p-0 px-1" style="font-size:0.7rem;" placeholder="ناوی کرێکار...">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1 mb-1 align-items-center px-1" style="font-size:0.7rem;">
+                            <span>کێش:</span>
+                            <input type="number" id="set_s3_w1" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W1">
+                            <input type="number" id="set_s3_w2" class="form-control form-control-sm p-0 text-center" style="width:75px;" placeholder="W2">
+                        </div>
+                        <div class="d-flex justify-content-between bg-white px-1 mx-1">
+                           <span style="font-size:1.1rem; font-weight:bold;">ژ. عەرەبانە:</span>
+                           <span id="set_s3_total" class="fw-bold text-primary" style="font-size:1.4rem;">0</span>
+                        </div>
+                     </div>
+
+                     <div class="p-2 bg-light mt-2">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1">
+                            <h6 class="fw-bold mb-0" style="font-size:1.3rem;">کۆی گشتی</h6>
+                            <span class="badge bg-primary" id="set_auto_total_display" style="font-size:1.5rem;">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                             <small>ژمارەی خشتی یەک عەرەبانە:</small>
+                             <input type="number" id="set_brick_per_car" class="form-control form-control-sm w-50 text-end">
+                        </div>
+                         <div class="d-flex justify-content-between align-items-center mb-1">
+                             <small>ژمارەی عەرەبانەی گەڕاج:</small>
+                             <input type="number" id="set_total_cutting" class="form-control form-control-sm w-50 text-end">
+                        </div>
+                     </div>
+                     </div>
+                 </div>
+                 
+                 <!-- Notes and Signature Section - Fixed to Bottom -->
+                 <div style="margin-top: auto; padding-top: 5px;">
+                    <!-- Notes Section -->
+                    <div class="p-2 bg-light mb-1">
+                        <h6 class="fw-bold mb-1 text-center" style="font-size:0.8rem;">تێبینیەکان</h6>
+                        <div class="row">
+                            <div class="col-4">
+                                <small class="fw-bold d-block mb-0">شیفتی یەکەم:</small>
+                                <textarea id="set_s1_note" rows="8" class="form-control form-control-sm" placeholder="تێبینی..."></textarea>
+                            </div>
+                            <div class="col-4">
+                                <small class="fw-bold d-block mb-0">شیفتی دووەم:</small>
+                                <textarea id="set_s2_note" rows="8" class="form-control form-control-sm" placeholder="تێبینی..."></textarea>
+                            </div>
+                            <div class="col-4">
+                                <small class="fw-bold d-block mb-0">شیفتی سێیەم:</small>
+                                <textarea id="set_s3_note" rows="8" class="form-control form-control-sm" placeholder="تێبینی..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Modern Signature -->
+                    ${SIGNATURE_TEMPLATE}
+                 </div>
+              </div>
+             `;
+                wrapper.innerHTML = html;
+
+                if (preserveState && Object.keys(savedData).length > 0) {
+                    setTimeout(() => {
+                        for (const [key, val] of Object.entries(savedData)) {
+                            const el = document.getElementById(key);
+                            if (el) {
+                                if (el.type === 'checkbox') el.checked = val;
+                                else el.value = val;
+                            }
+                        }
+                        calcSettingTotals();
+                        attachAutoSaveListeners();
+                        restoreSettingFlags();
+                    }, 0);
+                } else {
+                    // Initialize totals even if no preserved state
+                    setTimeout(() => {
+                        calcSettingTotals();
+                        attachAutoSaveListeners();
+                        restoreSettingFlags();
+                    }, 0);
+                }
+            }
+
+            // Click-to-flag functions for Setting department
+            function toggleSettingFlag(baseId) {
+                const checkbox = document.getElementById(`${baseId}_flagged`);
+                if (!checkbox) return;
+                checkbox.checked = !checkbox.checked;
+                applySettingFlag(baseId, checkbox.checked);
+            }
+
+            function applySettingFlag(baseId, flagged) {
+                const noTd = document.getElementById(`${baseId}_notd`);
+                const dot  = document.getElementById(`${baseId}_dot`);
+                if (noTd) noTd.style.backgroundColor = flagged ? '#ffcccc' : '';
+                if (dot)  dot.style.background = flagged ? '#e53935' : '#ccc';
+            }
+
+            function restoreSettingFlags() {
+                for (let i = 1; i <= 33; i++) {
+                    const baseId = `set_r${i}`;
+                    const checkbox = document.getElementById(`${baseId}_flagged`);
+                    if (checkbox) applySettingFlag(baseId, checkbox.checked);
+                }
+            }
+
+            function calcSettingTotals() {
+                let s1 = 0, s2 = 0, s3 = 0;
+                document.querySelectorAll('tr.row-s1 input[id$="_kilncar"]').forEach(i => { if (i.value) s1++; });
+                document.querySelectorAll('tr.row-s2 input[id$="_kilncar"]').forEach(i => { if (i.value) s2++; });
+                document.querySelectorAll('tr.row-s3 input[id$="_kilncar"]').forEach(i => { if (i.value) s3++; });
+
+                document.getElementById('set_s1_total').innerText = s1;
+                document.getElementById('set_s2_total').innerText = s2;
+                document.getElementById('set_s3_total').innerText = s3;
+
+                const total = s1 + s2 + s3;
+                // Update auto total display badge
+                const autoTotalDisplay = document.getElementById('set_auto_total_display');
+                if (autoTotalDisplay) {
+                    autoTotalDisplay.innerText = total;
+                }
+            }
+
+            // ====================================================================
+            // === KILN (فڕن) REPORT ==============================================
+            // ====================================================================
+            function renderKilnTable(wrapper, preserveState = false, overrides = {}) {
+                let savedData = {};
+                if (preserveState) {
+                    const existingInputs = wrapper.querySelectorAll('input, select, textarea');
+                    existingInputs.forEach(el => {
+                        if (el.id) savedData[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+                    });
+                }
+
+
+                const dateValue = document.getElementById('reportDate').value;
+
+                const settingEmps = REPORT_CONFIG.klin || [];
+
+                let empOptions = `<option value="">Select...</option>`;
+                settingEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+
+                const totalRows = 25;
+
+                const brickTypes = [
+                    { val: "", label: "" }, { val: "20x40", label: "20x40" }, { val: "15x40", label: "15x40" },
+                    { val: "24x40", label: "24x40" }, { val: "10x40", label: "10x40" }
+                ];
+                let brickOptions = "";
+                brickTypes.forEach(t => brickOptions += `<option value="${t.val}">${t.label}</option>`);
+
+                function getMinutes(timeStr) { if (!timeStr) return 480; const [h, m] = timeStr.split(':').map(Number); return h * 60 + m; }
+                function formatTime(totalMins) { let h = Math.floor(totalMins / 60) % 24; let m = totalMins % 60; return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`; }
+                let rowsHtml = '';
+
+                for (let i = 1; i <= totalRows; i++) {
+                    const timeId = `k_r${i}_time`;
+                    const rid = `k_r${i}`;
+
+                    // Values
+                    const valTime = (preserveState && savedData[timeId]) ? savedData[timeId] : '';
+                    const valTypeOut = (preserveState && savedData[`${rid}_type_out`]) ? savedData[`${rid}_type_out`] : '';
+                    const valCartOut = (preserveState && savedData[`${rid}_cart_out`]) ? savedData[`${rid}_cart_out`] : '';
+                    const valTypeIn = (preserveState && savedData[`${rid}_type_in`]) ? savedData[`${rid}_type_in`] : '';
+                    const valCartIn = (preserveState && savedData[`${rid}_cart_in`]) ? savedData[`${rid}_cart_in`] : '';
+
+                    // For selects, we need to inject selected attribute manually in the options or rely on fillReportData
+                    // But here we are generating the options string dynamically. 
+                    // To keep it simple and robust, let's use a helper.
+                    const getSelect = (id, options, currentVal) => {
+                        let s = `<select id="${id}" onchange="autoFillType(this, '${id.includes('type_out') ? 'type_out' : 'type_in'}', ${totalRows})">`;
+                        brickOptionsArray.forEach(opt => {
+                            s += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
+                        });
+                        s += `</select>`;
+                        return s;
+                    };
+
+                    const brickOptionsArray = ["", "بلۆکی 10", "بلۆکی 15", "بلۆکی 20", "بلۆکی 24", "10 قواطع", "15 قواطع", "24 قواطع", "قواطع 20",];
+
+                    rowsHtml += `
+                    <tr class="compact-rows">
+                        <td>${i}</td>
+                        <td><input type="time" id="${timeId}" value="${valTime}" class="fw-bold time-input no-ampm" style="text-align:center;"></td>
+
+                        <td>${getSelect(`${rid}_type_out`, null, valTypeOut)}</td>
+                        <td><input type="number" id="${rid}_cart_out" value="${valCartOut}"></td>
+                        <td>${getSelect(`${rid}_type_in`, null, valTypeIn)}</td>
+                        <td><input type="number" id="${rid}_cart_in" value="${valCartIn}"></td>
+                    </tr>
+                `;
+
+                }
+
+                const html = `
+                <div class="print-full-height"> <!-- Full Height Wrapper -->
+                ${REPORT_HEADER_TEMPLATE('بەشی فڕن', dateValue)}
+                <div class="d-flex justify-content-between mb-2 p-2 rounded bg-light">
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-5">
+                        <div class="shift-box bg-s1"><div class="shift-header">شیفتی یەکەم (24:00 - 08:00)</div><table class="report-table" style="border:none;"><tr><td>کارمەند ١</td><td><select id="k_s1_e1">${empOptions}</select></td></tr><tr><td>کارمەند ٢</td><td><select id="k_s1_e2">${empOptions}</select></td></tr><tr><td>کارمەند ٣</td><td><select id="k_s1_e3">${empOptions}</select></td></tr><tr><td colspan="2" class="fw-bold bg-light">تێبینی</td></tr><tr><td colspan="2"><textarea id="k_s1_note" rows="3"></textarea></td></tr></table></div>
+                        <div class="shift-box bg-s2"><div class="shift-header">شیفتی دووەم (08:00 - 16:00)</div><table class="report-table" style="border:none;"><tr><td>کارمەند ١</td><td><select id="k_s2_e1">${empOptions}</select></td></tr><tr><td>کارمەند ٢</td><td><select id="k_s2_e2">${empOptions}</select></td></tr><tr><td>کارمەند ٣</td><td><select id="k_s2_e3">${empOptions}</select></td></tr><tr><td colspan="2" class="fw-bold bg-light">تێبینی</td></tr><tr><td colspan="2"><textarea id="k_s2_note" rows="3"></textarea></td></tr></table></div>
+                        <div class="shift-box bg-s3"><div class="shift-header">شیفتی سێیەم (16:00 - 24:00)</div><table class="report-table" style="border:none;"><tr><td>کارمەند ١</td><td><select id="k_s3_e1">${empOptions}</select></td></tr><tr><td>کارمەند ٢</td><td><select id="k_s3_e2">${empOptions}</select></td></tr><tr><td>کارمەند ٣</td><td><select id="k_s3_e3">${empOptions}</select></td></tr><tr><td colspan="2" class="fw-bold bg-light">تێبینی</td></tr><tr><td colspan="2"><textarea id="k_s3_note" rows="3"></textarea></td></tr></table></div>
+                    </div>
+                    <div class="col-7">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="width:5%">#</th>
+                                    <th rowspan="2" style="width:15%">کات</th>
+                                    <th colspan="2" style="background:#f8f9fa">عەرەبانەی دەرچوو (خروج)</th>
+                                    <th colspan="2" style="background:#e9ecef">عەرەبانەی هاتوو (دخول)</th>
+                                </tr>
+                                <tr>
+                                    <th style="width:20%">جۆری خشت</th>
+                                    <th style="width:15%">ژمارە</th>
+                                    <th style="width:20%">جۆری خشت</th>
+                                    <th style="width:15%">ژمارە</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row g-2 mt-1">
+                    <div class="col-8">
+                        <table class="report-table">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Oil Balance</th>
+                                    <th>کۆی گشتی عەرەبانە</th>
+                                    <th>ژمارەی خشت بۆ یەک عەرەبانە</th>
+                                    <th>ژمارەی خشتی بەرهەمهێنراو</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td rowspan="3" style="vertical-align: middle;"><input type="number" id="k_oil_bal" class="fw-bold fs-6" style="height: 100%; text-align: center;"></td>
+                                    <td rowspan="3" style="vertical-align: middle;"><input type="number" id="k_tot_cars" class="fw-bold fs-6" style="height: 100%; text-align: center;"></td>
+                                    <td><input type="text" id="k_pcs_car" class="fw-bold fs-6" placeholder="--"></td>
+                                    <td><input type="text" id="k_tot_unload" class="fw-bold fs-6" placeholder="--"></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" id="k_pcs_car_2" class="fw-bold fs-6" placeholder="--"></td>
+                                    <td><input type="text" id="k_tot_unload_2" class="fw-bold fs-6" placeholder="--"></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" id="k_pcs_car_3" class="fw-bold fs-6" placeholder="--"></td>
+                                    <td><input type="text" id="k_tot_unload_3" class="fw-bold fs-6" placeholder="--"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-4">
+                        <table class="report-table"><tr><td class="bg-light fw-bold" style="font-size:0.7rem">پاککردنەوەی عەرەبانەکان</td><td><select id="k_clean_cart">${empOptions}</select></td></tr><tr><td class="bg-light fw-bold" style="font-size:0.7rem">گسک دانی فڕن و درایەر</td><td><select id="k_sweep_kiln">${empOptions}</select></td></tr></table>
+                    </div>
+                </div>
+                
+                <!-- Modern Signature -->
+                ${SIGNATURE_TEMPLATE}
+                
+                </div> <!-- End print-full-height -->
+            `;
+                wrapper.innerHTML = html;
+
+                if (preserveState && Object.keys(savedData).length > 0) {
+                    setTimeout(() => {
+                        for (const [key, val] of Object.entries(savedData)) {
+                            const el = document.getElementById(key);
+                            if (el) {
+                                if (el.type === 'checkbox') el.checked = val;
+                                else el.value = val;
+                            }
+                        }
+                    }, 0);
+                }
+            }
+
+            window.autoFillType = function (el, typeSuffix, maxRows) {
+                const val = el.value;
+                if (!val) return;
+                const currentId = el.id;
+                const parts = currentId.split('_');
+                const currentRowNum = parseInt(parts[1].substring(1));
+                for (let i = currentRowNum + 1; i <= maxRows; i++) {
+                    const nextId = `k_r${i}_${typeSuffix}`;
+                    const nextEl = document.getElementById(nextId);
+                    if (nextEl && (nextEl.value === "" || nextEl.value === "Select...")) {
+                        nextEl.value = val;
+                    }
+                }
+            };
+
+            // --- PREPARATION ---
+            // --- PREPARATION ---
+            function renderPreparationTable(wrapper) {
+                const prepEmps = REPORT_CONFIG.preparation || [];
+                let empOptions = `<option value="">Select...</option>`;
+                prepEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+
+                const dateValue = document.getElementById('reportDate').value;
+
+                // CHANGED: Stacking shifts vertically (col-12) for better printing
+                const html = `
+                <div class="print-full-height">
+                ${REPORT_HEADER_TEMPLATE('بەشی ئامادەکردنی خۆڵ', dateValue)}
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="shift-box bg-s1">
+                            <div class="shift-header">شیفتی یەکەم (08:00 - 16:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr><td style="width:15%" class="fw-bold">ناوى کارمەند</td><td colspan="3"><select id="p_s1_emp1">${empOptions}</select></td></tr>
+                                <tr><td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td><td colspan="3"><input type="text" id="p_s1_dur" onchange="calcPrepTotals()" placeholder="نموونە: 6:30 یان 8:00" style="font-weight:bold;"></td></tr>
+                                <tr><td class="fw-bold">خۆڵی ئامادەکراو (طەن)</td><td colspan="3"><input type="number" id="p_s1_tons" onchange="calcPrepTotals()" placeholder="0"></td></tr>
+                                <tr><td class="fw-bold">تێبینی</td><td colspan="3"><textarea id="p_s1_note" rows="5"></textarea></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="shift-box bg-s2">
+                            <div class="shift-header">شیفتی دووەم (16:00 - 00:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr><td style="width:15%" class="fw-bold">ناوى کارمەند</td><td colspan="3"><select id="p_s2_emp1">${empOptions}</select></td></tr>
+                                <tr><td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td><td colspan="3"><input type="text" id="p_s2_dur" onchange="calcPrepTotals()" placeholder="نموونە: 6:00" style="font-weight:bold;"></td></tr>
+                                <tr><td class="fw-bold">خۆڵی ئامادەکراو (طەن)</td><td colspan="3"><input type="number" id="p_s2_tons" onchange="calcPrepTotals()" placeholder="0"></td></tr>
+                                <tr><td class="fw-bold">تێبینی</td><td colspan="3"><textarea id="p_s2_note" rows="5"></textarea></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="shift-box bg-s3">
+                            <div class="shift-header">شیفتی سێیەم (00:00 - 08:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr><td style="width:15%" class="fw-bold">ناوى کارمەند</td><td colspan="3"><select id="p_s3_emp1">${empOptions}</select></td></tr>
+                                <tr><td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td><td colspan="3"><input type="text" id="p_s3_dur" onchange="calcPrepTotals()" placeholder="نموونە: 5:30 یان 6:00" style="font-weight:bold;"></td></tr>
+                                <tr><td class="fw-bold">خۆڵی ئامادەکراو (طەن)</td><td colspan="3"><input type="number" id="p_s3_tons" onchange="calcPrepTotals()" placeholder="0"></td></tr>
+                                <tr><td class="fw-bold">تێبینی</td><td colspan="3"><textarea id="p_s3_note" rows="5"></textarea></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                         <div class="p-3 bg-light rounded">
+                            <h6 class="text-center fw-bold pb-2">پوختەی ڕۆژانە</h6>
+                            <div class="row text-center">
+                                <div class="col-6"><div class="text-muted small fw-bold">کۆی گشتی کاتژمێری کارکردن</div><input type="text" id="p_total_hours" class="form-control text-center fw-bold fs-5 bg-transparent border-0"></div>
+                                <div class="col-6"><div class="text-muted small fw-bold">کۆی گشتی خۆڵی ئامادەکراو (طەن)</div><input type="number" id="p_total_tons" class="form-control text-center fw-bold fs-5 bg-transparent border-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modern Signature -->
+                ${SIGNATURE_TEMPLATE}
+                </div> <!-- End print-full-height -->
+            `;
+                wrapper.innerHTML = html;
+            }
+
+            function calcPrepTotals() {
+                const parseDur = (val) => {
+                    if (!val) return 0;
+                    val = val.toString().replace('.', ':');
+                    const parts = val.split(':');
+                    const h = parseInt(parts[0]) || 0;
+                    const m = parseInt(parts[1]) || 0;
+                    return h * 60 + m;
+                };
+                const minsToTime = (m) => `${Math.floor(m / 60)}:${(m % 60).toString().padStart(2, '0')}`;
+
+                const d1 = parseDur(document.getElementById('p_s1_dur').value);
+                const d2 = parseDur(document.getElementById('p_s2_dur').value);
+                const d3 = parseDur(document.getElementById('p_s3_dur').value);
+
+                // Auto calculate tons: 110 tons per hour (1.833 tons per min)
+                const t1 = (d1 / 60) * 110;
+                const t2 = (d2 / 60) * 110;
+                const t3 = (d3 / 60) * 110;
+
+                document.getElementById('p_s1_tons').value = Math.round(t1);
+                document.getElementById('p_s2_tons').value = Math.round(t2);
+                document.getElementById('p_s3_tons').value = Math.round(t3);
+
+                document.getElementById('p_total_tons').value = Math.round(t1 + t2 + t3);
+                document.getElementById('p_total_hours').value = minsToTime(d1 + d2 + d3);
+            }
+
+            // --- UNSETTING (داگرتن) ---
+            function renderUnsettingTable(wrapper, preserveState = false) {
+                let savedData = {};
+                let savedManualState = {};
+                if (preserveState) {
+                    const existingInputs = wrapper.querySelectorAll('input, select, textarea');
+                    existingInputs.forEach(el => {
+                        if (el.id) {
+                            savedData[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+                            if (el.dataset.manual === 'true') savedManualState[el.id] = true;
+                        }
+                    });
+                }
+
+                const unsettingEmps = REPORT_CONFIG.unsetting || [];
+                let empOptions = `<option value="">Select...</option>`;
+                unsettingEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+
+                const dateValue = document.getElementById('reportDate').value;
+                const s1EndCount = 11;
+                const s2EndCount = 22;
+                const s3EndCount = 33;
+
+                let rowsHtml = '';
+
+                for (let i = 1; i <= 33; i++) {
+                    const rid = `r${i}`;
+                    const valStart = (preserveState && savedData[`${rid}_start`]) ? savedData[`${rid}_start`] : '';
+                    const valEnd = (preserveState && savedData[`${rid}_end`]) ? savedData[`${rid}_end`] : '';
+                    const valCart = (preserveState && savedData[`${rid}_cart`]) ? savedData[`${rid}_cart`] : '';
+                    const valCracks = (preserveState && savedData[`${rid}_cracks`]) ? savedData[`${rid}_cracks`] : '';
+
+                    let colorClass = '';
+                    if (i <= s1EndCount) colorClass = 'row-s1';
+                    else if (i <= s2EndCount) colorClass = 'row-s2';
+                    else colorClass = 'row-s3';
+
+                    rowsHtml += `<tr class="${colorClass} compact-rows"><td><input type="time" class="fw-bold time-input" value="${valStart}" id="${rid}_start" style="text-align:center;"></td><td><input type="time" id="${rid}_end" value="${valEnd}" class="time-input" style="text-align:center;"></td><td><input type="text" id="${rid}_cart" value="${valCart}" onchange="updateUnsettingTotals()"></td><td><input type="number" id="${rid}_cracks" value="${valCracks}" placeholder="-"></td></tr>`;
+                }
+
+
+                const html = `
+                <div class="print-full-height">
+                ${REPORT_HEADER_TEMPLATE('بەشی داگرتن', dateValue)}
+                <!-- Date bar removed -->
+                <div class="row g-2">
+                    <div class="col-6">
+                         <div class="shift-box bg-s1"><div class="shift-header"><span>شیفتی یەکەم (08:00 - 16:00)</span></div><table class="report-table expanded-rows" style="border:none;"><tr><td style="width:40%">کۆی عەرەبانە</td><td><input type="number" id="s1_carts" class="fw-bold fs-6" onchange="this.dataset.manual='true'; updateUnsettingTotals()"></td></tr><tr><td>بالێتی داگیراو</td><td><input type="number" id="s1_pallets" onchange="updateUnsettingTotals()"></td></tr><tr><td>ژمارەی کۆڵۆم</td><td><input type="number" id="s1_columns"></td></tr><tr><td colspan="2" style="padding:2px;"><div class="d-flex gap-1"><select id="s1_e1" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select><select id="s1_e2" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select></div></td></tr><tr><td colspan="2"><textarea id="s1_note" rows="2" placeholder="تێبینی..."></textarea></td></tr></table></div>
+                        <div class="shift-box bg-s2"><div class="shift-header"><span>شیفتی دووەم (16:00 - 00:00)</span></div><table class="report-table expanded-rows" style="border:none;"><tr><td style="width:40%">کۆی عەرەبانە</td><td><input type="number" id="s2_carts" class="fw-bold fs-6" onchange="this.dataset.manual='true'; updateUnsettingTotals()"></td></tr><tr><td>بالێتی داگیراو</td><td><input type="number" id="s2_pallets" onchange="updateUnsettingTotals()"></td></tr><tr><td>ژمارەی کۆڵۆم</td><td><input type="number" id="s2_columns"></td></tr><tr><td colspan="2" style="padding:2px;"><div class="d-flex gap-1"><select id="s2_e1" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select><select id="s2_e2" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select></div></td></tr><tr><td colspan="2"><textarea id="s2_note" rows="2" placeholder="تێبینی..."></textarea></td></tr></table></div>
+                        <div class="shift-box bg-s3"><div class="shift-header"><span>شیفتی سێیەم (00:00 - 08:00)</span></div><table class="report-table expanded-rows" style="border:none;"><tr><td style="width:40%">کۆی عەرەبانە</td><td><input type="number" id="s3_carts" class="fw-bold fs-6" onchange="this.dataset.manual='true'; updateUnsettingTotals()"></td></tr><tr><td>بالێتی داگیراو</td><td><input type="number" id="s3_pallets" onchange="updateUnsettingTotals()"></td></tr><tr><td>ژمارەی کۆڵۆم</td><td><input type="number" id="s3_columns"></td></tr><tr><td colspan="2" style="padding:2px;"><div class="d-flex gap-1"><select id="s3_e1" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select><select id="s3_e2" style="flex:1; font-size:0.7rem; padding:2px;">${empOptions}</select></div></td></tr><tr><td colspan="2"><textarea id="s3_note" rows="2" placeholder="تێبینی..."></textarea></td></tr></table></div>
+                        <div class="shift-box bg-white mt-2"><div class="shift-header bg-light">وردەکاری تەکنیکی</div><table class="report-table expanded-rows" style="border:none;"><tr><td>کێشی سەروەرە</td><td><input type="number" id="w_top"></td></tr><tr><td>کێشی ناوەڕاست</td><td><input type="number" id="w_mid"></td></tr><tr><td>کێشی خوارەوە</td><td><input type="number" id="w_bot"></td></tr><tr><td>ژ. کۆڵۆم</td><td><input type="number" id="tech_col"></td></tr><tr><td>سەر زنجیر</td><td><input type="number" id="tech_row"></td></tr></table></div>
+                    </div>
+                    <div class="col-6">
+                        <table class="report-table"><thead><tr><th style="width:25%">دەستپێک</th><th style="width:25%">تەواوبوون</th><th style="width:20%">ژ. عەرەبانە</th><th style="width:20%">درز</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr style="background-color:#e9ecef; font-weight:bold;"><td colspan="2" class="text-end">کۆی گشتی بالێت:</td><td colspan="2"><input type="number" id="total_pallets" readonly></td></tr><tr style="background-color:#e9ecef; font-weight:bold;"><td colspan="2" class="text-end">کۆی گشتی عەرەبانە:</td><td colspan="2"><input type="number" id="total_carts" onchange="this.dataset.manual='true'"></td></tr></tfoot></table>
+                    </div>
+                </div>
+                
+                <!-- Modern Signature -->
+                ${SIGNATURE_TEMPLATE}
+                </div>
+                `;
+                wrapper.innerHTML = html;
+
+                // 2. RESTORE DATA LOGIC
+                // After HTML generation, put values back into inputs
+                if (preserveState) {
+                    // Short timeout to ensure DOM is ready
+                    setTimeout(() => {
+                        for (const [key, val] of Object.entries(savedData)) {
+                            const el = document.getElementById(key);
+                            if (el) {
+                                if (el.type === 'checkbox') el.checked = val;
+                                else el.value = val;
+                                if (savedManualState[key]) el.dataset.manual = 'true';
+                            }
+                        }
+
+                        // Detect manual overrides from DB load (mismatch hack)
+                        // Important: Run this BEFORE updateUnsettingTotals
+                        ['s1', 's2', 's3'].forEach(s => {
+                            const cartInput = document.getElementById(`${s}_carts`);
+                            if (cartInput && cartInput.value) {
+                                let c = 0;
+                                document.querySelectorAll(`tr.row-${s} input[id$="_cart"]`).forEach(inp => { if (inp.value.trim() !== '') c++ });
+                                const currentVal = parseInt(cartInput.value);
+                                if (!isNaN(currentVal) && currentVal !== c) {
+                                    cartInput.dataset.manual = 'true';
+                                }
+                            }
+                        });
+
+                        // Detect manual Grand Total
+                        const totalInput = document.getElementById('total_carts');
+                        if (totalInput && totalInput.value) {
+                            const s1 = parseInt(document.getElementById('s1_carts')?.value || 0);
+                            const s2 = parseInt(document.getElementById('s2_carts')?.value || 0);
+                            const s3 = parseInt(document.getElementById('s3_carts')?.value || 0);
+                            const calcTotal = s1 + s2 + s3;
+                            if (parseInt(totalInput.value) !== calcTotal) {
+                                totalInput.dataset.manual = 'true';
+                            }
+                        }
+
+                        updateUnsettingTotals(); // Recalculate totals
+                    }, 10);
+                } else {
+                    updateUnsettingTotals();
+                }
+            }
+            function updateUnsettingTotals() {
+                const s1p = parseFloat(document.getElementById('s1_pallets').value) || 0;
+                const s2p = parseFloat(document.getElementById('s2_pallets').value) || 0;
+                const s3p = parseFloat(document.getElementById('s3_pallets').value) || 0;
+                document.getElementById('total_pallets').value = s1p + s2p + s3p;
+                let s1c = 0, s2c = 0, s3c = 0;
+                document.querySelectorAll('tr.row-s1 input[id$="_cart"]').forEach(inp => { if (inp.value.trim() !== '') s1c++; });
+                document.querySelectorAll('tr.row-s2 input[id$="_cart"]').forEach(inp => { if (inp.value.trim() !== '') s2c++; });
+                document.querySelectorAll('tr.row-s3 input[id$="_cart"]').forEach(inp => { if (inp.value.trim() !== '') s3c++; });
+
+                const s1Input = document.getElementById('s1_carts');
+                const s2Input = document.getElementById('s2_carts');
+                const s3Input = document.getElementById('s3_carts');
+
+                if (s1Input && !s1Input.dataset.manual) s1Input.value = s1c;
+                if (s2Input && !s2Input.dataset.manual) s2Input.value = s2c;
+                if (s3Input && !s3Input.dataset.manual) s3Input.value = s3c;
+
+                const total = (parseInt(s1Input.value) || 0) + (parseInt(s2Input.value) || 0) + (parseInt(s3Input.value) || 0);
+                const totalInput = document.getElementById('total_carts');
+                if (totalInput && totalInput.dataset.manual !== 'true') {
+                    totalInput.value = total;
+                }
+            }
+
+            // --- CRUSHING (هاڕین) - UPDATED COLORFUL LAYOUT ---
+            function renderCrushingTable(wrapper) {
+                const crushingEmps = REPORT_CONFIG.crushing || [];
+                let empOptions = `<option value="">...</option>`;
+                crushingEmps.forEach(name => empOptions += `<option value="${name}">${name}</option>`);
+                let percentOptions = `<option value="">%</option>`;
+                for (let i = 0; i <= 100; i += 5) percentOptions += `<option value="${i}%">${i}%</option>`;
+                const dateValue = document.getElementById('reportDate').value;
+
+                // CHANGED: Redesigned to use Shift Boxes (Cards) instead of one big table, matching preparation UI
+                const html = `
+                <div class="print-full-height">
+                ${REPORT_HEADER_TEMPLATE('بەشی هاڕین', dateValue)}
+
+                <div class="row g-3 crushing-container">
+                    <div class="col-12">
+                        <div class="shift-box bg-s1">
+                            <div class="shift-header">شیفتی یەکەم (08:00 - 16:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr>
+                                    <td style="width:15%" class="fw-bold">ناوى کارمەند</td>
+                                    <td colspan="3"><select id="c_s1_emp">${empOptions}</select></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">خێرایی بۆکسفیدەر</td>
+                                    <td colspan="3"><input type="number" id="c_s1_speed" placeholder="%"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td>
+                                    <td colspan="3"><input type="text" id="c_s1_dur" onchange="calcCrush()" style="font-weight:bold;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">بڕی خۆڵی هاڕدراو (طەن)</td>
+                                    <td colspan="3"><input type="number" id="c_s1_ton" onchange="calcCrush()" placeholder="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تێبینی</td>
+                                    <td colspan="3"><textarea id="c_s1_note" rows="5"></textarea></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="shift-box bg-s2">
+                            <div class="shift-header">شیفتی دووەم (16:00 - 00:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr>
+                                    <td style="width:15%" class="fw-bold">ناوى کارمەند</td>
+                                    <td colspan="3"><select id="c_s2_emp">${empOptions}</select></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">خێرایی بۆکسفیدەر</td>
+                                    <td colspan="3"><input type="number" id="c_s2_speed" placeholder="%"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td>
+                                    <td colspan="3"><input type="text" id="c_s2_dur" onchange="calcCrush()" style="font-weight:bold;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">بڕی خۆڵی هاڕدراو (طەن)</td>
+                                    <td colspan="3"><input type="number" id="c_s2_ton" onchange="calcCrush()" placeholder="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تێبینی</td>
+                                    <td colspan="3"><textarea id="c_s2_note" rows="5"></textarea></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="shift-box bg-s3">
+                            <div class="shift-header">شیفتی سێیەم (00:00 - 08:00)</div>
+                            <table class="report-table expanded-rows" style="border:none;">
+                                <tr>
+                                    <td style="width:15%" class="fw-bold">ناوى کارمەند</td>
+                                    <td colspan="3"><select id="c_s3_emp">${empOptions}</select></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">خێرایی بۆکسفیدەر</td>
+                                    <td colspan="3"><input type="number" id="c_s3_speed" placeholder="%"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">ماوەی کارکردن (کاتژمێر)</td>
+                                    <td colspan="3"><input type="text" id="c_s3_dur" onchange="calcCrush()" style="font-weight:bold;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">بڕی خۆڵی هاڕدراو (طەن)</td>
+                                    <td colspan="3"><input type="number" id="c_s3_ton" onchange="calcCrush()" placeholder="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تێبینی</td>
+                                    <td colspan="3"><textarea id="c_s3_note" rows="5"></textarea></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                         <div class="p-3 bg-light rounded">
+                            <h6 class="text-center fw-bold pb-2">پوختەی ڕۆژانە</h6>
+                            <div class="row text-center">
+                                <div class="col-6"><div class="text-muted small fw-bold">کۆی گشتی کاتژمێری کارکردن</div><input type="text" id="c_total_dur" class="form-control text-center fw-bold fs-5 bg-transparent border-0" readonly></div>
+                                <div class="col-6"><div class="text-muted small fw-bold">کۆی گشتی خۆڵی هاڕدراو (طەن)</div><input type="number" id="c_total_ton" class="form-control text-center fw-bold fs-5 bg-transparent border-0" readonly></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modern Signature -->
+                ${SIGNATURE_TEMPLATE}
+                </div>
+             `;
+                wrapper.innerHTML = html;
+            }
+            function calcCrush() {
+                const toMins = (t) => { if (!t) return 0; const [h, m] = t.split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+                const toTime = (m) => { const h = Math.floor(m / 60); const mn = m % 60; return `${h}:${mn.toString().padStart(2, '0')} `; };
+                const d1 = toMins(document.getElementById('c_s1_dur').value); const d2 = toMins(document.getElementById('c_s2_dur').value); const d3 = toMins(document.getElementById('c_s3_dur').value);
+                document.getElementById('c_total_dur').value = toTime(d1 + d2 + d3);
+                const t1 = parseFloat(document.getElementById('c_s1_ton').value) || 0; const t2 = parseFloat(document.getElementById('c_s2_ton').value) || 0; const t3 = parseFloat(document.getElementById('c_s3_ton').value) || 0;
+                document.getElementById('c_total_ton').value = t1 + t2 + t3;
+            }
+
+            async function saveReport(status = 'draft', isReject = false, silent = false) {
+                // Prevent editing submitted or approved reports (except for approve/reject actions)
+                if (currentReportData) {
+                    const currentStatus = currentReportData.status;
+                    // Only allow approve/reject actions on submitted reports, not editing
+                    if (currentStatus === 'pending_admin' && status === 'draft' && !isReject) {
+                        showToast('Cannot edit submitted report. Please approve or reject it first.', 'warning');
+                        return;
+                    }
+                    // Cannot edit approved reports at all
+                    if (currentStatus === 'approved' && status !== 'approved' && !isReject) {
+                        showToast('Cannot edit approved report.', 'warning');
+                        return;
+                    }
+                }
+
+                // RESTRICTION CHECK: Prevent restricted users from submitting to admin
+                if (status === 'pending_admin') {
+                    const restrictedUsers = ['cutemp', 'kilnemp'];
+                    const username = currentUser.username ? currentUser.username.toLowerCase() : '';
+                    if (restrictedUsers.includes(username)) {
+                        showToast("You are not authorized to submit reports to admin. Please just Save Draft.", "warning");
+                        return;
+                    }
+                }
+
+                const date = document.getElementById('reportDate').value;
+                const dept = document.getElementById('departmentSelect').value;
+                const reportId = `${dept}_${date}_${Date.now()} `;
+                const inputs = document.getElementById('tableWrapper').querySelectorAll('input, select, textarea');
+                let tableData = {};
+
+                inputs.forEach(inp => {
+                    if (inp.id) {
+                        // Checkbox handling logic
+                        if (inp.type === 'checkbox') {
+                            tableData[inp.id] = inp.checked;
+                        } else {
+                            let val = inp.value;
+                            // TIME FORMAT FIX: Force HH:MM for time inputs
+                            if (inp.type === 'time' && val && typeof val === 'string') {
+                                if (val.length === 4 && val.indexOf(':') === 1) {
+                                    val = "0" + val;
+                                }
+                            }
+                            tableData[inp.id] = val;
+                        }
+                    }
+                });
+
+                if (dept === 'klin') {
+                    const rowsSetting = document.getElementById('k_rows_setting');
+                    if (rowsSetting) {
+                        tableData['k_rows_setting'] = rowsSetting.value;
+                    }
+                }
+
+                // DOUBLE CHECK FOR NEW REPORTS (IF NOT UPDATING EXISTING)
+                if (!currentReportId) {
+                    try {
+                        const snap = await db.collection('dailyReports')
+                            .where('date', '==', date)
+                            .where('department', '==', dept)
+                            .get();
+
+                        if (!snap.empty) {
+                            alert(`Error: A report already exists for ${formatDept(dept)} on ${date}.`);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Error in save existence check:", e);
+                    }
+                }
+
+                const finalReportId = currentReportId || reportId;
+
+                // Handle Rejection
+                let finalStatus = status;
+                let rejectionReason = (currentReportData && currentReportData.rejectionReason) ? currentReportData.rejectionReason : '';
+
+                if (isReject) {
+                    const reason = prompt("تکایە هۆکاری ڕەتکردنەوە بنووسە / Please enter rejection reason:\n(This will be visible to the supervisor)", rejectionReason);
+                    if (reason === null) return; // Cancelled
+                    if (reason.trim() === "") {
+                        alert("هۆکاری ڕەتکردنەوە پێویستە / Rejection reason is required.");
+                        return;
+                    }
+                    rejectionReason = reason;
+                    finalStatus = 'draft';
+                }
+
+                const payload = {
+                    id: finalReportId,
+                    department: dept,
+                    date: date,
+                    supervisor: (currentReportData && currentReportData.supervisor) ? currentReportData.supervisor : currentUser.username,
+                    status: finalStatus,
+                    rejectionReason: rejectionReason,
+                    updatedAt: new Date().toISOString(),
+                    tableData: tableData
+                };
+
+                // First time creation timestamps
+                if (!currentReportId) {
+                    payload.createdAt = new Date().toISOString();
+                }
+
+                // Workflow timestamps/users
+                if (finalStatus === 'pending_admin' && (!currentReportData || currentReportData.status === 'draft')) {
+                    payload.submittedAt = new Date().toISOString();
+                }
+                if (finalStatus === 'approved') {
+                    payload.approvedBy = currentUser.username;
+                    payload.approvedAt = new Date().toISOString();
+                }
+
+                try {
+                    if (currentReportId) {
+                        await db.collection('dailyReports').doc(finalReportId).update(payload);
+                        if (!silent) showToast('Report Updated Successfully', 'success');
+                    } else {
+                        await db.collection('dailyReports').doc(finalReportId).set(payload);
+                        currentReportId = finalReportId;
+                        if (!silent) showToast('Report Saved Successfully', 'success');
+                    }
+
+                    if (silent) {
+                        const saveBtn = document.querySelector('button[onclick="saveReport(\'draft\')"]');
+                        if (saveBtn) {
+                            const originalText = saveBtn.innerHTML;
+                            saveBtn.innerHTML = '<i class="bi bi-check2"></i> Saved';
+                            saveBtn.classList.remove('btn-primary');
+                            saveBtn.classList.add('btn-success');
+                            setTimeout(() => {
+                                saveBtn.innerHTML = originalText;
+                                saveBtn.classList.remove('btn-success');
+                                saveBtn.classList.add('btn-primary');
+                            }, 1500);
+                        }
+                    }
+
+                    // Update local state immediately so UI reflects changes
+                    currentReportData = { ...currentReportData, ...payload };
+                    updatePrintFooter(currentReportData);
+                    renderActionButtons(finalStatus);
+                    updateInputsState(finalStatus);
+
+                    // If it was an approval action, specifically ensure the approvedBy name shows
+                    if (finalStatus === 'approved') {
+                        document.querySelectorAll('.print-approved-by').forEach(el => el.innerText = getUserFullName(currentUser.username));
+                    }
+
+                    // Refresh history if open
+                    if (document.getElementById('historySection').classList.contains('active-view')) {
+                        loadHistoryData();
+                    }
+
+
+                    updatePrintFooter(currentReportData);
+
+                } catch (e) {
+                    console.error(e);
+                    showToast('Error saving report', 'danger');
+                }
+            }
+
+            async function handleLogout() {
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                }
+            }
+
+
+            async function startNewReport() {
+                const dateInput = document.getElementById('reportDate');
+                const deptSelect = document.getElementById('departmentSelect');
+                if (!dateInput.value) {
+                    alert("Please select a date first / تکایە سەرەتا بەروار دیاری بکە");
+                    dateInput.focus();
+                    return;
+                }
+
+                const date = dateInput.value;
+                const dept = deptSelect.value;
+
+                // CHECK IF REPORT ALREADY EXISTS FOR THIS DEPT + DATE
+                try {
+                    const snap = await db.collection('dailyReports')
+                        .where('date', '==', date)
+                        .where('department', '==', dept)
+                        .get();
+
+                    if (!snap.empty) {
+                        const existingReport = snap.docs[0].data();
+                        // If it's the same date and dept, don't allow creating a new one
+                        if (confirm(`ئەم ڕاپۆرتە پێشتر دروستکراوە بۆ ئەم بەشە و ئەم بەروارە.\nReport already exists for ${formatDept(dept)} on ${date}.\n\nWould you like to view/edit the existing report instead?`)) {
+                            loadReportForView(existingReport, snap.docs[0].id);
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error checking existing reports:", e);
+                }
+
+                currentReportId = null;
+                currentReportData = null; // Clear data
+                isFromHistory = false;
+                generateReport();
+
+                document.getElementById('reportContainer').style.display = 'block';
+
+                // Reset UI for new draft
+                renderActionButtons('draft');
+                updateInputsState('draft');
+                updatePrintFooter(null);
+
+                // HIDE CONTROL PANEL after generation
+                const cp = document.getElementById('reportControlPanel');
+                if (cp) cp.style.display = 'none';
+            }
+
+            async function showPendingReportsModal() {
+                const modal = new bootstrap.Modal(document.getElementById('pendingReportsModal'));
+                const list = document.getElementById('pendingReportsList');
+                const loading = document.getElementById('pendingLoading');
+                const noMsg = document.getElementById('noPendingMessage');
+
+                list.innerHTML = '';
+                loading.style.display = 'block';
+                noMsg.style.display = 'none';
+                modal.show();
+
+                try {
+                    const snap = await db.collection('dailyReports')
+                        .where('status', '==', 'pending_admin')
+                        .get();
+
+                    loading.style.display = 'none';
+
+                    if (snap.empty) {
+                        noMsg.style.display = 'block';
+                        return;
+                    }
+
+                    // Sort locally by date descending
+                    const reports = [];
+                    snap.forEach(doc => reports.push({ id: doc.id, ...doc.data() }));
+                    reports.sort((a, b) => b.date.localeCompare(a.date));
+
+                    reports.forEach(r => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="fw-bold">${r.date}</td>
+                            <td><span class="badge bg-info text-dark">${formatDept(r.department)}</span></td>
+                            <td>${getUserFullName(r.supervisor)}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-primary me-2" onclick="viewPendingReport('${r.id}')">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="quickApproveReport('${r.id}', event)">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                            </td>
+                        `;
+                        list.appendChild(row);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    loading.style.display = 'none';
+                    alert("Error loading pending reports.");
+                }
+            }
+
+            async function viewPendingReport(id) {
+                const modalEl = document.getElementById('pendingReportsModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                const doc = await db.collection('dailyReports').doc(id).get();
+                if (doc.exists) {
+                    loadReportForView(doc.data(), id);
+                }
+            }
+
+            async function quickApproveReport(id, event) {
+                if (!confirm("Are you sure you want to approve this report?")) return;
+
+                const btn = event.currentTarget;
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+
+                try {
+                    await db.collection('dailyReports').doc(id).update({
+                        status: 'approved',
+                        approvedBy: currentUser.username,
+                        approvedAt: new Date().toISOString()
+                    });
+
+                    showToast("Report approved successfully!", "success");
+                    btn.closest('tr').remove();
+
+                    const list = document.getElementById('pendingReportsList');
+                    if (list.children.length === 0) {
+                        document.getElementById('noPendingMessage').style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showToast("Error approving report.", "danger");
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+
+            function showToast(msg, type) {
+                const container = document.querySelector('.toast-container');
+                const el = document.createElement('div');
+                el.className = `toast show align-items-center text-white bg-${type} border-0 shadow`;
+                el.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }
+
+            // ---------------------------------------------------------
+            //  ARROW KEY NAVIGATION FOR TABLES (Added Feature)
+            // ---------------------------------------------------------
+            document.addEventListener('keydown', function (e) {
+                // 1. Only run if we are inside an input, select, or textarea within a table
+                if (!e.target.matches('table input, table select, table textarea')) return;
+
+                // 2. Only run for arrow keys
+                const key = e.key;
+                if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) return;
+
+                const currentInput = e.target;
+                const currentCell = currentInput.closest('td');
+                const currentRow = currentCell.closest('tr');
+
+                // Safety check
+                if (!currentCell || !currentRow) return;
+
+                const cellIndex = currentCell.cellIndex;
+                let targetInput = null;
+
+                // 3. Determine the target based on the key pressed
+                if (key === 'ArrowLeft') {
+                    // Move to previous cell in the same row
+                    const prevCell = currentRow.cells[cellIndex + 1];
+                    if (prevCell) {
+                        targetInput = prevCell.querySelector('input, select, textarea');
+                    }
+                }
+                else if (key === 'ArrowRight') {
+                    // Move to next cell in the same row
+                    const nextCell = currentRow.cells[cellIndex - 1];
+                    if (nextCell) {
+                        targetInput = nextCell.querySelector('input, select, textarea');
+                    }
+                }
+                else if (key === 'ArrowUp') {
+                    // Move to the same column in the previous row
+                    const prevRow = currentRow.previousElementSibling;
+                    // Check if prevRow exists and has a cell at this index
+                    if (prevRow && prevRow.cells[cellIndex]) {
+                        targetInput = prevRow.cells[cellIndex].querySelector('input, select, textarea');
+                    }
+                }
+                else if (key === 'ArrowDown') {
+                    // Move to the same column in the next row
+                    const nextRow = currentRow.nextElementSibling;
+                    // Check if nextRow exists and has a cell at this index
+                    if (nextRow && nextRow.cells[cellIndex]) {
+                        targetInput = nextRow.cells[cellIndex].querySelector('input, select, textarea');
+                    }
+                }
+
+                // 4. If a valid target is found, focus it
+                if (targetInput) {
+                    e.preventDefault(); // Prevent default scrolling or number adjusting
+                    targetInput.focus();
+
+                    // Optional: Select the text in the new cell for easier overwriting
+                    if (targetInput.select && targetInput.type !== 'range') {
+                        targetInput.select();
+                    }
+                }
+            });
+            // ---------------------------------------------------------
+            //  TIME INPUT AUTO-FILL (Current Time on click/focus)
+            // ---------------------------------------------------------
+            document.addEventListener('focusin', function (e) {
+                if (e.target.tagName === 'INPUT' && (e.target.type === 'time' || e.target.classList.contains('time-input'))) {
+                    // Only fill if empty
+                    if (!e.target.value) {
+                        const now = new Date();
+                        const hh = String(now.getHours()).padStart(2, '0');
+                        const mm = String(now.getMinutes()).padStart(2, '0');
+                        e.target.value = `${hh}:${mm}`;
+
+                        // Trigger change/input listeners
+                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
+                        e.target.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+
+            // ---------------------------------------------------------
+            //  TIME INPUT MASKING (Universal)
+            // ---------------------------------------------------------
+            document.addEventListener('input', function (e) {
+                if (e.target.classList.contains('time-mask')) {
+                    var input = e.target;
+                    var val = input.value.replace(/[^0-9]/g, ''); // Remove non-numbers
+
+                    // Auto-insert colon
+                    if (val.length > 2) {
+                        val = val.substring(0, 2) + ':' + val.substring(2);
+                    }
+
+                    // Limit length to 5 (HH:mm)
+                    if (val.length > 5) {
+                        val = val.substring(0, 5);
+                    }
+
+                    input.value = val;
+                }
+            });
+
+            document.addEventListener('change', function (e) {
+                if (e.target.classList.contains('time-mask')) {
+                    var input = e.target;
+                    var val = input.value;
+                    // Simple validation: if incomplete, maybe clear or Warn?
+                    // For now, let's just let it save whatever (robustness > strictness) because user complained about deleting data.
+                }
+            });
+        </script>
+
+        <div class="global-footer no-print">
+            <img src="teg_logo.png" alt="TEG Logo" class="teg-logo-footer">
+            <div class="copyright-text">&copy; 2026 Asobrick Factory System</div>
+        </div>
+</body>
+
+</html>

@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - کۆبوونەوەکان</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="meeting.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header-bar">
+            <div class="header-title">
+                <h1><i class="bi bi-calendar-event me-2"></i>Meetings</h1>
+                <small>کۆبوونەوەکان</small>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="user-badge d-flex align-items-center gap-2 me-3" id="userInfo"
+                    style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; color: white;">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="fw-bold">User</span>
+                </div>
+                <a href="dashboard.html" class="btn-back"><i class="bi bi-arrow-right-circle-fill"></i> گەڕانەوە</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="card card-custom">
+            <div
+                class="card-header-custom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h4 class="card-title text-primary m-0 fw-bold"><i class="bi bi-calendar2-range me-2"></i> خشتەی
+                        کۆبوونەوەکان</h4>
+                    <p class="text-muted small m-0 mt-2">لێرەدا دەتوانیت سەرجەم کۆبوونەوەکانی کارگە بەڕێوەببەیت و
+                        ئەرشیفیان بکەیت.</p>
+                </div>
+                <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="openAddMeetingModal()"
+                    style="font-size: 0.95rem;">
+                    <i class="bi bi-plus-lg me-2"></i> زیادکردنی کۆبوونەوەی نوێ
+                </button>
+            </div>
+            <div class="card-body p-4 bg-light" style="border-radius: 0 0 20px 20px;">
+                <div class="table-responsive px-2" style="overflow-x: auto;">
+                    <table class="table table-custom align-middle text-center w-100" id="meetingsTable"
+                        style="min-width: 950px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%">ناوی کۆبوونەوە</th>
+                                <th style="width: 15%">بەروار و کات</th>
+                                <th style="width: 30%">بەشداربووان</th>
+                                <th style="width: 15%">ڕەوشی کۆبوونەوە</th>
+                                <th style="width: 15%">کردارەکان</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meetingsListBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div> داتا
+                                    باردەکرێت...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Meeting Modal -->
+    <div class="modal fade" id="addMeetingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header card-header-custom align-items-center">
+                    <h5 class="modal-title fw-bold text-primary m-0" id="addMeetingModalTitle"><i
+                            class="bi bi-calendar-plus me-2"></i>تۆمارکردنی کۆبوونەوەی نوێ
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 p-md-5 bg-light">
+                    <form id="meetingForm">
+                        <input type="hidden" id="edit_meeting_id">
+
+                        <div class="d-flex align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style="width: 45px; height: 45px;">
+                                <i class="bi bi-info-circle fs-5"></i>
+                            </div>
+                            <h5 class="text-primary fw-bold m-0">زانیارییە سەرەکییەکان (Primary)</h5>
+                        </div>
+
+                        <div class="row g-4 mb-5 bg-white p-4 rounded-4 shadow-sm border border-light-subtle">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-card-text me-1 text-primary"></i> ناونیشانی کۆبوونەوە</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_title" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-calendar-date me-1 text-primary"></i> بەرواری کۆبوونەوە</label>
+                                <input type="date" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_date" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-clock-history me-1 text-primary"></i> ماوەی کۆبوونەوە</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_duration" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-geo-alt-fill me-1 text-primary"></i> شوێنی کۆبوونەوە</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_location" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-person-badge-fill me-1 text-primary"></i> سەرپەرشتیاری
+                                    کۆبوونەوە</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_supervisor" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-tags-fill me-1 text-primary"></i> جۆری کۆبوونەوە</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_type" required>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-secondary small mb-2"><i
+                                        class="bi bi-pencil-fill me-1 text-primary"></i> ئامادەکاری کۆنوس</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 px-3 fs-6"
+                                    id="m_preparer" required>
+                            </div>
+                        </div>
+
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-success-subtle">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3"
+                                    style="width: 45px; height: 45px;">
+                                    <i class="bi bi-people-fill fs-5"></i>
+                                </div>
+                                <h5 class="text-success fw-bold m-0">دیاریکردنی ئامادەبوان</h5>
+                            </div>
+                            <small class="text-muted bg-white px-3 py-1 rounded-pill border shadow-sm">تەنها ناو دیاری
+                                بکە، پرسیارەکان دواتر دادەنرێن.</small>
+                        </div>
+
+                        <div id="attendeesSelectionContainer" class="row g-3 mb-3">
+                            <!-- Populated via JS -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-white border-top-0 px-4 py-3 d-flex justify-content-between"
+                    style="border-radius: 0 0 20px 20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.03);">
+                    <button type="button"
+                        class="btn btn-light border px-4 rounded-pill text-secondary fw-semibold hover-shadow"
+                        data-bs-dismiss="modal">پاشگەزبوونەوە</button>
+                    <button type="button" class="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm"
+                        id="btnSaveMeeting" onclick="createMeeting()">
+                        <i class="bi bi-cloud-arrow-up me-2"></i> دروستکردنی کۆبوونەوە (Create)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View / Edit Meeting Modal -->
+    <div class="modal fade" id="viewMeetingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header bg-info text-dark" style="border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title fw-bold" id="viewMeetingTitle"><i class="bi bi-eyeglass me-2"></i>وردەکاری
+                        کۆبوونەوە</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <input type="hidden" id="v_meetingId">
+
+                    <div class="border border-dark bg-white p-3 mb-4 mx-auto"
+                        style="font-family: 'Noto Sans Arabic', sans-serif; max-width: 1000px;"
+                        id="printableMeetingArea">
+                        <!-- Report Header -->
+                        <div class="text-center mb-3">
+                            <img src="logo.png" alt="Asobric Logo" style="max-height: 120px;">
+                        </div>
+
+                        <div class="bg-info bg-opacity-50 border border-dark text-center p-2 mb-3">
+                            <h5 class="fw-bold m-0" id="v_title_header">ناونیشانی کۆبوونەوە : </h5>
+                        </div>
+
+                        <div class="row g-0 text-center fw-bold border border-dark mb-3 small align-items-center">
+                            <div class="col-4 border-end border-dark p-2">ماوەی کۆبوونەوە : <span
+                                    id="v_duration"></span></div>
+                            <div class="col-4 border-end border-dark p-2">بەرواری کۆبوونەوە : <span id="v_date"></span>
+                            </div>
+                            <div class="col-4 p-2 d-flex justify-content-center align-items-center gap-2">
+                                وەڵامی کۆبوونەوەی (ژ :
+                                <div id="v_id_num_container">
+                                    <span id="v_id_num_span" class="d-none">--</span>
+                                    <input type="text" id="v_id_num_input"
+                                        class="form-control form-control-sm text-center fw-bold bg-transparent border-0 border-bottom border-dark rounded-0 d-print-none"
+                                        style="width: 80px; display:inline-block;" placeholder="ژمارە">
+                                    <span id="v_id_num_print" class="d-none d-print-inline">--</span>
+                                </div>
+                                )
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered border-dark text-end small align-middle mb-4 w-100">
+                            <tbody>
+                                <tr>
+                                    <td class="bg-info bg-opacity-25 fw-bold text-center" style="width: 25%">شوێنی
+                                        کۆبوونەوە</td>
+                                    <td id="v_location" style="width: 75%"></td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-info bg-opacity-25 fw-bold text-center">سەرپەرشتیاری کۆبوونەوە</td>
+                                    <td id="v_supervisor"></td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-info bg-opacity-25 fw-bold text-center">جۆری کۆبوونەوە</td>
+                                    <td id="v_type"></td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-info bg-opacity-25 fw-bold text-center">ئامادەکاری کۆنوس</td>
+                                    <td id="v_preparer"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered border-dark text-center align-middle small mb-4 w-100">
+                            <thead class="bg-info bg-opacity-25">
+                                <tr>
+                                    <th style="width: 30%">ئامادەبوان</th>
+                                    <th style="width: 40%">ناوی ئامادەبوان</th>
+                                    <th style="width: 30%">پۆست / بەش</th>
+                                </tr>
+                            </thead>
+                            <tbody id="v_attendeesListBasic">
+                                <!-- JS populate -->
+                            </tbody>
+                        </table>
+
+                        <div id="v_attendeesQuestionsContainer">
+                            <!-- JS populate questions tables -->
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-white d-flex justify-content-between" style="border-radius: 0 0 20px 20px;">
+                    <div>
+                        <button type="button" class="btn btn-outline-dark" onclick="window.print()"><i
+                                class="bi bi-printer"></i> چاپکردن</button>
+                        <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btnEditPrimaryInfo"
+                            onclick="openEditPrimaryInfoModal()">
+                            <i class="bi bi-pencil-square"></i> دەستکاریکردنی زانیارییەکان
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">داخستن</button>
+                        <button type="button" class="btn btn-danger px-4 d-none ms-2" id="btnEndMeeting"
+                            onclick="endMeeting()">
+                            <i class="bi bi-x-octagon me-2"></i> کۆتایی هاتنی کۆبوونەوە
+                        </button>
+                        <button type="button" class="btn btn-success px-5 fw-bold ms-2" id="btnUpdateMeeting"
+                            onclick="updateMeetingDetails()">
+                            <i class="bi bi-check-circle me-2"></i> پاشەکەوتکردنی گۆڕانکارییەکان
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- Firebase Init ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Wrap db.collection mapping for multi-line support like other pages
+        const originalCollection = db.collection.bind(db);
+        db.collection = function (path) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+            if (line === 'line1') {
+                const parts = path.split('/');
+                parts[0] = parts[0] + '_line1';
+                return originalCollection(parts.join('/'));
+            }
+            return originalCollection(path);
+        };
+
+        // --- Globals ---
+        const PREDEFINED_ATTENDEES = [
+            { id: 'admin', name: 'سعید برزۆ جلوند', role: 'بەڕێوبەری بەرهەم' },
+            { id: 'hemn', name: 'هێمن جبار حسن', role: 'لێپرسراوی هاڕین و ئامادەکردن' },
+            { id: 'himat', name: 'هیمەت جمعە مورشید', role: 'لێپرسراوی بڕین و بارکردن' },
+            { id: 'samdar', name: 'سامدار محمود محمد', role: 'لێپرسراوی داگرتن' },
+            { id: 'kiln', name: 'هێمن حسن صالح', role: 'لێپرسراوی فڕن' },
+            { id: 'shalaw', name: 'شاڵاو موستەفا عبداللە', role: 'لێپرسراوی میکانیک' },
+            { id: 'diyar', name: 'دیار فائق عبدالرحمن', role: 'ئەندازیاری میکانیک' },
+
+
+        ];
+
+        let currentMeetingData = null; // Store currently viewed meeting
+
+        // --- Auth & Access Check ---
+        let currentUser = null;
+        let isAdmin = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            isAdmin = (currentUser.role === 'admin' || currentUser.role === 'manager');
+
+            // Display Username in header
+            const userInfoSpan = document.querySelector('#userInfo span');
+            if (userInfoSpan) userInfoSpan.innerText = currentUser.username;
+
+            // Load today's date into modal by default
+            document.getElementById('m_date').valueAsDate = new Date();
+
+            // Initialize Modals
+            addMeetingModal = new bootstrap.Modal(document.getElementById('addMeetingModal'));
+            viewMeetingModal = new bootstrap.Modal(document.getElementById('viewMeetingModal'));
+
+            loadMeetings();
+        });
+
+        // --- Modals & Dynamic UI ---
+        let addMeetingModal;
+        let viewMeetingModal;
+
+        function openAddMeetingModal() {
+            if (!isAdmin) {
+                alert("تەنها ئەدمین / بەڕێوەبەر دەتوانێت کۆبوونەوە دروست بکات.");
+                return;
+            }
+
+            document.getElementById('meetingForm').reset();
+            document.getElementById('edit_meeting_id').value = '';
+            document.getElementById('m_date').valueAsDate = new Date();
+            document.getElementById('addMeetingModalTitle').innerHTML = '<i class="bi bi-calendar-plus me-2"></i>تۆمارکردنی کۆبوونەوەی نوێ';
+            document.getElementById('btnSaveMeeting').innerHTML = '<i class="bi bi-cloud-arrow-up me-2"></i> دروستکردنی کۆبوونەوە (Create)';
+
+            // Build Checkboxes for predefined attendees
+            const container = document.getElementById('attendeesSelectionContainer');
+            container.innerHTML = '';
+
+            PREDEFINED_ATTENDEES.forEach(att => {
+                const checked = (att.id === 'admin' || att.id === 'diyar') ? 'checked' : '';
+                container.innerHTML += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check form-switch bg-white border border-light-subtle shadow-sm p-3 rounded-4 cursor-pointer h-100 d-flex align-items-center transition-all hover-shadow">
+                            <input class="form-check-input ms-0 me-3 mt-0 fs-5" type="checkbox" role="switch" id="att_${att.id}" value="${att.id}" ${checked}>
+                            <label class="form-check-label w-100" for="att_${att.id}">
+                                <div class="fw-bold text-dark fs-6">${att.name}</div>
+                                <div class="text-secondary small mt-1"><i class="bi bi-briefcase-fill me-1 opacity-75"></i>${att.role}</div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+
+            addMeetingModal.show();
+        }
+
+        // --- Firebase Operations ---
+        async function createMeeting() {
+            if (!isAdmin) return;
+
+            const form = document.getElementById('meetingForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const title = document.getElementById('m_title').value;
+            const date = document.getElementById('m_date').value;
+            const duration = document.getElementById('m_duration').value;
+            const location = document.getElementById('m_location').value;
+            const supervisor = document.getElementById('m_supervisor').value;
+            const type = document.getElementById('m_type').value;
+            const preparer = document.getElementById('m_preparer').value;
+
+            const editId = document.getElementById('edit_meeting_id').value;
+
+            // Collect selected attendees
+            const attendees = [];
+            PREDEFINED_ATTENDEES.forEach(att => {
+                const cb = document.getElementById(`att_${att.id}`);
+                if (cb && cb.checked) {
+
+                    // If editing, try to preserve existing topics for this attendee
+                    let existingTopics = [{ question: "", answer: "" }];
+                    if (editId && currentMeetingData && currentMeetingData.attendees) {
+                        const existingAtt = currentMeetingData.attendees.find(a => a.username === att.id);
+                        if (existingAtt && existingAtt.topics) {
+                            existingTopics = existingAtt.topics;
+                        }
+                    }
+
+                    attendees.push({
+                        username: att.id,
+                        name: att.name,
+                        role: att.role,
+                        topics: existingTopics
+                    });
+                }
+            });
+
+            if (attendees.length === 0) {
+                alert("تکایە لایەنی کەم یەک ئامادەبوو دیاری بکە.");
+                return;
+            }
+            const btnSave = document.getElementById('btnSaveMeeting');
+            btnSave.disabled = true;
+            btnSave.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> جارێ سەیڤ دەبێت...`;
+
+            const meetingData = {
+                title: title,
+                date: date,
+                duration: duration,
+                location: location,
+                supervisor: supervisor,
+                type: type,
+                preparer: preparer,
+                attendees: attendees,
+                created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                created_by: currentUser.username
+            };
+
+            try {
+                if (editId) {
+                    await db.collection('meetings').doc(editId).update({
+                        title: title,
+                        date: date,
+                        duration: duration,
+                        location: location,
+                        supervisor: supervisor,
+                        type: type,
+                        preparer: preparer,
+                        attendees: attendees,
+                        last_edited_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        last_edited_by: currentUser.username
+                    });
+                    alert("کۆبوونەوەکە بە سەرکەوتوویی نوێکرایەوە!");
+                } else {
+                    await db.collection('meetings').add(meetingData);
+                    alert("کۆبوونەوەکە بە سەرکەوتوویی پاشەکەوت کرا!");
+                }
+
+                addMeetingModal.hide();
+                loadMeetings();
+            } catch (error) {
+                console.error("Error adding meeting: ", error);
+                alert("کێشەیەک هەیە لە پاشەکەوتکردن: " + error.message);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = `<i class="bi bi-cloud-arrow-up me-2"></i> پاشەکەوتکردن (Save)`;
+            }
+        }
+
+        async function loadMeetings() {
+            const tbody = document.getElementById('meetingsListBody');
+
+            try {
+                const snapshot = await db.collection('meetings').orderBy('date', 'desc').limit(50).get();
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">هیچ کۆبوونەوەیەک بوونی نییە</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                let visibleCount = 0;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+
+                    // Filter for non-admins: only show if they are an attendee
+                    if (!isAdmin) {
+                        const isUserInvolved = data.attendees && data.attendees.some(a => a.username === currentUser.username);
+                        if (!isUserInvolved) {
+                            return; // Skip this meeting
+                        }
+                    }
+
+                    visibleCount++;
+
+                    const attendeesNames = data.attendees ? data.attendees.map(a => a.name).join('، ') : '';
+                    const attendeeCount = data.attendees ? data.attendees.length : 0;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-start ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-file-earmark-text fs-5"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold text-dark d-block" style="font-size: 0.95rem;">${data.title}</span>
+                                    <span class="small text-muted mt-1 px-2 py-1 bg-light rounded shadow-sm d-inline-block border"><i class="bi bi-tag-fill me-1 text-secondary"></i>${data.type}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold mb-1"><i class="bi bi-calendar-event text-primary me-2"></i>${data.date}</div>
+                            <div class="small bg-light border text-muted d-inline-block px-2 rounded-pill"><i class="bi bi-clock me-1"></i>${data.duration}</div>
+                        </td>
+                        <td class="text-start">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2 p-0 shadow-sm" style="width: 25px; height: 25px; font-size: 0.8rem;">
+                                    ${attendeeCount}
+                                </span>
+                                <div class="text-truncate small text-secondary fw-semibold" style="max-width: 220px;" title="${attendeesNames}">
+                                    ${attendeesNames}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            ${data.isComplete
+                            ? '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2"><i class="bi bi-lock-fill me-1"></i>کۆتایی هاتووە</span>'
+                            : '<span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2"><i class="bi bi-unlock-fill me-1"></i>کراوەیە</span>'}
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-light border text-primary rounded-pill px-3 hover-shadow" onclick="viewMeetingDetails('${id}')" title="بینینی کۆبوونەوە">
+                                    <i class="bi bi-eye"></i> بینین
+                                </button>
+                                ${isAdmin ? `<button class="btn btn-sm btn-light border text-danger rounded-pill px-2 hover-shadow admin-only" onclick="deleteMeeting('${id}')" title="سڕینەوە"><i class="bi bi-trash"></i></button>` : ''}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (visibleCount === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">هیچ کۆبوونەوەیەک بوونی نییە بۆ تۆ</td></tr>`;
+                }
+
+                // (Delete button logic handled directly in html rendering above)
+
+            } catch (error) {
+                console.error("Error loading meetings: ", error);
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle"></i> هەڵە ڕوویدا لە هێنانەوەی داتا</td></tr>`;
+            }
+        }
+
+        async function viewMeetingDetails(id) {
+            try {
+                const doc = await db.collection('meetings').doc(id).get();
+                if (!doc.exists) return;
+
+                const data = doc.data();
+                currentMeetingData = data;
+
+                document.getElementById('v_meetingId').value = id;
+                document.getElementById('viewMeetingTitle').innerHTML = `<i class="bi bi-eyeglass me-2"></i>وردەکاری: ${data.title}`;
+                document.getElementById('v_title_header').innerText = `ناونیشانی کۆبوونەوە : ${data.title}`;
+                document.getElementById('v_date').innerText = data.date || '--';
+                document.getElementById('v_duration').innerText = data.duration || '--';
+                document.getElementById('v_location').innerText = data.location || '--';
+                document.getElementById('v_supervisor').innerText = data.supervisor || '--';
+                document.getElementById('v_type').innerText = data.type || '--';
+                document.getElementById('v_preparer').innerText = data.preparer || '--';
+
+                const meetingNum = data.meetingNumber || id.substring(0, 4).toUpperCase();
+                document.getElementById('v_id_num_span').innerText = meetingNum;
+                document.getElementById('v_id_num_print').innerText = meetingNum;
+                document.getElementById('v_id_num_input').value = meetingNum;
+
+                const btnEditPrimary = document.getElementById('btnEditPrimaryInfo');
+                if (isAdmin) {
+                    document.getElementById('v_id_num_span').classList.add('d-none');
+                    document.getElementById('v_id_num_input').classList.remove('d-none');
+                    btnEditPrimary.classList.remove('d-none');
+                } else {
+                    document.getElementById('v_id_num_span').classList.remove('d-none');
+                    document.getElementById('v_id_num_input').classList.add('d-none');
+                    btnEditPrimary.classList.add('d-none');
+                }
+
+                renderAttendeesInModal();
+
+                viewMeetingModal.show();
+            } catch (error) {
+                console.error("Error fetching meeting details:", error);
+            }
+        }
+
+        function openEditPrimaryInfoModal() {
+            if (!isAdmin || !currentMeetingData) return;
+
+            viewMeetingModal.hide();
+
+            document.getElementById('meetingForm').reset();
+            document.getElementById('edit_meeting_id').value = document.getElementById('v_meetingId').value;
+
+            document.getElementById('m_title').value = currentMeetingData.title || '';
+            document.getElementById('m_date').value = currentMeetingData.date || '';
+            document.getElementById('m_duration').value = currentMeetingData.duration || '';
+            document.getElementById('m_location').value = currentMeetingData.location || '';
+            document.getElementById('m_supervisor').value = currentMeetingData.supervisor || '';
+            document.getElementById('m_type').value = currentMeetingData.type || '';
+            document.getElementById('m_preparer').value = currentMeetingData.preparer || '';
+
+            document.getElementById('addMeetingModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>نوێکردنەوەی زانیارییەکانی کۆبوونەوە';
+            document.getElementById('btnSaveMeeting').innerHTML = '<i class="bi bi-check-circle me-2"></i> پاشەکەوتکردن (Update)';
+
+            const container = document.getElementById('attendeesSelectionContainer');
+            container.innerHTML = '';
+
+            const currentAttendeesUsernames = currentMeetingData.attendees ? currentMeetingData.attendees.map(a => a.username) : [];
+
+            PREDEFINED_ATTENDEES.forEach(att => {
+                const isChecked = currentAttendeesUsernames.includes(att.id) ? 'checked' : '';
+                container.innerHTML += `
+                    <div class="col-md-4 col-12">
+                        <div class="form-check form-switch bg-light border p-2 rounded cursor-pointer h-100">
+                            <input class="form-check-input ms-0 me-2 mt-1" type="checkbox" role="switch" id="att_${att.id}" value="${att.id}" ${isChecked}>
+                            <label class="form-check-label fw-bold small" for="att_${att.id}">${att.name} <span class="d-block text-muted" style="font-size: 0.75rem">${att.role}</span></label>
+                        </div>
+                    </div>
+                `;
+            });
+
+            addMeetingModal.show();
+        }
+
+        function renderAttendeesInModal() {
+            const data = currentMeetingData;
+
+            const listContainer = document.getElementById('v_attendeesListBasic');
+            listContainer.innerHTML = '';
+
+            // Normalize old data
+            data.attendees.forEach(att => {
+                if (!att.topics) {
+                    att.topics = [{ question: att.question || "", answer: att.answer || "" }];
+                }
+            });
+
+            if (data.attendees && data.attendees.length > 0) {
+                let isFirstAtt = true;
+                data.attendees.forEach((att, index) => {
+                    listContainer.innerHTML += `
+                        <tr>
+                            ${isFirstAtt ? `<td rowspan="${data.attendees.length}" class="bg-info bg-opacity-10 align-middle fw-bold text-center">ئامادەبوان</td>` : ''}
+                            <td class="fw-bold">${att.name}</td>
+                            <td>${att.role || '-'}</td>
+                        </tr>
+                    `;
+                    isFirstAtt = false;
+                });
+            } else {
+                listContainer.innerHTML = '<tr><td colspan="3" class="text-danger">هیچ ئامادەبوویەک دیاری نەکراوە</td></tr>';
+            }
+
+            const qContainer = document.getElementById('v_attendeesQuestionsContainer');
+            qContainer.innerHTML = '';
+
+            if (data.attendees && data.attendees.length > 0) {
+                data.attendees.forEach((att, attIndex) => {
+                    const isThisUser = (att.username === currentUser.username);
+                    const isAdminAnsweringForDiyar = (currentUser.username === 'admin' && att.username === 'diyar');
+                    const canEditAnswer = isThisUser || isAdminAnsweringForDiyar;
+
+                    let topicsHtml = '';
+                    att.topics.forEach((topic, tIndex) => {
+                        const questionReadonly = isAdmin ? '' : 'readonly';
+                        const answerReadonly = (isAdmin || (canEditAnswer && !data.isComplete)) ? '' : 'readonly';
+                        const qClass = isAdmin ? 'border-primary bg-light' : 'border-0 bg-transparent';
+                        const aClass = (isAdmin || (canEditAnswer && !data.isComplete)) ? 'border-success bg-white' : 'border-0 bg-transparent';
+
+                        topicsHtml += `
+                            <tr>
+                                <td class="text-center align-middle">${tIndex + 1}</td>
+                                <td class="text-end">
+                                    <div class="mb-2">
+                                        <textarea class="form-control ${qClass} topic-q input-print" data-att="${attIndex}" data-topic="${tIndex}" rows="2" ${questionReadonly} placeholder="پرسیار لێرە دەنووسرێت...">${topic.question}</textarea>
+                                    </div>
+                                    <div class="d-flex align-items-start bg-warning bg-opacity-10 p-2 border border-warning rounded">
+                                        <span class="badge bg-warning text-dark me-2 mt-1">وەڵام:</span>
+                                        <textarea class="form-control ${aClass} topic-a input-print bg-transparent" data-att="${attIndex}" data-topic="${tIndex}" rows="2" ${answerReadonly} placeholder="${(isThisUser || isAdmin) && !data.isComplete ? 'وەڵامەکەت لێرە بنووسە...' : (data.isComplete && !topic.answer && !isAdmin ? 'بێ وەڵام' : 'چاوەڕێی وەڵام...')}">${topic.answer}</textarea>
+                                    </div>
+                                </td>
+                                ${tIndex === 0 ? `<td rowspan="${att.topics.length}" class="text-center align-middle fw-bold">
+                                    <span class="d-block mb-2">${att.name}</span>
+                                    ${isAdmin ? `<button class="btn btn-sm btn-outline-primary mt-3 d-print-none" onclick="addTopic(${attIndex})"><i class="bi bi-plus"></i> پرسیار</button>` : ''}
+                                </td>` : ''}
+                            </tr>
+                        `;
+                    });
+
+                    qContainer.innerHTML += `
+                        <table class="table table-bordered border-dark align-middle small mb-4 w-100">
+                            <thead class="bg-info bg-opacity-25 text-center">
+                                <tr>
+                                    <th style="width: 5%">ژ</th>
+                                    <th>بابەتە باسکراوەکان</th>
+                                    <th style="width: 25%">ناوی ئامادەبوو</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${topicsHtml}
+                            </tbody>
+                        </table>
+                    `;
+                });
+            }
+
+            const isUserInvolved = data.attendees.some(a => a.username === currentUser.username);
+            const btnUpdate = document.getElementById('btnUpdateMeeting');
+            const btnEnd = document.getElementById('btnEndMeeting');
+
+            if (data.isComplete && !isAdmin) {
+                btnUpdate.style.display = 'none';
+                btnUpdate.classList.add('d-none');
+                btnEnd.style.display = 'none';
+                btnEnd.classList.add('d-none');
+            } else {
+                if (isAdmin || (isUserInvolved && !data.isComplete)) {
+                    btnUpdate.style.display = 'block';
+                    btnUpdate.classList.remove('d-none');
+                } else {
+                    btnUpdate.style.display = 'none';
+                    btnUpdate.classList.add('d-none');
+                }
+
+                if (isAdmin && !data.isComplete) {
+                    btnEnd.style.display = 'block';
+                    btnEnd.classList.remove('d-none');
+                } else {
+                    btnEnd.style.display = 'none';
+                    btnEnd.classList.add('d-none');
+                }
+            }
+        }
+
+        function addTopic(attIndex) {
+            saveCurrentInputsToData();
+            currentMeetingData.attendees[attIndex].topics.push({ question: '', answer: '' });
+            renderAttendeesInModal();
+        }
+
+        function saveCurrentInputsToData() {
+            document.querySelectorAll('.topic-q').forEach(el => {
+                const aIdx = el.getAttribute('data-att');
+                const tIdx = el.getAttribute('data-topic');
+                currentMeetingData.attendees[aIdx].topics[tIdx].question = el.value;
+            });
+            document.querySelectorAll('.topic-a').forEach(el => {
+                const aIdx = el.getAttribute('data-att');
+                const tIdx = el.getAttribute('data-topic');
+                currentMeetingData.attendees[aIdx].topics[tIdx].answer = el.value;
+            });
+        }
+
+        async function updateMeetingDetails() {
+            const id = document.getElementById('v_meetingId').value;
+            if (!id || !currentMeetingData || (!isAdmin && currentMeetingData.isComplete)) return;
+
+            const btnUpdate = document.getElementById('btnUpdateMeeting');
+            btnUpdate.disabled = true;
+            btnUpdate.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> جارێ سەیڤ دەبێت...`;
+
+            saveCurrentInputsToData();
+            const updatedAttendees = currentMeetingData.attendees;
+            const updatedMeetingNumber = isAdmin ? document.getElementById('v_id_num_input').value : currentMeetingData.meetingNumber;
+
+            try {
+                await db.collection('meetings').doc(id).update({
+                    attendees: updatedAttendees,
+                    meetingNumber: updatedMeetingNumber,
+                    last_edited_by: currentUser.username,
+                    last_edited_at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                viewMeetingModal.hide();
+                alert("زانیارییەکان بە سەرکەوتوویی تازەکرانەوە!");
+                loadMeetings();
+            } catch (error) {
+                console.error("Error updating details:", error);
+                alert("هەڵە ڕوویدا لە تازەکردنەوەی داتا");
+            } finally {
+                btnUpdate.disabled = false;
+                btnUpdate.innerHTML = `<i class="bi bi-check-circle me-2"></i> پاشەکەوتکردنی گۆڕانکارییەکان`;
+            }
+        }
+
+        async function deleteMeeting(id) {
+            if (!confirm('دڵنیایت لە سڕینەوەی ئەم کۆبوونەوەیە؟')) return;
+
+            try {
+                // Determine if user is allowed to delete
+                const doc = await db.collection('meetings').doc(id).get();
+                if (doc.exists && doc.data().isComplete && !isAdmin) {
+                    alert('ئەم کۆبوونەوەیە کۆتایی هاتووە و ناتوانرێت بسڕێتەوە.');
+                    return;
+                }
+
+                await db.collection('meetings').doc(id).delete();
+                loadMeetings();
+            } catch (error) {
+                console.error("Error deleting: ", error);
+                alert("هەڵە ڕوویدا لە سڕینەوەی کۆبوونەوەکە");
+            }
+        }
+
+        async function endMeeting() {
+            const id = document.getElementById('v_meetingId').value;
+            if (!id || !currentMeetingData) return;
+
+            if (!confirm('ئایا دڵنیایت دەتەوێت کۆتایی بەم کۆبوونەوەیە بێنیت؟ دوای ئەوە هیچ کەس ناتوانێت دەستکاری بکات.')) {
+                return;
+            }
+
+            const btnEnd = document.getElementById('btnEndMeeting');
+            btnEnd.disabled = true;
+            btnEnd.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> چاوەڕێبە...`;
+
+            // First save any current inputs just in case
+            saveCurrentInputsToData();
+            const updatedAttendees = currentMeetingData.attendees;
+            const updatedMeetingNumber = isAdmin ? document.getElementById('v_id_num_input').value : currentMeetingData.meetingNumber;
+
+            try {
+                await db.collection('meetings').doc(id).update({
+                    attendees: updatedAttendees,
+                    meetingNumber: updatedMeetingNumber,
+                    isComplete: true,
+                    completed_by: currentUser.username,
+                    completed_at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                viewMeetingModal.hide();
+                alert("کۆبوونەوەکە کۆتایی هات و داخرا!");
+                loadMeetings();
+            } catch (error) {
+                console.error("Error ending meeting:", error);
+                alert("هەڵە ڕوویدا لە داخستنی کۆبوونەوەکە");
+                btnEnd.disabled = false;
+                btnEnd.innerHTML = `<i class="bi bi-x-octagon me-2"></i> کۆتایی هاتنی کۆبوونەوە`;
+            }
+        }
+
+        // Adjust textareas for print so all text is visible
+        window.addEventListener('beforeprint', () => {
+            document.querySelectorAll('textarea.input-print').forEach(el => {
+                el.style.height = 'auto'; // Reset size
+                el.style.height = (el.scrollHeight) + 'px'; // Expand to fit scrollHeight
+            });
+        });
+
+        window.addEventListener('afterprint', () => {
+            document.querySelectorAll('textarea.input-print').forEach(el => {
+                el.style.height = ''; // Restore original CSS height
+            });
+        });
+    </script>
+</body>
+
+</html>

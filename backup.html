@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - Database Backup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: bgShift 12s ease infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @keyframes bgShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .card-wrap {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            padding: 44px 40px;
+            width: 100%;
+            max-width: 640px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+        }
+
+        .logo-text h2 {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .logo-text p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.82rem;
+            margin: 0;
+            margin-top: 2px;
+        }
+
+        /* Collections list */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .col-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .col-item:hover {
+            background: rgba(255, 255, 255, 0.13);
+        }
+
+        .col-status {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+        .col-status.done {
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        .col-status.active {
+            background: #facc15;
+            box-shadow: 0 0 8px #facc15;
+            animation: pulse 0.8s ease infinite;
+        }
+
+        .col-status.error {
+            background: #f87171;
+            box-shadow: 0 0 8px #f87171;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+        .col-name {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        .col-count {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.75rem;
+            margin-right: auto;
+        }
+
+        /* Progress bar */
+        .progress-wrap {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            height: 8px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Status box */
+        .status-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.82rem;
+            line-height: 1.7;
+            min-height: 60px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', monospace;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .status-log-line {
+            display: block;
+        }
+
+        .status-log-line.ok {
+            color: #86efac;
+        }
+
+        .status-log-line.warn {
+            color: #fde68a;
+        }
+
+        .status-log-line.err {
+            color: #fca5a5;
+        }
+
+        /* Buttons */
+        .btn-backup {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(106, 17, 203, 0.4);
+            margin-bottom: 12px;
+        }
+
+        .btn-backup:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(106, 17, 203, 0.55);
+        }
+
+        .btn-backup:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .btn-download {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid rgba(74, 222, 128, 0.5);
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+
+        .btn-download:hover {
+            background: rgba(74, 222, 128, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-back {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .summary-badge {
+            display: none;
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            color: #86efac;
+            font-size: 0.88rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .btn-smart {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(250, 204, 21, 0.5);
+            background: rgba(250, 204, 21, 0.1);
+            color: #fde68a;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+
+        .btn-smart:hover:not(:disabled) {
+            background: rgba(250, 204, 21, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(250, 204, 21, 0.25);
+        }
+
+        .btn-smart:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .smart-section {
+            background: rgba(250, 204, 21, 0.05);
+            border: 1px solid rgba(250, 204, 21, 0.15);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+
+        .smart-section label {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .file-pick-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 10px 16px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .file-pick-btn:hover {
+            background: rgba(255, 255, 255, 0.13);
+            border-color: rgba(250, 204, 21, 0.5);
+        }
+
+        .divider-or {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .divider-or::before,
+        .divider-or::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider-or span {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .section-label {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-wrap">
+
+        <div class="logo-row">
+            <div class="logo-icon"><i class="bi bi-cloud-arrow-down-fill"></i></div>
+            <div class="logo-text">
+                <h2>Database Backup</h2>
+                <p>ASOBRICK FACTORY · باکەپ داتابەیس</p>
+            </div>
+        </div>
+
+        <div class="section-label">کۆلیکشنەکان</div>
+        <div class="collections-grid" id="collectionsGrid">
+            <!-- filled by JS -->
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="status-box" id="statusBox">
+            <span class="status-log-line">چاوەڕوانی دەستپێکردن...</span>
+        </div>
+
+        <div class="summary-badge" id="summaryBadge"></div>
+
+        <button class="btn-backup" id="backupBtn" onclick="startBackup()">
+            <i class="bi bi-database-fill-down"></i>
+            دەستپێکردنی باکەپ تەواو
+        </button>
+
+        <div class="divider-or"><span>یان / or</span></div>
+
+        <!-- Smart Update Section -->
+        <div class="smart-section">
+            <label><i class="bi bi-lightning-charge-fill me-1"></i>نوێکردنی زیرەکانە (تەنها گۆڕانکاریەکانی نوێ)</label>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <button class="file-pick-btn" onclick="document.getElementById('prevBackupFile').click()">
+                    <i class="bi bi-folder2-open"></i>
+                    <span id="filePickLabel">فایلی باکەپ پێشتر هەڵبژێرە...</span>
+                </button>
+                <input type="file" id="prevBackupFile" accept=".json" style="display:none"
+                    onchange="onFileSelected(event)">
+            </div>
+            <button class="btn-smart" id="smartBtn" onclick="startSmartUpdate()" disabled>
+                <i class="bi bi-arrow-repeat"></i>
+                Smart Update — تازەکردنەوەی زیرەکانە
+            </button>
+        </div>
+
+        <button class="btn-download" id="downloadBtn" onclick="downloadBackup()">
+            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+            داونلۆدکردنی فایلی باکەپ (.json)
+        </button>
+
+        <a href="dashboard.html" class="btn-back">
+            <i class="bi bi-arrow-right"></i>
+            گەڕانەوە بۆ داشبۆرد
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ─── Firebase ────────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const originalCollection = db.collection.bind(db);
+        db.collection = function (path) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+            if (line === 'line1') {
+                const parts = path.split('/');
+                parts[0] = parts[0] + '_line1';
+                return originalCollection(parts.join('/'));
+            }
+            return originalCollection(path);
+        };
+
+        // ─── Security check ───────────────────────────────────────────
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('تەنها admin دەتوانێت ئەم پەڕەیە بکاتەوە.');
+            window.location.href = 'index.html';
+        }
+
+        // ─── Collections to back up ───────────────────────────────────
+        // These are all the top-level collections in your Firestore.
+        // The script will also automatically fetch ALL subcollections for
+        // each document (employees → dailyWork, otherWork, etc.)
+        const COLLECTIONS = [
+            // ── employees.html ──────────────────────────────────────
+            { id: 'employees', label: 'Employees', icon: 'bi-people-fill' },
+            { id: 'projects', label: 'Projects', icon: 'bi-briefcase-fill' },
+            { id: 'notifications', label: 'Notifications', icon: 'bi-bell-fill' },
+            // ── maintenance.html ─────────────────────────────────────
+            { id: 'machines', label: 'Machines', icon: 'bi-cpu-fill' },
+            { id: 'machine_logs', label: 'Machine Logs', icon: 'bi-tools' },
+            // ── mold_maintenance.html ────────────────────────────────
+            { id: 'molds', label: 'Molds', icon: 'bi-grid-3x3' },
+            // ── notes.html ───────────────────────────────────────────
+            { id: 'notes', label: 'Notes', icon: 'bi-journal-text' },
+            // ── manuals.html ─────────────────────────────────────────
+            { id: 'manuals', label: 'Manuals', icon: 'bi-book-half' },
+            // ── reports.html ─────────────────────────────────────────
+            { id: 'dailyReports', label: 'Daily Reports', icon: 'bi-file-earmark-text' },
+            // ── annual_report.html ───────────────────────────────────
+            { id: 'annual_daily_records', label: 'Annual Daily Records', icon: 'bi-calendar3-range' },
+            { id: 'annual_report_config', label: 'Annual Report Config', icon: 'bi-gear-wide-connected' },
+            // ── misc ─────────────────────────────────────────────────
+            { id: 'settings', label: 'Settings', icon: 'bi-gear-fill' },
+            { id: 'users', label: 'Users', icon: 'bi-person-circle' },
+        ];
+
+        // Subcollections to look for inside each employee document
+        const EMPLOYEE_SUBCOLLECTIONS = ['workRecords'];
+
+        // ─── State ────────────────────────────────────────────────────
+        let backupData = null;
+        let prevBackupData = null; // Loaded from user's existing file
+
+        // ─── File Picker ──────────────────────────────────────────────
+        function onFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    prevBackupData = JSON.parse(e.target.result);
+                    const exportedAt = prevBackupData?._meta?.exportedAt;
+                    if (!exportedAt) {
+                        alert('فایلەکە دروست نییە: exportedAt نەدۆزرایەوە.');
+                        prevBackupData = null;
+                        return;
+                    }
+                    document.getElementById('filePickLabel').textContent = `✓ ${file.name}`;
+                    document.getElementById('filePickLabel').style.color = '#86efac';
+                    document.getElementById('smartBtn').disabled = false;
+                    log(`📂 فایل بارکرا: ${file.name}`, 'ok');
+                    log(`🕐 دوایین باکەپ: ${new Date(exportedAt).toLocaleString('en-GB')}`, 'warn');
+                } catch (err) {
+                    alert('هەڵەی خوێندنەوەی فایل: ' + err.message);
+                    prevBackupData = null;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ─── Smart Incremental Update ─────────────────────────────────
+        async function startSmartUpdate() {
+            if (!prevBackupData || !prevBackupData._meta?.exportedAt) {
+                alert('تکایە سەرەتا فایلی باکەپ پێشتر هەڵبژێرە.');
+                return;
+            }
+
+            const btn = document.getElementById('smartBtn');
+            const backupBtn = document.getElementById('backupBtn');
+            btn.disabled = true;
+            backupBtn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> چاوەڕوانبە...';
+            document.getElementById('summaryBadge').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+            document.getElementById('statusBox').innerHTML = '';
+
+            const sinceDate = new Date(prevBackupData._meta.exportedAt);
+            log(`⚡ Smart Update دەستپێکرد...`, 'ok');
+            log(`🕐 گۆڕانکاریەکانی دواتر لە: ${sinceDate.toLocaleString('en-GB')}`, 'warn');
+
+            // Deep-clone existing backup as our base
+            const result = JSON.parse(JSON.stringify(prevBackupData));
+            result._meta.exportedAt = new Date().toISOString();
+            result._meta.exportedBy = currentUser.username;
+            result._meta.smartUpdateFrom = prevBackupData._meta.exportedAt;
+
+            let totalUpdated = 0;
+            let totalAdded = 0;
+
+            // Collections that support incremental (have last_updated field)
+            const incrementalCollections = COLLECTIONS.filter(c => !['settings'].includes(c.id));
+
+            for (let i = 0; i < incrementalCollections.length; i++) {
+                const c = incrementalCollections[i];
+                setProgress(Math.round((i / incrementalCollections.length) * 90));
+                setColStatus(c.id, 'active');
+
+                try {
+                    // Query only docs updated since last backup
+                    const snap = await db.collection(c.id)
+                        .where('last_updated', '>', firebase.firestore.Timestamp.fromDate(sinceDate))
+                        .get();
+
+                    if (snap.empty) {
+                        setColStatus(c.id, 'done', 0);
+                        log(`⏩ ${c.id}: گۆڕانکاری نییە`, '');
+                        continue;
+                    }
+
+                    // Ensure collection exists in result
+                    if (!result[c.id]) result[c.id] = {};
+
+                    let updatedInColl = 0;
+                    let addedInColl = 0;
+
+                    for (const d of snap.docs) {
+                        const docData = { _id: d.id, ...convertTimestamps(d.data()) };
+
+                        // For employees, also fetch updated subcollections
+                        if (c.id === 'employees') {
+                            for (const sub of EMPLOYEE_SUBCOLLECTIONS) {
+                                try {
+                                    const subSnap = await db
+                                        .collection(c.id).doc(d.id).collection(sub)
+                                        .where('last_updated', '>', firebase.firestore.Timestamp.fromDate(sinceDate))
+                                        .get();
+                                    if (!subSnap.empty) {
+                                        // Merge with existing sub data
+                                        const existingSub = result[c.id][d.id]?.[`_sub_${sub}`] || [];
+                                        const existingSubMap = {};
+                                        existingSub.forEach(sd => existingSubMap[sd._id] = sd);
+                                        subSnap.docs.forEach(sd => {
+                                            existingSubMap[sd.id] = { _id: sd.id, ...convertTimestamps(sd.data()) };
+                                        });
+                                        docData[`_sub_${sub}`] = Object.values(existingSubMap);
+                                    } else if (result[c.id][d.id]?.[`_sub_${sub}`]) {
+                                        docData[`_sub_${sub}`] = result[c.id][d.id][`_sub_${sub}`];
+                                    }
+                                } catch (_) { }
+                            }
+                        }
+
+                        if (result[c.id][d.id]) {
+                            updatedInColl++;
+                            totalUpdated++;
+                        } else {
+                            addedInColl++;
+                            totalAdded++;
+                        }
+                        result[c.id][d.id] = docData;
+                    }
+
+                    const changeStr = `${updatedInColl} نوێکرا, ${addedInColl} زیادکرا`;
+                    setColStatus(c.id, 'done', snap.size);
+                    log(`✓ ${c.id}: ${changeStr}`, 'ok');
+
+                } catch (err) {
+                    // If the collection has no last_updated index or field, log and continue
+                    setColStatus(c.id, 'error');
+                    log(`⚠ ${c.id}: ${err.message} — گۆڕانکاری نەدۆزرایەوە`, 'warn');
+                }
+            }
+
+            // Always re-fetch settings (small, rarely changes, no last_updated)
+            try {
+                const settingsData = await fetchCollection('settings');
+                if (settingsData) result['settings'] = settingsData;
+            } catch (_) { }
+
+            setProgress(100);
+            backupData = result;
+
+            const summary = `⚡ Smart Update تەواو بوو · ${totalUpdated} نوێکرا · ${totalAdded} زیادکرا`;
+            log(summary, 'ok');
+
+            const badge = document.getElementById('summaryBadge');
+            badge.textContent = summary;
+            badge.style.display = 'block';
+
+            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Smart Update — تازەکردنەوەی زیرەکانە';
+            btn.disabled = false;
+            backupBtn.disabled = false;
+
+            const dlBtn = document.getElementById('downloadBtn');
+            dlBtn.style.display = 'flex';
+        }
+
+        // ─── Build collection grid ────────────────────────────────────
+        function buildGrid() {
+            const grid = document.getElementById('collectionsGrid');
+            grid.innerHTML = COLLECTIONS.map(c => `
+                <div class="col-item" id="col-${c.id}">
+                    <div class="col-status" id="status-${c.id}"></div>
+                    <i class="bi ${c.icon}" style="color:rgba(255,255,255,0.5);font-size:0.9rem;"></i>
+                    <span class="col-name">${c.label}</span>
+                    <span class="col-count" id="count-${c.id}"></span>
+                </div>
+            `).join('');
+        }
+
+        buildGrid();
+
+        // ─── Logging ──────────────────────────────────────────────────
+        function log(msg, type = '') {
+            const box = document.getElementById('statusBox');
+            const line = document.createElement('span');
+            line.className = 'status-log-line' + (type ? ' ' + type : '');
+            const now = new Date().toLocaleTimeString('en-GB');
+            line.textContent = `[${now}] ${msg}`;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function setColStatus(id, state, count) {
+            const el = document.getElementById(`status-${id}`);
+            const countEl = document.getElementById(`count-${id}`);
+            if (el) el.className = `col-status ${state}`;
+            if (countEl && count !== undefined) countEl.textContent = `${count} doc`;
+        }
+
+        function setProgress(pct) {
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        // ─── Fetch a collection (with optional subcollections) ────────
+        async function fetchCollection(collId) {
+            setColStatus(collId, 'active');
+            try {
+                const snap = await db.collection(collId).get();
+                const docs = {};
+
+                for (const d of snap.docs) {
+                    const docData = {
+                        _id: d.id,
+                        ...convertTimestamps(d.data())
+                    };
+
+                    // If this is the employees collection, fetch subcollections
+                    if (collId === 'employees') {
+                        for (const sub of EMPLOYEE_SUBCOLLECTIONS) {
+                            try {
+                                const subSnap = await db
+                                    .collection(collId)
+                                    .doc(d.id)
+                                    .collection(sub)
+                                    .get();
+                                if (!subSnap.empty) {
+                                    docData[`_sub_${sub}`] = subSnap.docs.map(sd => ({
+                                        _id: sd.id,
+                                        ...convertTimestamps(sd.data())
+                                    }));
+                                }
+                            } catch (_) { /* subcollection may not exist */ }
+                        }
+                    }
+
+                    docs[d.id] = docData;
+                }
+
+                setColStatus(collId, 'done', snap.size);
+                log(`✓ ${collId}: ${snap.size} documents`, 'ok');
+                return docs;
+            } catch (err) {
+                setColStatus(collId, 'error');
+                log(`✗ ${collId}: ${err.message}`, 'err');
+                return null;
+            }
+        }
+
+        // ─── Convert Firestore Timestamps → ISO strings ───────────────
+        function convertTimestamps(obj) {
+            if (obj === null || obj === undefined) return obj;
+            if (obj instanceof Object && typeof obj.toDate === 'function') {
+                return obj.toDate().toISOString();
+            }
+            if (Array.isArray(obj)) {
+                return obj.map(convertTimestamps);
+            }
+            if (typeof obj === 'object') {
+                const out = {};
+                for (const k of Object.keys(obj)) {
+                    out[k] = convertTimestamps(obj[k]);
+                }
+                return out;
+            }
+            return obj;
+        }
+
+        // ─── Main backup function ─────────────────────────────────────
+        async function startBackup() {
+            const btn = document.getElementById('backupBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> داگرتنی داتا...';
+            document.getElementById('summaryBadge').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+            document.getElementById('statusBox').innerHTML = '';
+
+            // Reset all statuses
+            COLLECTIONS.forEach(c => {
+                setColStatus(c.id, '');
+                document.getElementById(`count-${c.id}`).textContent = '';
+            });
+
+            log('🚀 باکەپ دەستپێکرد...', 'ok');
+            log(`👤 بەکارهێنەر: ${currentUser.username}`);
+
+            const result = {
+                _meta: {
+                    exportedAt: new Date().toISOString(),
+                    exportedBy: currentUser.username,
+                    projectId: firebaseConfig.projectId,
+                    version: '2.0'
+                }
+            };
+
+            let totalDocs = 0;
+            let successCount = 0;
+
+            for (let i = 0; i < COLLECTIONS.length; i++) {
+                const c = COLLECTIONS[i];
+                setProgress(Math.round((i / COLLECTIONS.length) * 90));
+                const data = await fetchCollection(c.id);
+                if (data !== null) {
+                    result[c.id] = data;
+                    totalDocs += Object.keys(data).length;
+                    successCount++;
+                }
+            }
+
+            setProgress(100);
+            backupData = result;
+
+            const summary = `✅ باکەپ تەواو بوو · ${successCount}/${COLLECTIONS.length} کۆلیکشن · ${totalDocs} document`;
+            log(summary, 'ok');
+
+            const badge = document.getElementById('summaryBadge');
+            badge.textContent = summary;
+            badge.style.display = 'block';
+
+            btn.innerHTML = '<i class="bi bi-database-fill-down"></i> دووبارە کردنەوە';
+            btn.disabled = false;
+
+            const dlBtn = document.getElementById('downloadBtn');
+            dlBtn.style.display = 'flex';
+        }
+
+        // ─── Download JSON ────────────────────────────────────────────
+        function downloadBackup() {
+            if (!backupData) return;
+
+            const json = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `asobrick_backup_${dateStr}_${timeStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            log(`📥 فایل داونلۆد کرا: asobrick_backup_${dateStr}_${timeStr}.json`, 'ok');
+        }
+    </script>
+</body>
+
+</html>

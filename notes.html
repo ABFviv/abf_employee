@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - تێبینییەکان</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="notes.css">
+</head>
+
+<body>
+
+    <div class="toast-container position-fixed top-0 start-0 p-3"></div>
+
+    <div class="container pb-5">
+        <div class="header-bar">
+            <div class="header-title">
+                <h1 class="m-0">تێبینییەکان</h1>
+                <div style="font-size: 0.8rem; opacity: 0.8; font-weight: 600;">DAILY NOTES & FEEDBACK</div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- REFRESH BUTTON - Manually reload notes -->
+                <button class="btn btn-header" onclick="refreshNotes()" title="نوێکردنەوە">
+                    <i class="bi bi-arrow-clockwise fs-4"></i>
+                    <span>نوێکردنەوە</span>
+                </button>
+                <div class="user-badge" id="userInfo">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span>User</span>
+                </div>
+                <!-- Switch employee button for cutemp -->
+                <a href="dashboard.html" class="btn btn-header">
+                    <i class="bi bi-arrow-right-short fs-4"></i>
+                    <span>گەڕانەوە</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="search-container mb-5">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control search-input" id="searchNote" placeholder="گەڕان لە تێبینییەکان..."
+                onkeyup="filterNotes()">
+        </div>
+
+        <div class="notes-grid" id="notesGrid">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+
+        <div class="global-footer">
+            <img src="teg_logo.png" alt="TEG Logo" class="teg-logo-footer">
+            <div class="copyright-text">&copy; 2026 Aso brick Factory System</div>
+        </div>
+    </div>
+
+    <!-- Employee Identity Modal (For cutemp) -->
+    <div class="modal fade" id="sessionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">دیاریکردنی ناسنامە (Identity)</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">تکایە ناو و کۆدەکەت داخل بکە بۆ بینینی تێبینییەکانی خۆت</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">ناوی کارمەند</label>
+                            <select class="form-select" id="sessionEmployeeName">
+                                <option value="">هەڵبژێرە...</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">کۆدی تایبەت</label>
+                            <input type="password" class="form-control" id="sessionEmployeeCode" placeholder="****">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <a href="dashboard.html" class="btn btn-light" style="border-radius: 12px;">پاشگەزبوونەوە</a>
+                    <button type="button" class="btn btn-primary px-4" onclick="verifySession()"
+                        style="border-radius: 12px; font-weight: 700;">چوونە ژوورەوە</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary btn-fab" onclick="openModal()">
+        <i class="bi bi-pencil-square"></i>
+    </button>
+
+    <div class="modal fade" id="noteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalTitle">زیادکردنی تێبینی</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="noteForm">
+                        <input type="hidden" id="editNoteId">
+
+                        <div class="mb-4">
+                            <label class="form-label">بابەت (Subject)</label>
+                            <input type="text" class="form-control" id="noteTitle" required placeholder="بابەت بنووسە">
+                        </div>
+
+                        <div id="verificationSection" style="display: none;">
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">ناوی کارمەند</label>
+                                    <select class="form-select" id="employeeName">
+                                        <option value="">هەڵبژێرە...</option>
+                                        <!-- Will be populated from cutempRegistry or electricalRegistry -->
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">کۆدی تایبەت</label>
+                                    <input type="password" class="form-control" id="employeeCode" placeholder="****">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="electricalFields" style="display: none;">
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">بەشی کارکردن (Departments of Working)</label>
+                                    <select class="form-select" id="noteDepartment">
+                                        <option value="">هەڵبژێرە...</option>
+                                        <option value="crushing-prep">وردکردن و ئامادەکردن</option>
+                                        <option value="cutting-setting">بڕین و ڕێکخستن</option>
+                                        <option value="klin">کوورە</option>
+                                        <option value="unsetting">هەڵگرتن</option>
+                                        <option value="mechanical">میکانیک (General)</option>
+                                        <option value="electrical-ac">کارەبا (General)</option>
+                                        <option value="dryer">درایەر</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">کاتی کارکردن (Hours of Working)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="noteHours" placeholder="H"
+                                            min="0">
+                                        <span class="input-group-text">:</span>
+                                        <input type="number" class="form-control" id="noteMinutes" placeholder="M"
+                                            min="0" max="59">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">ناوەڕۆک (Message)</label>
+                            <textarea class="form-control" id="noteContent" rows="5" required
+                                placeholder="تێبینییەکە لێرە بنووسە..."></textarea>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer d-flex flex-column gap-2">
+                    <div class="w-100 d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal"
+                            style="border-radius: 18px; font-weight:800;">پاشگەزبوونەوە</button>
+                        <button type="button" class="btn btn-primary px-4" onclick="saveNote()"
+                            style="border-radius: 18px; font-weight:800;">پاشەکەوتکردن</button>
+                    </div>
+                    <div id="cutempWarning" class="text-danger small fw-bold text-center w-100 mt-1"
+                        style="display: none;">
+                        تێبینی: دوای ناردن، تێبینییەکە ناگۆڕدرێت و ناسڕێتەوە
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const originalCollection = db.collection.bind(db);
+        db.collection = function (path) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+            if (line === 'line1') {
+                const parts = path.split('/');
+                parts[0] = parts[0] + '_line1';
+                return originalCollection(parts.join('/'));
+            }
+            return originalCollection(path);
+        };
+
+        // Employee Registry for shared accounts (cutemp and electrical)
+        const cutempRegistry = {
+            "ئامانج محمود": "16571",
+            "هاڕوون ئازاد": "00982",
+            "پەیڕەو جەلیل": "21763",
+            "بادینان نەوشیروان": "91824",
+            "محمد نعمان": "77025",
+            "محمد ستار": "23096",
+            "سامی عمر": "35417",
+            "ئەژوان نعمان": "48768",
+            "جمال جمعە": "51839",
+            "هۆشیمان عثمان": "62100",
+            "نەهروان حسین": "81181",
+            "ئارا احمد": "10732",
+            "مەولود قادر": "01733",
+            "اسماعیل ئەکرەم": "34294"
+        };
+
+        // Electrical employees registry (8 employees)
+        const electricalRegistry = {
+            "هەڵکەوت اسماعیل حەمە سعید": "21A1300",
+            "ئومێد اسماعیل ڕەمەزان": "21A7649",
+            "توانا حەسەن فەتاح": "21A9266",
+            "ئومێد جمعە فتاح": "21A0916",
+            "سۆران لوقمان سەلمان": "21A8522",
+            "ئیدریس حەسەن موستەفا": "21A3148",
+            "دانا خیراللە عبداللە": "21A5611",
+            "عیماد عبید کەریم": "21A0012"
+        };
+
+        // Mechanic employees registry (Placeholders - Update with actual names/codes)
+        const mechanicRegistry = {
+            "محمد بورهان حەمە لاو": "4524",
+            "مەریوان کەریم موستەفا": "7597",
+            "ڕێباز ئەسکەندەر احمد": "1469",
+            "بەهێز بابارسوڵ سادق": "7590",
+            "نەجات حەمە ڕەشید": "2746",
+            "دابان عەلی شەفیق": "8537",
+            "گۆران محمد فرج": "0027",
+            "نەهرۆ ئیدریس سادق": "1255",
+            "سوبحان عبدالرحمان فارس": "2391"
+
+        };
+
+
+        // Unsetting employees registry (9 employees)
+        const unempRegistry = {
+            "بەرزان": "4524",
+            "هاوبەش": "7597",
+            "ئاسۆ عوسمان": "1469",
+            "هۆشیار": "7590",
+            "کۆسرەت": "2746",
+            "محمد موستەفا": "8537",
+            "ئاسۆ احمد": "0027",
+            "محمد ئیبراهیم ": "1291"
+        };
+
+        let currentUser = null;
+        let notesList = [];
+        let activeEmployee = null;
+
+        // --- 2. AUTH & INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const stored = JSON.parse(localStorage.getItem('currentUser'));
+            currentUser = stored;
+            document.getElementById('userInfo').querySelector('span').innerText = currentUser.username;
+
+            // Only persist session for cutemp and unemp
+            if (currentUser.username === 'cutemp' || currentUser.username === 'unemp' || currentUser.username === 'setemp' || currentUser.username === 'mechanic') {
+                activeEmployee = sessionStorage.getItem('activeEmployee');
+            }
+
+            // Handle shared accounts (cutemp, setemp, unemp and electrical)
+            if (currentUser.username === 'cutemp' || currentUser.username === 'setemp' || currentUser.username === 'unemp' || currentUser.username === 'electrical' || currentUser.username === 'mechanic') {
+                if (!activeEmployee) {
+                    showSessionModal();
+                } else {
+                    document.getElementById('userInfo').querySelector('span').innerText = `${currentUser.username} (${activeEmployee})`;
+                }
+            }
+
+            // Access Control: Only admin and supervisor can access notes
+            const allowedRoles = ['admin', 'supervisor'];
+            if (!allowedRoles.includes(currentUser.role) &&
+                currentUser.username !== 'cutemp' &&
+                currentUser.username !== 'unemp' &&
+                currentUser.username !== 'setemp' &&
+                currentUser.username !== 'electrical' &&
+                currentUser.username !== 'mechanic') {
+                document.querySelector('.container').innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center;">
+                        <i class="bi bi-lock-fill" style="font-size: 5rem; color: #e74c3c; margin-bottom: 20px;"></i>
+                        <h2 style="color: #2c3e50; margin-bottom: 10px;">بەردەست نییە</h2>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">Not Available</h3>
+                        <p style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 30px;">تۆ ڕێگەت نییە بۆ ئەم بەشە</p>
+                        <button class="btn btn-primary btn-lg" onclick="window.location.href='index.html'">
+                            <i class="bi bi-arrow-right me-2"></i> گەڕانەوە بۆ لاپەڕەی سەرەکی
+                        </button>
+                    </div>
+                `;
+                return; // Stop further execution for unauthorized users
+            }
+
+            loadNotes();
+        });
+
+        // --- 3. LOAD DATA (OPTIMIZED - One-time read instead of realtime listener) ---
+        // IMPORTANT: Changed from onSnapshot() to get() to MASSIVELY reduce database reads
+        // onSnapshot() creates a persistent listener that re-reads ALL notes on EVERY change
+        // get() reads notes only once, saving hundreds of thousands of reads per month
+        // NO DATA LOSS: All write operations (save/delete) remain unchanged
+        async function loadNotes() {
+            try {
+                console.log('📡 Loading notes from Firebase...');
+                const snap = await db.collection('notes').get(); // ONE-TIME READ (not realtime)
+                notesList = [];
+                snap.forEach(doc => {
+                    notesList.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Client-side Sort (Newest first)
+                notesList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                renderNotes();
+                console.log(`✅ Loaded ${notesList.length} notes`);
+            } catch (error) {
+                console.error('❌ Error loading notes:', error);
+                showToast('هەڵە لە بارکردنی تێبینییەکان', 'danger');
+            }
+        }
+
+        // Manual refresh function - call this to reload notes on demand
+        function refreshNotes() {
+            loadNotes();
+            showToast('تێبینییەکان نوێ کرانەوە', 'success');
+        }
+
+        function renderNotes() {
+            const grid = document.getElementById('notesGrid');
+            grid.innerHTML = '';
+
+            // Filter logic: Admin sees all, User sees ONLY their own
+            const isHimat = (currentUser.username === 'himat');
+            const isSarezh = (currentUser.username === 'sarezh');
+            const isSamdar = (currentUser.username === 'samdar');
+            const isAdmin = (currentUser.role === 'admin' || currentUser.role === 'manager');
+
+            const visibleNotes = notesList.filter(n => {
+                if (isAdmin) return true;
+                if (isHimat && n.author === 'cutemp') return true; // Himat sees all cutemp notes
+                if (isSarezh && n.author === 'electrical') return true; // Sarezh sees all electrical notes
+                if (isSamdar && n.author === 'unemp') return true; // Samdar sees all unemp notes
+                if (isSamdar && n.author === 'setemp') return true; // Samdar sees all setemp notes
+
+                if (currentUser.username === 'cutemp') {
+                    // Cutemp employee only sees notes where they match the name
+                    return n.author === 'cutemp' && n.employeeName === activeEmployee;
+                }
+
+                if (currentUser.username === 'setemp') {
+                    // Setemp employee only sees notes where they match the name
+                    return n.author === 'setemp' && n.employeeName === activeEmployee;
+                }
+
+                if (currentUser.username === 'unemp') {
+                    // Unemp employee sees all notes authored by unemp
+                    // because multiple employees use this account to post notes
+                    return n.author === 'unemp' && activeEmployee;
+                }
+
+                if (currentUser.username === 'electrical') {
+                    // Electrical employee only sees notes where they match the name
+                    return n.author === 'electrical' && n.employeeName === activeEmployee;
+                }
+
+                if (currentUser.username === 'mechanic') {
+                    // Mechanic employee only sees notes where they match the name
+                    return n.author === 'mechanic' && n.employeeName === activeEmployee;
+                }
+
+                return n.author === currentUser.username;
+            });
+
+            if (visibleNotes.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center text-muted mt-5"><h5>هیچ تێبینییەک نییە</h5></div>';
+                return;
+            }
+
+            visibleNotes.forEach(note => {
+                grid.innerHTML += createNoteCard(note, isAdmin);
+            });
+        }
+
+        // --- 4. CREATE CARD HTML ---
+        function createNoteCard(note, isAdmin) {
+            const isHimat = (currentUser.username === 'himat');
+            const isSarezh = (currentUser.username === 'sarezh');
+            const isSamdar = (currentUser.username === 'samdar');
+            const isNoteFromCutemp = (note.author === 'cutemp');
+            const isNoteFromSetemp = (note.author === 'setemp');
+            const isNoteFromElectrical = (note.author === 'electrical');
+
+            // Author Info
+            const authorInitial = note.author.charAt(0).toUpperCase();
+            const displayName = note.employeeName ? `${note.author} (${note.employeeName})` : note.author;
+            const displayInitial = note.employeeName ? note.employeeName.charAt(0).toUpperCase() : authorInitial;
+
+            // Permissions
+            const isMyNote = (note.author === currentUser.username);
+            const isCutemp = (currentUser.username === 'cutemp');
+            const isSetemp = (currentUser.username === 'setemp');
+            const isElectrical = (currentUser.username === 'electrical');
+
+            // Buttons
+            let actionBtns = '';
+            if (isAdmin) {
+                // Admin can delete anyone's note
+                actionBtns = `<button class="btn btn-sm btn-light text-danger p-0 px-1" onclick="deleteNote('${note.id}')" title="سڕینەوە"><i class="bi bi-trash"></i></button>`;
+            } else if (isMyNote && !isCutemp && !isSetemp && !isElectrical) {
+                actionBtns = `
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-light text-primary p-0 px-1" onclick="editNote('${note.id}')" title="دەستکاری"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-light text-danger p-0 px-1" onclick="deleteNote('${note.id}')" title="سڕینەوە"><i class="bi bi-trash"></i></button>
+                    </div>
+                `;
+            }
+
+            // Reply Section - Multi-reply support
+            let repliesHTML = '';
+            if (note.replies && note.replies.length > 0) {
+                note.replies.forEach((rep, index) => {
+                    const replyLabel = rep.user === 'admin' ? 'وەڵامی بەڕێوبەی بەرهەم' : `وەڵامی ${rep.user}`;
+                    let replyActions = '';
+                    if (rep.user === currentUser.username) {
+                        replyActions = `
+                            <div class="ms-auto d-flex gap-1" style="opacity: 0.7;">
+                                <button class="btn btn-sm btn-link text-warning p-0" onclick="editReply('${note.id}', ${index})" title="دەستکاری"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteReply('${note.id}', ${index})" title="سڕینەوە"><i class="bi bi-trash"></i></button>
+                            </div>
+                        `;
+                    }
+                    repliesHTML += `
+                        <div class="reply-box">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="reply-header"><i class="bi bi-arrow-return-left"></i> ${replyLabel}:</div>
+                                ${replyActions}
+                            </div>
+                            <div class="small">${rep.text}</div>
+                        </div>
+                    `;
+                });
+            } else if (note.adminReply) {
+                // Backward compatibility for old single replies
+                repliesHTML = `
+                    <div class="reply-box">
+                        <div class="reply-header"><i class="bi bi-arrow-return-left"></i> وەڵام:</div>
+                        <div class="small">${note.adminReply}</div>
+                    </div>
+                `;
+            }
+
+            // Input field for new reply
+            let inputHTML = '';
+            if (isAdmin ||
+                (isHimat && isNoteFromCutemp) ||
+                (isSarezh && isNoteFromElectrical) ||
+                (isSamdar && isNoteFromSetemp)) {
+                inputHTML = `
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="input-group input-group-sm">
+                            <textarea class="form-control" id="reply-input-${note.id}" rows="1" placeholder="نووسینی وەڵام..." style="resize:none;"></textarea>
+                            <button class="btn btn-primary" onclick="submitReply('${note.id}')"><i class="bi bi-send"></i></button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="note-item">
+                    <div class="note-card">
+                        <div class="note-header">
+                            <div class="sender-info">
+                                <div class="sender-avatar">${displayInitial}</div>
+                                <div style="line-height:1.2">
+                                    <div style="font-size:1rem; font-weight:800; color:var(--text-main);">${displayName}</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">${new Date(note.createdAt).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="note-title mb-1">${note.title}</h6>
+                        
+                        ${(note.department || note.hours) ? `
+                        <div class="mb-3 d-flex gap-2 flex-wrap">
+                            ${note.department ? `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-diagram-3 me-1"></i> ${note.department}</span>` : ''}
+                            ${note.hours ? `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i> ${note.hours}:${note.minutes || '00'} H</span>` : ''}
+                        </div>
+                        ` : ''}
+
+                        <div class="note-content">${note.content}</div>
+
+                        <div class="note-footer">
+                            <span class="text-muted small fw-bold">ID: ${note.id.substring(0, 4)}</span>
+                            ${actionBtns}
+                        </div>
+
+                        ${repliesHTML}
+                        ${inputHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 5. ACTIONS ---
+
+        // Add or Edit Logic
+        function openModal() {
+            document.getElementById('noteForm').reset();
+            document.getElementById('editNoteId').value = '';
+            document.getElementById('modalTitle').textContent = 'زیادکردنی تێبینی';
+
+            const vSection = document.getElementById('verificationSection');
+            const vWarning = document.getElementById('cutempWarning');
+
+            if (currentUser.username === 'cutemp' || currentUser.username === 'setemp' || currentUser.username === 'unemp' || currentUser.username === 'electrical' || currentUser.username === 'mechanic') {
+                vWarning.style.display = 'block';
+                // Verification section already handled by session - only show if somehow skip session
+                vSection.style.display = activeEmployee ? 'none' : 'block';
+
+                // Show electrical fields for electrical account
+                if (currentUser.username === 'electrical') {
+                    document.getElementById('electricalFields').style.display = 'block';
+                } else {
+                    document.getElementById('electricalFields').style.display = 'none';
+                }
+
+                if (!activeEmployee) {
+                    const empSelect = document.getElementById('employeeName');
+                    if (empSelect.options.length <= 1) {
+                        const registry = currentUser.username === 'cutemp' ? cutempRegistry :
+                            (currentUser.username === 'setemp' ? setempRegistry :
+                                (currentUser.username === 'unemp' ? unempRegistry :
+                                    (currentUser.username === 'mechanic' ? mechanicRegistry : electricalRegistry)));
+                        Object.keys(registry).forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.innerText = name;
+                            empSelect.appendChild(opt);
+                        });
+                    }
+                }
+            } else {
+                vSection.style.display = 'none';
+                vWarning.style.display = 'none';
+            }
+
+            new bootstrap.Modal(document.getElementById('noteModal')).show();
+        }
+
+        function editNote(id) {
+            const note = notesList.find(n => n.id === id);
+            if (!note) return;
+
+            document.getElementById('editNoteId').value = note.id;
+            document.getElementById('noteTitle').value = note.title;
+            document.getElementById('noteContent').value = note.content;
+
+            // Load electrical fields if they exist
+            if (currentUser.username === 'electrical') {
+                document.getElementById('electricalFields').style.display = 'block';
+                document.getElementById('noteDepartment').value = note.department || '';
+                document.getElementById('noteHours').value = note.hours || '';
+                document.getElementById('noteMinutes').value = note.minutes || '';
+            } else {
+                document.getElementById('electricalFields').style.display = 'none';
+            }
+
+            // Hide verification for editing (it's already been verified once)
+            document.getElementById('verificationSection').style.display = 'none';
+
+            document.getElementById('modalTitle').textContent = 'دەستکاریکردنی تێبینی';
+            new bootstrap.Modal(document.getElementById('noteModal')).show();
+        }
+
+        async function saveNote() {
+            const id = document.getElementById('editNoteId').value;
+            const title = document.getElementById('noteTitle').value;
+            const content = document.getElementById('noteContent').value;
+
+            if (!title || !content) { showToast('تکایە هەموو زانیاریەکان بنووسە', 'warning'); return; }
+
+            const data = {
+                title, content,
+                updatedAt: new Date().toISOString()
+            };
+
+            // Add electrical fields if applicable
+            if (currentUser.username === 'electrical') {
+                data.department = document.getElementById('noteDepartment').value;
+                data.hours = document.getElementById('noteHours').value;
+                data.minutes = document.getElementById('noteMinutes').value;
+            }
+
+            // Verification for new notes from cutemp, setemp or electrical
+            if (!id && (currentUser.username === 'cutemp' || currentUser.username === 'setemp' || currentUser.username === 'unemp' || currentUser.username === 'electrical' || currentUser.username === 'mechanic')) {
+                if (activeEmployee) {
+                    data.employeeName = activeEmployee;
+                } else {
+                    const empName = document.getElementById('employeeName').value;
+                    const empCode = document.getElementById('employeeCode').value;
+
+                    if (!empName || !empCode) {
+                        showToast('تکایە ناو و کۆدەکەت داخل بکە', 'warning');
+                        return;
+                    }
+
+                    let registry;
+                    if (currentUser.username === 'cutemp') registry = cutempRegistry;
+                    else if (currentUser.username === 'setemp') registry = setempRegistry;
+                    else if (currentUser.username === 'unemp') registry = unempRegistry;
+                    else if (currentUser.username === 'mechanic') registry = mechanicRegistry;
+                    else registry = electricalRegistry;
+
+                    if (registry[empName] !== empCode) {
+                        showToast('کۆدەکە هەڵەیە!', 'danger');
+                        return;
+                    }
+                    data.employeeName = empName;
+                }
+            }
+
+            try {
+                if (id) {
+                    // Update existing
+                    data.last_updated = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('notes').doc(id).update(data);
+                    showToast('نوێکرایەوە', 'success');
+                } else {
+                    // Create new
+                    data.author = currentUser.username;
+                    data.createdAt = new Date().toISOString();
+                    data.last_updated = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('notes').add(data);
+                    showToast('زیادکرا', 'success');
+                }
+                bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+
+                // RELOAD notes after save (since we removed realtime listener)
+                loadNotes();
+
+                // Force re-verification for electrical, setting and unemp users
+                if (currentUser.username === 'electrical' || currentUser.username === 'setemp' || currentUser.username === 'unemp' || currentUser.username === 'mechanic') {
+                    activeEmployee = null;
+                    renderNotes(); // Clear the view
+                    showSessionModal(); // Ask for code again
+                }
+
+            } catch (e) {
+                console.error(e);
+                showToast('هەڵە ڕوویدا', 'danger');
+            }
+        }
+
+        async function deleteNote(id) {
+            if (confirm('دڵنیایت لە سڕینەوە؟')) {
+                try {
+                    await db.collection('notes').doc(id).delete();
+                    showToast('سڕایەوە', 'success');
+                    // RELOAD notes after delete (since we removed realtime listener)
+                    loadNotes();
+                } catch (e) { showToast('هەڵە', 'danger'); }
+            }
+        }
+
+        // Multi-Reply Logic
+        async function submitReply(noteId) {
+            const inputEl = document.getElementById(`reply-input-${noteId}`);
+            const replyText = inputEl.value.trim();
+            if (!replyText) return;
+
+            try {
+                // Add to replies array using arrayUnion for safety
+                await db.collection('notes').doc(noteId).update({
+                    replies: firebase.firestore.FieldValue.arrayUnion({
+                        user: currentUser.username,
+                        text: replyText,
+                        timestamp: new Date().toISOString()
+                    }),
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                inputEl.value = ''; // Clear input
+                showToast('وەڵام نێردرا', 'success');
+                // RELOAD notes after reply (since we removed realtime listener)
+                loadNotes();
+            } catch (e) {
+                console.error(e);
+                showToast('هەڵە ڕوویدا', 'danger');
+            }
+        }
+
+        async function editReply(noteId, index) {
+            const note = notesList.find(n => n.id === noteId);
+            if (!note || !note.replies || !note.replies[index]) return;
+
+            // Ownership check
+            if (note.replies[index].user !== currentUser.username) {
+                showToast('تۆ ناتوانیت ئەم وەڵامە بگۆڕیت (بۆ تۆ نییە)', 'danger');
+                return;
+            }
+
+            const currentText = note.replies[index].text;
+            const newText = prompt('تکایە وەڵامەکە نوێ بکەرەوە:', currentText);
+
+            if (newText === null || newText === currentText || !newText.trim()) return;
+
+            const updatedReplies = [...note.replies];
+            updatedReplies[index].text = newText.trim();
+            updatedReplies[index].lastEditedAt = new Date().toISOString();
+
+            try {
+                await db.collection('notes').doc(noteId).update({
+                    replies: updatedReplies,
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('وەڵامەکە نوێکرایەوە', 'success');
+                // RELOAD notes after edit (since we removed realtime listener)
+                loadNotes();
+            } catch (e) {
+                console.error(e);
+                showToast('هەڵە ڕوویدا', 'danger');
+            }
+        }
+
+        async function deleteReply(noteId, index) {
+            const note = notesList.find(n => n.id === noteId);
+            if (!note || !note.replies || !note.replies[index]) return;
+
+            // Ownership check
+            if (note.replies[index].user !== currentUser.username) {
+                showToast('تۆ ناتوانیت ئەم وەڵامە بسڕیتەوە (بۆ تۆ نییە)', 'danger');
+                return;
+            }
+
+            if (!confirm('دڵنیایت لە سڕینەوەی ئەم وەڵامە؟')) return;
+
+            const updatedReplies = [...note.replies];
+            updatedReplies.splice(index, 1);
+
+            try {
+                await db.collection('notes').doc(noteId).update({
+                    replies: updatedReplies,
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('وەڵامەکە سڕایەوە', 'success');
+                // RELOAD notes after delete (since we removed realtime listener)
+                loadNotes();
+            } catch (e) {
+                console.error(e);
+                showToast('هەڵە ڕوویدا', 'danger');
+            }
+        }
+
+        // Utils
+        function filterNotes() {
+            const term = document.getElementById('searchNote').value.toLowerCase();
+            const items = document.querySelectorAll('.note-item');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(term) ? '' : 'none';
+            });
+        }
+
+        function showToast(msg, type) {
+            const container = document.querySelector('.toast-container');
+            const el = document.createElement('div');
+            el.className = `toast show align-items-center text-white bg-${type} border-0`;
+            el.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div></div>`;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+
+        // --- Session Management ---
+        function showSessionModal() {
+            const select = document.getElementById('sessionEmployeeName');
+            select.innerHTML = '<option value="">هەڵبژێرە...</option>';
+
+            let registry;
+            if (currentUser.username === 'cutemp') registry = cutempRegistry;
+            else if (currentUser.username === 'setemp') registry = setempRegistry;
+            else if (currentUser.username === 'unemp') registry = unempRegistry;
+            else if (currentUser.username === 'mechanic') registry = mechanicRegistry;
+            else registry = electricalRegistry;
+
+            Object.keys(registry).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = name;
+                select.appendChild(opt);
+            });
+
+            new bootstrap.Modal(document.getElementById('sessionModal')).show();
+        }
+
+        function verifySession() {
+            const name = document.getElementById('sessionEmployeeName').value;
+            const code = document.getElementById('sessionEmployeeCode').value;
+
+            if (!name || !code) {
+                showToast('تکایە هەموو زانیاریەکان بنووسە', 'warning');
+                return;
+            }
+
+            let registry;
+            if (currentUser.username === 'cutemp') registry = cutempRegistry;
+            else if (currentUser.username === 'setemp') registry = setempRegistry;
+            else if (currentUser.username === 'unemp') registry = unempRegistry;
+            else if (currentUser.username === 'mechanic') registry = mechanicRegistry;
+            else registry = electricalRegistry;
+
+            if (registry[name] === code) {
+                activeEmployee = name;
+                if (currentUser.username === 'cutemp' || currentUser.username === 'setemp' || currentUser.username === 'unemp' || currentUser.username === 'mechanic') {
+                    sessionStorage.setItem('activeEmployee', name);
+                }
+                document.getElementById('userInfo').querySelector('span').innerText = `${currentUser.username} (${activeEmployee})`;
+                bootstrap.Modal.getInstance(document.getElementById('sessionModal')).hide();
+                renderNotes();
+            } else {
+                showToast('کۆدەکە هەڵەیە!', 'danger');
+            }
+        }
+
+    </script>
+</body>
+
+</html>

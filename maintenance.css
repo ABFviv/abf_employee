@@ -1,0 +1,422 @@
+        :root {
+            /* Blue Theme */
+            --primary-color: #1976d2;
+            --primary-gradient: linear-gradient(135deg, #42a5f5, #0d47a1);
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #0dcaf0;
+            --light-bg: #f0f2f5;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            flex: 1;
+        }
+
+        /* --- HEADER --- */
+        .header-bar {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(25, 118, 210, 0.15);
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 8px 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .btn-header:hover {
+            background: white !important;
+            color: #1976d2 !important;
+            transform: translateY(-2px);
+            border-color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-badge {
+            background: white;
+            color: #1976d2;
+            padding: 6px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        /* Selectors Box */
+        .machine-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Tabs */
+        .nav-tabs .nav-link {
+            color: #555;
+            font-weight: 600;
+            border: none;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            background: transparent;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Premium KPI Cards Redesign */
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--card-accent, #ddd);
+        }
+
+        .kpi-icon-wrapper {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: white;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .kpi-label {
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .kpi-subtext {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Tables */
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .excel-table th,
+        .excel-table td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .excel-table th {
+            background-color: #f8f9fa;
+            color: #444;
+            font-weight: bold;
+        }
+
+        .excel-table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .pivot-row-header {
+            text-align: right !important;
+            background-color: #fafafa;
+            font-weight: bold;
+        }
+
+        .total-row {
+            background-color: #e3f2fd;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            height: 350px;
+            position: relative;
+        }
+
+        .badge-category {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: normal;
+            border: 1px solid #bbdefb;
+        }
+
+        .badge-part {
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Manage Parts Styles */
+        .part-group-item {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+
+        /* Schedule Table Status */
+        .status-ok {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            font-weight: bold;
+        }
+
+        .status-danger {
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .type-manual {
+            color: #1976d2;
+            font-weight: bold;
+        }
+
+        .type-auto {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Recent Activity & Pivot Overhaul */
+        .activity-list {
+            list-style: none;
+            padding: 5px;
+            margin: 0;
+            overflow-y: auto;
+            max-height: 280px;
+        }
+
+        .activity-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 12px;
+            border-right: 4px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(-5px);
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pivot Table Premium Styling */
+        .card-pivot {
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .excel-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+        }
+
+        .excel-table th {
+            background: #1e293b;
+            color: #f8fafc;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 15px;
+            border: none;
+            text-align: center;
+        }
+
+        .excel-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: center;
+            color: #475569;
+        }
+
+        .pivot-row-header {
+            text-align: right !important;
+            font-weight: 700;
+            color: #1e293b !important;
+            background: #f8fafc;
+        }
+
+        .total-row {
+            font-weight: 800;
+            color: var(--primary-color) !important;
+            background: #eff6ff;
+        }
+
+        .excel-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .excel-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        /* --- Global Footer Styling --- */
+        .global-footer {
+            margin-top: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .teg-logo-footer {
+            height: 60px;
+            width: auto;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15));
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .teg-logo-footer:hover {
+            transform: scale(1.1) rotate(-2deg);
+        }
+
+        .copyright-text {
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }

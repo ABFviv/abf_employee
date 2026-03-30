@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - چاکسازی پێشکەوتوو</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="maintenance.css">
+    <style>
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-bar">
+        <div class="logo-container">
+            <div class="logo-image-container">
+                <img src="logo.png" alt="Logo"
+                    style="height: 40px; border-radius: 8px; background: white; padding: 4px;">
+            </div>
+            <div>
+                <h5 class="m-0 fw-bold" style="letter-spacing: 0.5px;">چاکسازی پێشکەوتوو</h5>
+                <div style="font-size: 0.65rem; opacity: 0.8; font-weight: 600;">MAINTENANCE SYSTEM</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="user-badge" id="userInfo">
+                <i class="bi bi-person-circle fs-5"></i>
+                <span>User</span>
+            </div>
+            <button id="btnSync" class="btn btn-header" onclick="loadLogs(currentMachineId)"
+                style="color: var(--bs-primary);">
+                <i class="bi bi-cloud-arrow-down-fill fs-4"></i>
+                <span class="ms-2">Sync</span>
+            </button>
+            <button class="btn btn-header" onclick="window.location.href='dashboard.html'">
+                <i class="bi bi-arrow-right-short fs-4"></i>
+                <span>گەڕانەوە</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container-fluid px-0">
+
+        <div class="machine-selector">
+            <div class="d-flex align-items-center gap-2">
+                <label class="fw-bold text-secondary"><i class="bi bi-diagram-3"></i> بەش:</label>
+                <select id="departmentSelect" class="form-select form-select-sm" style="min-width: 150px;">
+                    <option value="">-- هەموو --</option>
+                </select>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <label class="fw-bold text-secondary"><i class="bi bi-cpu"></i> ئامێر:</label>
+                <select id="machineSelect" class="form-select" style="min-width: 250px;">
+                    <option value="">-- ئامێرێک دیاری بکە --</option>
+                </select>
+            </div>
+
+            <div id="machineControls" style="display:none;" class="d-flex gap-2">
+                <button class="btn btn-warning btn-sm text-white action-btn" onclick="openManagePartsModal()">
+                    <i class="bi bi-gear-fill"></i> ڕێکخستنی پارچەکان
+                </button>
+            </div>
+
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm action-btn" id="btnDeptTotals"
+                    onclick="openDeptTotalsModal()">
+                    <i class="bi bi-building"></i> Department Totals
+                </button>
+                <button class="btn btn-primary btn-sm action-btn" id="btnAddMachine" onclick="openAddMachineModal()">
+                    <i class="bi bi-plus-lg"></i> زیادکردن
+                </button>
+                <button class="btn btn-secondary btn-sm action-btn" id="btnManageMachines"
+                    onclick="openManageMachinesModal()">
+                    <i class="bi bi-list-ul"></i> بەڕێوەبردن
+                </button>
+            </div>
+        </div>
+
+        <div id="mainContent" style="display: none;">
+
+            <ul class="nav nav-tabs mb-4" id="maintTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard">
+                        <i class="bi bi-speedometer2 me-2"></i>داشبۆرد & شیکاری
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#schedule">
+                        <i class="bi bi-calendar-check me-2"></i>پلان و پێشبینی
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#records">
+                        <i class="bi bi-clipboard-data me-2"></i>تۆماری چاکسازی
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#problems">
+                        <i class="bi bi-exclamation-triangle me-2"></i>کێشەکان
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+                <div class="tab-pane fade show active" id="dashboard">
+
+                    <div class="d-flex justify-content-end align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2 bg-white p-2 rounded shadow-sm border">
+                            <label class="fw-bold text-secondary small"><i class="bi bi-calendar3"></i> فلتەری
+                                کات:</label>
+                            <select id="dashboardDateFilter"
+                                class="form-select form-select-sm border-0 bg-light fw-bold" style="width: auto;"
+                                onchange="updateDashboard()">
+                                <option value="all">All Time (هەموو کاتەکان)</option>
+                                <option value="this_year">This Year (ئەمساڵ)</option>
+                                <option value="this_month">This Month (ئەم مانگە)</option>
+                                <option value="last_30">Last 30 Days (٣٠ ڕۆژی ڕابردوو)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- Total Downtime -->
+                        <div class="col-md-3">
+                            <div class="kpi-card" style="--card-accent: #f59e0b;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="kpi-label">کۆی وەستان</div>
+                                        <div class="kpi-value" id="kpiDowntime">--</div>
+                                        <div class="kpi-subtext">Total Downtime (Hours)</div>
+                                    </div>
+                                    <div class="kpi-icon-wrapper"
+                                        style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- MTTF -->
+                        <div class="col-md-3">
+                            <div class="kpi-card" style="--card-accent: #0ea5e9;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="kpi-label">ناوەندی کاتی کارکردن</div>
+                                        <div class="kpi-value" id="kpiMTTF">--</div>
+                                        <div class="kpi-subtext">MTTF (Usage Days)</div>
+                                    </div>
+                                    <div class="kpi-icon-wrapper"
+                                        style="background: linear-gradient(135deg, #38bdf8, #0ea5e9);">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- MTBF -->
+                        <div class="col-md-3">
+                            <div class="kpi-card" style="--card-accent: #10b981;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="kpi-label">ماوەی نێوان دوو وەستان</div>
+                                        <div class="kpi-value" id="kpiMTBF">--</div>
+                                        <div class="kpi-subtext">MTBF (Cycle Days)</div>
+                                    </div>
+                                    <div class="kpi-icon-wrapper"
+                                        style="background: linear-gradient(135deg, #34d399, #10b981);">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- MTTR -->
+                        <div class="col-md-3">
+                            <div class="kpi-card" style="--card-accent: #ef4444;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="kpi-label">ناوەندی کاتی چاککردنەوە</div>
+                                        <div class="kpi-value" id="kpiMTTR">--</div>
+                                        <div class="kpi-subtext">MTTR (Repair Hours)</div>
+                                    </div>
+                                    <div class="kpi-icon-wrapper"
+                                        style="background: linear-gradient(135deg, #f87171, #ef4444);">
+                                        <i class="bi bi-tools"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-8">
+                            <div class="chart-container">
+                                <div class="d-flex flex-wrap justify-content-between align-items-end mb-3 gap-2">
+                                    <div>
+                                        <h5 class="text-secondary m-0"><i class="bi bi-bar-chart-fill"></i> شیکاری
+                                            (Analysis)</h5>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <div>
+                                            <label class="form-label small text-muted mb-0">Category (بەش)</label>
+                                            <select id="chartFilterCat" class="form-select form-select-sm"
+                                                onchange="applyChartFilters()">
+                                                <option value="">ALL (هەموو)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="form-label small text-muted mb-0">Part (پارچە)</label>
+                                            <select id="chartFilterPart" class="form-select form-select-sm"
+                                                onchange="applyChartFilters()">
+                                                <option value="">ALL (هەموو)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="d-flex align-items-end">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                onclick="resetChartFilters()" title="Reset Filters">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <input type="radio" class="btn-check" name="chartView" id="viewCat"
+                                            autocomplete="off" checked onchange="toggleChartMode('category')">
+                                        <label class="btn btn-outline-primary" for="viewCat">By Category</label>
+
+                                        <input type="radio" class="btn-check" name="chartView" id="viewPart"
+                                            autocomplete="off" onchange="toggleChartMode('part')">
+                                        <label class="btn btn-outline-primary" for="viewPart">By Part</label>
+                                    </div>
+                                </div>
+
+                                <div style="height: 300px; width: 100%;">
+                                    <canvas id="maintenanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="chart-container">
+                                <h5 class="mb-3 text-secondary"><i class="bi bi-activity"></i> دوایین چالاکییەکان</h5>
+                                <ul class="activity-list" id="recentActivitiesList">
+                                    <li class="text-muted text-center py-4">داتا باردەکرێت...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-6">
+                            <div class="chart-container">
+                                <h5 class="mb-3 text-danger"><i class="bi bi-graph-down"></i> هێڵکاری وەستانەکان
+                                    (Downtime)</h5>
+                                <div style="height: 280px; width: 100%;">
+                                    <canvas id="downtimeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card card-pivot h-100">
+                                <div
+                                    class="card-header bg-dark text-white fw-bold py-3 border-0 d-flex align-items-center">
+                                    <i class="bi bi-grid-3x3-gap-fill me-2 text-info"></i> پوختەی ساڵانە (Annual
+                                    Analysis Pivot)
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive" style="max-height: 350px;">
+                                        <table class="excel-table" id="pivotTable">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="p-4 text-muted">داتا باردەکرێت...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-7">
+                            <div class="chart-container">
+                                <h5 class="mb-3 text-success"><i class="bi bi-graph-up-arrow"></i> شیکاری متمانەپێکراوی
+                                    (Reliability Trends)</h5>
+                                <div style="height: 300px; width: 100%;">
+                                    <canvas id="reliabilityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="chart-container">
+                                <h5 class="mb-3 text-warning"><i class="bi bi-pie-chart-fill"></i> دابەشبوونی کێشەکان
+                                    (Top Problems)</h5>
+                                <div style="height: 300px; width: 100%;">
+                                    <canvas id="problemParetoChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="tab-pane fade" id="schedule">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-success fw-bold">خشتەی چاکسازی (Auto & Manual Plan)</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success action-btn" onclick="openPlanModal()">
+                                <i class="bi bi-calendar-plus"></i> زیادکردنی پلان
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="printSchedule()">
+                                <i class="bi bi-printer"></i> چاپکردن
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="excel-table table-hover">
+                                    <thead class="bg-success text-white">
+                                        <tr>
+                                            <th>ناوی چاکسازی (Part)</th>
+                                            <th>جۆری پلان (Type)</th>
+                                            <th>کۆتا چاکسازی (Last Date)</th>
+                                            <th>چاکسازی داهاتوو (Date)</th>
+                                            <th>ماوە (ڕۆژ) (Remaining)</th>
+                                            <th>کردار</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scheduleBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="records">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-primary fw-bold">تۆماری گۆڕانکاری و پارچەکان</h5>
+                        <div class="d-flex gap-2">
+                            <button id="btnDeleteSelected" class="btn btn-danger action-btn" style="display:none;"
+                                onclick="deleteSelectedLogs()">
+                                <i class="bi bi-trash"></i> سڕینەوەی دیاریکراوەکان (<span id="selectedCount">0</span>)
+                            </button>
+
+                            <button class="btn btn-outline-secondary action-btn" onclick="openBulkImportModal()">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> هاوردنی بە کۆمەڵ (Excel)
+                            </button>
+                            <button class="btn btn-primary action-btn" onclick="openAddRecordModal('maintenance')">
+                                <i class="bi bi-plus-lg me-2"></i>زیادکردنی تۆمار
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive bg-white rounded shadow-sm">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;" class="admin-only"><input type="checkbox" id="selectAll"
+                                            onchange="toggleSelectAll()"></th>
+                                    <th onclick="sortMaintenanceTable('date')" style="cursor:pointer;">بەروار <i
+                                            class="bi bi-sort-alpha-down small opacity-50"></i></th>
+                                    <th onclick="sortMaintenanceTable('year')" style="cursor:pointer;">ساڵ <i
+                                            class="bi bi-sort-numeric-down small opacity-50"></i></th>
+                                    <th onclick="sortMaintenanceTable('partCategory')" style="cursor:pointer;">بەشی
+                                        سەرەکی (Category) <i class="bi bi-sort-alpha-down small opacity-50"></i></th>
+                                    <th onclick="sortMaintenanceTable('partName')" style="cursor:pointer;">ناوی پارچە
+                                        (Part) <i class="bi bi-sort-alpha-down small opacity-50"></i></th>
+                                    <th>ساڵانە چەند جار؟</th>
+                                    <th>تێبینی</th>
+                                    <th>کردار</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maintenanceLogBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="problems">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-danger fw-bold">تۆماری کێشە و وەستانەکان</h5>
+                        <button class="btn btn-danger action-btn" onclick="openAddRecordModal('problem')">
+                            <i class="bi bi-exclamation-octagon me-2"></i>زیادکردنی کێشە
+                        </button>
+                    </div>
+                    <div class="table-responsive bg-white rounded shadow-sm">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th>بەروار</th>
+                                    <th>کێشە</th>
+                                    <th>کۆدی گەنجینە</th>
+                                    <th>هۆکار</th>
+                                    <th>ماوەی وەستان</th>
+                                    <th>چارەسەر کراوە لەلایەن</th>
+                                    <th>کردار</th>
+                                </tr>
+                            </thead>
+                            <tbody id="problemLogBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="noMachineState" class="text-center py-5">
+            <i class="bi bi-cpu text-secondary opacity-25" style="font-size: 6rem;"></i>
+            <h3 class="text-muted mt-3">تکایە سەرەتا ئامێرێک هەڵبژێرە</h3>
+            <p class="text-muted">بۆ بینینی داتا و شیکارییەکان، ناوی ئامێرەکە لە لیستی سەرەوە دیاری بکە</p>
+        </div>
+
+        <div class="global-footer">
+            <img src="teg_logo.png" alt="TEG Logo" class="teg-logo-footer">
+            <div class="copyright-text">&copy; 2026 Asobrick Factory System</div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bulkImportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">هاوردنی داتا لە ئێکسڵ (Excel Import)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">1. Paste Data Here:</label>
+                            <textarea id="bulkImportText" class="form-control mb-3" rows="10"
+                                placeholder="Date | Category | Part Name | Frequency"></textarea>
+
+                            <label class="form-label small text-muted">Data Separator:</label>
+                            <select id="importSeparator" class="form-select form-select-sm mb-3">
+                                <option value="tab">Tab (Excel Default)</option>
+                                <option value="space">Space ( )</option>
+                                <option value="comma">Comma ( , )</option>
+                            </select>
+
+                            <button class="btn btn-outline-primary w-100" onclick="previewBulkData()">
+                                <i class="bi bi-table"></i> 2. Preview & Analyze
+                            </button>
+                        </div>
+
+                        <div class="col-md-8 border-start">
+                            <label class="form-label fw-bold">3. Verify & Edit (Click cells to change):</label>
+                            <div id="previewTableContainer" class="table-responsive"
+                                style="height: 400px; display:none;">
+                                <table class="table table-bordered table-sm small table-hover" id="bulkPreviewTable">
+                                    <thead style="position: sticky; top: 0; background: white; z-index: 5;">
+                                        <tr class="table-light text-center">
+                                            <th style="width: 15%">Date</th>
+                                            <th style="width: 25%" class="text-primary">Category (بەش)</th>
+                                            <th style="width: 35%" class="text-success">Part Name (پارچە)</th>
+                                            <th style="width: 10%">Freq</th>
+                                            <th style="width: 15%">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="previewBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="importStatus" class="alert alert-light mt-2 border" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary px-4" onclick="saveBulkData()" id="btnSaveBulk" disabled>
+                        <i class="bi bi-cloud-upload"></i> 4. Save to Database
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addRecordModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white" id="recordModalHeader">
+                    <h5 class="modal-title" id="recordModalTitle">تۆماری نوێ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="recordForm">
+                        <input type="hidden" id="recordType">
+                        <input type="hidden" id="editingLogId">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="recDate" required>
+                            </div>
+
+                            <div class="col-md-6 maintenance-field">
+                                <label class="form-label fw-bold text-primary">بەشی سەرەکی (Category)</label>
+                                <select class="form-select" id="partCategory" onchange="updateSubParts()">
+                                    <option value="">هەڵبژێرە...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 maintenance-field">
+                                <label class="form-label fw-bold text-danger">ناوی پارچە (Part Name)</label>
+                                <div id="partCheckboxes" class="border rounded p-2 bg-light"
+                                    style="max-height: 200px; overflow-y: auto;">
+                                    <div class="text-muted small">سەرەتا بەشی سەرەکی هەڵبژێرە</div>
+                                </div>
+                                <select class="form-select" id="partName" style="display:none;">
+                                    <option value="">هەڵبژێرە</option>
+                                </select>
+                            </div>
+                            <!-- Frequency removed here as it is managed in configuration -->
+
+                            <div class="col-md-12 problem-field" style="display:none;">
+                                <label class="form-label">کێشە (Problem)</label>
+                                <input type="text" class="form-control" id="recProblem">
+                            </div>
+                            <div class="col-md-6 problem-field" style="display:none;">
+                                <label class="form-label">کۆدی گەنجینە (Storage Code)</label>
+                                <input type="text" class="form-control" id="recStorageCode">
+                            </div>
+                            <div class="col-md-6 problem-field" style="display:none;">
+                                <label class="form-label">هۆکاری سەرەکی (Root Cause)</label>
+                                <input type="text" class="form-control" id="recRootCause">
+                            </div>
+                            <div class="col-md-6 problem-field" style="display:none;">
+                                <label class="form-label">ماوەی وەستان (کاتی وەستان بە کاتژمێر و خولەک HH:mm)</label>
+                                <input type="text" class="form-control" id="recDowntime" placeholder="e.g. 02:30">
+                            </div>
+                            <div class="col-md-6 problem-field" style="display:none;">
+                                <label class="form-label">چارەسەر کراوە لەلایەن</label>
+                                <input type="text" class="form-control" id="recSolution">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="recNote" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 d-grid">
+                            <button type="submit" class="btn btn-primary" id="saveBtnLabel">تۆمارکردن</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="planModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">دیاریکردنی پلان بۆ داهاتوو</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="planForm">
+                        <div class="mb-3">
+                            <label class="form-label">بەش (Category)</label>
+                            <select class="form-select" id="planCategory" onchange="updatePlanSubParts()" required>
+                                <option value="">هەڵبژێرە...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">پارچە (Part)</label>
+                            <select class="form-select" id="planPart" required disabled>
+                                <option value="">سەرەتا بەش هەڵبژێرە</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">بەرواری پلان (Planned Date)</label>
+                            <input type="date" class="form-control" id="planDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="planNote" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">زیادکردنی پلان</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addMachineModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> زیادکردنی ئامێری نوێ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addMachineForm">
+                        <div class="mb-3">
+                            <label for="newMachineName" class="form-label">ناوی ئامێر (Machine Name)</label>
+                            <input type="text" class="form-control" id="newMachineName" required
+                                placeholder="Example: Robot Arm A">
+                        </div>
+                        <div class="mb-3">
+                            <label for="newMachineDept" class="form-label">بەش (Department)</label>
+                            <select class="form-select" id="newMachineDept">
+                                <option value="Production">Production (بەرهەمهێنان)</option>
+                                <option value="Packaging">Packaging (پاکەتکردن)</option>
+                                <option value="Maintenance">Maintenance (چاکسازی)</option>
+                                <option value="Utilities">Utilities (خزمەتگوزاری)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewMachine()">زیادکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="managePartsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">ڕێکخستنی پارچەکانی ئامێر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 border-end">
+                            <h6 class="fw-bold">زیادکردنی بەش (Category)</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="newCatLabel"
+                                    placeholder="ناوی بەش (e.g. Motor)">
+                                <button class="btn btn-success" onclick="addNewCategory()">+</button>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold">پارچەکان بەپێی بەش</h6>
+                            <div id="partsConfigList" style="max-height: 400px; overflow-y: auto;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMachineParts()">پاشەکەوتکردن
+                        (Save)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Overhauled Department Totals Modal -->
+    <div class="modal fade" id="deptTotalsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white py-3">
+                    <h5 class="modal-title d-flex align-items-center">
+                        <i class="bi bi-building-fill-gear me-3 fs-4 text-info"></i>
+                        <span>پوختەی وردی بەشەکان (Advanced department Analytics)</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="text-secondary small fw-bold"><i class="bi bi-info-circle me-1"></i> Global metrics
+                            across all machines grouped by department.</div>
+                        <select id="deptTotalFilter" class="form-select w-auto shadow-sm border-0 fw-bold text-primary"
+                            onchange="loadDepartmentTotals()">
+                            <option value="all">All Time (هەموو کات)</option>
+                            <option value="this_year" selected>This Year (ئەمساڵ)</option>
+                            <option value="last_30">Last 30 Days</option>
+                        </select>
+                    </div>
+
+                    <!-- Global KPIs for Modal -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm text-center p-3"
+                                style="border-right: 5px solid var(--info-color) !important;">
+                                <div class="text-muted small fw-bold">Active Machines</div>
+                                <div id="modalGlobalMachines" class="fs-2 fw-bold text-secondary">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm text-center p-3"
+                                style="border-right: 5px solid var(--danger-color) !important;">
+                                <div class="text-muted small fw-bold">Total Issues</div>
+                                <div id="modalGlobalIssues" class="fs-2 fw-bold text-danger">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm text-center p-3"
+                                style="border-right: 5px solid var(--warning-color) !important;">
+                                <div class="text-muted small fw-bold">Total Downtime (h)</div>
+                                <div id="modalGlobalDowntime" class="fs-2 fw-bold text-warning">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="table-responsive rounded">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-white text-secondary small text-uppercase fw-bold">
+                                    <tr>
+                                        <th class="ps-4">Department</th>
+                                        <th class="text-center">Machines</th>
+                                        <th class="text-center">Issues</th>
+                                        <th class="text-center">Downtime</th>
+                                        <th class="text-center">MTTR (Avg)</th>
+                                        <th class="text-center">Main Failure Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deptTotalsBody" class="border-top-0">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary opacity-50"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manageMachinesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">بەڕێوەبردنی ئامێرەکان</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ناو</th>
+                                    <th>بەش</th>
+                                    <th>کردار</th>
+                                </tr>
+                            </thead>
+                            <tbody id="machinesListBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- CONFIGURATION ---
+        const departments = {
+            'haarin': 'هاڕین', 'amadakrdn': 'ئامادەکردن', 'brin': 'بڕین', 'barkrdn': 'بارکردن',
+            'dryer': 'درایەر', 'firn': 'فڕن', 'dagrtn': 'داگرتن', 'kareba': 'کارەبا', 'mechanical': 'میکانیک'
+        };
+
+        const defaultPartsConfig = {
+            'general': { label: 'گشتی', parts: [{ name: 'هیتر', freq: 'N/A' }] }
+        };
+
+        // --- AUTH & RBAC CONFIGURATION ---
+        const USER_PERMISSIONS = {
+            'himat': ['brin', 'barkrdn', 'dryer'],
+            'hemn': ['haarin', 'amadakrdn'],
+            'kiln': ['firn'],
+            'samdar': ['dagrtn'],
+            'sarezh': ['kareba'],
+            'shalaw': ['brin', 'barkrdn', 'dryer', 'haarin', 'amadakrdn', 'firn', 'dagrtn', 'kareba'],
+            'admin': ['ALL'],
+            'manager': ['ALL']
+        };
+
+        // --- FIREBASE SETUP ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const originalCollection = db.collection.bind(db);
+        db.collection = function (path) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+            if (line === 'line1') {
+                const parts = path.split('/');
+                parts[0] = parts[0] + '_line1';
+                return originalCollection(parts.join('/'));
+            }
+            return originalCollection(path);
+        };
+        let machinesCache = null; // NEW: Global cache for machines
+
+        let currentUser = null;
+        let currentMachineId = null;
+        let currentPartsConfig = null;
+
+        // Chart & Data Vars
+        let chartInstance = null;
+        let downtimeChartInstance = null;
+        let reliabilityChartInstance = null;
+        let problemParetoInstance = null;
+        let unsubscribeLogs = null;
+        let globalLogsCache = [];
+        let currentChartLogs = [];
+        let filteredChartLogs = [];
+        let currentChartMode = 'category';
+
+        const userStr = localStorage.getItem('currentUser');
+        if (!userStr) window.location.href = 'index.html';
+        currentUser = JSON.parse(userStr);
+
+        // Block 'employee' role from accessing this page
+        if (currentUser.role === 'employee') {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('userInfo').querySelector('span').innerText = currentUser.username;
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initUI();
+            loadMachines();
+            applyUserRestrictions();
+        });
+
+        function applyUserRestrictions() {
+            const role = currentUser.role;
+            const buttons = document.querySelectorAll('.action-btn');
+
+            // 1. MANAGER: Read-Only (Hide all action buttons)
+            if (role === 'shalaw') {
+                buttons.forEach(btn => btn.style.display = 'none');
+                // Also hide checkboxes and edit/delete icons in tables via CSS logic or JS rendering
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+
+
+            // 2. SUPERVISOR: Restricted
+            else if (role === 'supervisor') {
+                // Hide "Add Machine", "Manage Machine"
+                document.getElementById('btnAddMachine').style.display = 'none';
+                document.getElementById('btnManageMachines').style.display = 'none';
+                // Supervisors can now manage parts
+                document.getElementById('machineControls').style.display = 'block';
+                document.getElementById('btnDeptTotals').style.display = 'none';
+            }
+        }
+
+        function initUI() {
+            // Populate Departments based on Permissions
+            const deptSelect = document.getElementById('newMachineDept'); // For Add Modal
+            const deptFilter = document.getElementById('departmentSelect'); // Main Filter
+
+            deptSelect.innerHTML = '';
+            deptFilter.innerHTML = '<option value="">-- هەموو --</option>';
+
+            const userPerms = USER_PERMISSIONS[currentUser.username] || [];
+            const isAdminOrShalaw = (currentUser.role === 'admin' || currentUser.role === 'shalaw');
+
+            Object.keys(departments).forEach(key => {
+                // Show if Admin/Manager OR if User has this permission
+                if (isAdminOrShalaw || userPerms.includes(key)) {
+                    const opt = `<option value="${departments[key]}">${departments[key]}</option>`;
+                    deptSelect.innerHTML += `<option value="${departments[key]}">${departments[key]}</option>`;
+                    deptFilter.innerHTML += opt;
+                }
+            });
+
+            // Listeners
+            document.getElementById('departmentSelect').addEventListener('change', (e) => loadMachines(e.target.value));
+            document.getElementById('machineSelect').addEventListener('change', (e) => {
+                selectMachine(e.target.value);
+            });
+        }
+
+        // --- MACHINES LOAD (WITH PERMISSION FILTER & CACHING) ---
+        async function loadMachines(filterDept = '') {
+            const select = document.getElementById('machineSelect');
+            select.innerHTML = '<option value="">-- بارکردن... --</option>';
+
+            try {
+                let snap;
+                if (machinesCache) {
+                    snap = machinesCache;
+                } else {
+                    snap = await db.collection('machines').get();
+                    machinesCache = snap; // Cache the snapshot
+                }
+
+                select.innerHTML = '<option value="">-- ئامێرێک دیاری بکە --</option>';
+
+                const userPerms = USER_PERMISSIONS[currentUser.username] || [];
+                const isAdminOrShalaw = (currentUser.role === 'admin' || currentUser.role === 'shalaw');
+
+                snap.forEach(doc => {
+                    const m = doc.data();
+
+                    let isAllowed = false;
+                    if (isAdminOrShalaw) isAllowed = true;
+                    else {
+                        userPerms.forEach(key => {
+                            if (departments[key] === m.department) isAllowed = true;
+                        });
+                    }
+
+                    if (isAllowed) {
+                        if (!filterDept || m.department === filterDept) {
+                            select.innerHTML += `<option value="${doc.id}">${m.name}</option>`;
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                select.innerHTML = '<option value="">هەڵە لە بارکردن</option>';
+            }
+        }
+
+        async function selectMachine(id) {
+            if (!id) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('noMachineState').style.display = 'block';
+                if (currentUser.role === 'admin') document.getElementById('machineControls').style.display = 'block';
+                return;
+            }
+            currentMachineId = id;
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('noMachineState').style.display = 'none';
+
+            if (['admin', 'supervisor'].includes(currentUser.role)) {
+                document.getElementById('machineControls').style.display = 'block';
+            } else {
+                document.getElementById('machineControls').style.display = 'none';
+            }
+
+            const doc = await db.collection('machines').doc(id).get();
+            const machineData = doc.data();
+
+            if (machineData.partsConfig) {
+                currentPartsConfig = machineData.partsConfig;
+            } else {
+                currentPartsConfig = JSON.parse(JSON.stringify(defaultPartsConfig));
+            }
+
+            // Load logs for the selected machine
+            loadLogs(id);
+        }
+
+
+        // --- DATA LOGIC: LOAD LOGS (Limited to 6 months by default) ---
+        async function loadLogs(machineId, showAll = false) {
+            if (!machineId) return;
+
+            const btn = document.getElementById('btnSync');
+            if (btn) { btn.innerHTML = '<i class="bi bi-arrow-repeat spin fs-4"></i><span class="ms-2">Syncing...</span>'; btn.disabled = true; }
+
+            try {
+                let logQuery = db.collection('machine_logs')
+                    .where('machineId', '==', machineId)
+                    .orderBy('date', 'desc');
+
+                // If not showing all, default to last 6 months
+                if (!showAll) {
+                    const sixMonthsAgo = new Date();
+                    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                    const dateStr = sixMonthsAgo.toISOString().split('T')[0];
+                    logQuery = logQuery.where('date', '>=', dateStr);
+                }
+
+                const snap = await logQuery.get();
+
+                const logs = [];
+                snap.forEach(doc => logs.push({ id: doc.id, ...doc.data() }));
+                globalLogsCache = logs;
+                updateDashboard();
+            } catch (error) {
+                console.error("Error loading logs:", error);
+
+                if (error.message && error.message.includes('index')) {
+                    console.error("🚨 FIRESTORE INDEX REQUIRED: Click the link above in the console to create it.");
+                    alert("بۆ پیشاندانی داتاکان پێویستە 'Index' دروست بکرێت لە Firestore. تکایە سەیری Console بکە بۆ تێپەڕە (Link).");
+                } else {
+                    alert("هەڵە لە بارکردنی داتا: " + error.message);
+                }
+            } finally {
+                if (btn) { btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill fs-4"></i><span class="ms-2">Sync</span>'; btn.disabled = false; }
+            }
+        }
+
+        function updateDashboard() {
+            const filterType = document.getElementById('dashboardDateFilter').value;
+            const filteredLogs = filterLogsByDate(globalLogsCache, filterType);
+
+            const maintLogs = filteredLogs.filter(l => l.type === 'maintenance');
+            const probLogs = filteredLogs.filter(l => l.type === 'problem');
+            const planLogs = globalLogsCache.filter(l => l.type === 'plan');
+
+            renderDashboardVisuals(maintLogs, probLogs, globalLogsCache);
+            renderMaintTable(maintLogs);
+            renderProbTable(probLogs);
+            renderScheduleTable(maintLogs, planLogs);
+            calculateKPIs(probLogs, maintLogs);
+        }
+
+        function filterLogsByDate(logs, filterType) {
+            if (filterType === 'all') return logs;
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+
+            return logs.filter(log => {
+                const logDate = new Date(log.date);
+                if (filterType === 'this_year') return logDate.getFullYear() === currentYear;
+                if (filterType === 'this_month') return logDate.getFullYear() === currentYear && logDate.getMonth() === currentMonth;
+                if (filterType === 'last_30') return (now - logDate) / (1000 * 60 * 60 * 24) <= 30;
+                return true;
+            });
+        }
+
+        // --- CHARTING WITH FILTERS & TOGGLE ---
+        function renderDashboardVisuals(maintLogs, probLogs, allLogs) {
+            currentChartLogs = maintLogs;
+            populateChartFilters();
+            resetChartFilters(); // Will trigger chart draw
+
+            renderDowntimeChart(probLogs);
+            renderRecentActivity(allLogs);
+            renderReliabilityChart(probLogs);
+            renderProblemParetoChart(probLogs);
+
+            // Pivot Table
+            const pivotData = {};
+            const yearsSet = new Set();
+            maintLogs.forEach(log => {
+                const dateVal = log.date || '';
+                const y = dateVal.substring(0, 4) || 'N/A';
+                yearsSet.add(y);
+                const part = log.partName || log.part || 'General';
+                if (!pivotData[part]) pivotData[part] = {};
+                if (!pivotData[part][y]) pivotData[part][y] = 0;
+                pivotData[part][y] += parseInt(log.quantity || 1);
+            });
+            renderPivotTable(pivotData, Array.from(yearsSet).sort());
+        }
+
+        function populateChartFilters() {
+            const catSelect = document.getElementById('chartFilterCat');
+            const partSelect = document.getElementById('chartFilterPart');
+            const oldCat = catSelect.value;
+            const oldPart = partSelect.value;
+
+            catSelect.innerHTML = '<option value="">ALL (هەموو)</option>';
+            partSelect.innerHTML = '<option value="">ALL (هەموو)</option>';
+
+            if (currentPartsConfig) {
+                for (const [key, val] of Object.entries(currentPartsConfig)) {
+                    catSelect.innerHTML += `<option value="${key}">${val.label}</option>`;
+                }
+                const targetParts = (oldCat && currentPartsConfig[oldCat]) ? currentPartsConfig[oldCat].parts : [];
+                if (!oldCat) {
+                    for (const [key, val] of Object.entries(currentPartsConfig)) {
+                        val.parts.forEach(p => {
+                            const pName = p.name || p;
+                            partSelect.innerHTML += `<option value="${pName}">${pName}</option>`;
+                        });
+                    }
+                } else {
+                    targetParts.forEach(p => {
+                        const pName = p.name || p;
+                        partSelect.innerHTML += `<option value="${pName}">${pName}</option>`;
+                    });
+                }
+            }
+            catSelect.value = oldCat;
+            partSelect.value = oldPart;
+        }
+
+        function applyChartFilters() {
+            const catVal = document.getElementById('chartFilterCat').value;
+            const partVal = document.getElementById('chartFilterPart').value;
+
+            filteredChartLogs = currentChartLogs.filter(log => {
+                let matchesCat = !catVal || (log.partCategory === catVal);
+                let matchesPart = !partVal || (log.partName === partVal || log.part === partVal);
+                return matchesCat && matchesPart;
+            });
+            updateMainChart();
+        }
+
+        function resetChartFilters() {
+            document.getElementById('chartFilterCat').value = "";
+            document.getElementById('chartFilterPart').value = "";
+            filteredChartLogs = [...currentChartLogs];
+            updateMainChart();
+        }
+
+        function toggleChartMode(mode) {
+            currentChartMode = mode;
+            updateMainChart();
+        }
+
+        function updateMainChart() {
+            const dataLogs = filteredChartLogs;
+            if (!dataLogs) return;
+
+            const dataMap = {};
+            const yearsSet = new Set();
+
+            dataLogs.forEach(log => {
+                const dateVal = log.date || '';
+                const y = dateVal.substring(0, 4) || 'N/A';
+                yearsSet.add(y);
+
+                let key = "";
+                if (currentChartMode === 'category') {
+                    key = currentPartsConfig?.[log.partCategory]?.label || log.partCategory || 'General';
+                } else {
+                    key = log.partName || log.part || 'Unknown';
+                }
+
+                if (!dataMap[key]) dataMap[key] = {};
+                if (!dataMap[key][y]) dataMap[key][y] = 0;
+                dataMap[key][y] += parseInt(log.quantity || 1);
+            });
+
+            const years = Array.from(yearsSet).sort();
+            renderMainChart(dataMap, years);
+        }
+
+        function renderMainChart(dataMap, years) {
+            const ctx = document.getElementById('maintenanceChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const chartColors = [
+                { border: '#4f46e5', start: 'rgba(79, 70, 229, 0.8)', end: 'rgba(79, 70, 229, 0.4)' },
+                { border: '#10b981', start: 'rgba(16, 185, 129, 0.8)', end: 'rgba(16, 185, 129, 0.4)' },
+                { border: '#f59e0b', start: 'rgba(245, 158, 11, 0.8)', end: 'rgba(245, 158, 11, 0.4)' },
+                { border: '#ef4444', start: 'rgba(239, 68, 68, 0.8)', end: 'rgba(239, 68, 68, 0.4)' },
+                { border: '#8b5cf6', start: 'rgba(139, 92, 246, 0.8)', end: 'rgba(139, 92, 246, 0.4)' },
+                { border: '#06b6d4', start: 'rgba(6, 182, 212, 0.8)', end: 'rgba(6, 182, 212, 0.4)' }
+            ];
+
+            const datasets = Object.keys(dataMap).map((key, i) => {
+                const color = chartColors[i % chartColors.length];
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, color.start);
+                gradient.addColorStop(1, color.end);
+
+                return {
+                    label: key,
+                    data: years.map(y => dataMap[key][y] || 0),
+                    backgroundColor: gradient,
+                    borderColor: color.border,
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    maxBarThickness: 40
+                };
+            });
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: years, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, font: { weight: '600' } } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            title: { display: true, text: 'Actions Count', font: { weight: 'bold' } }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // --- OTHER CHARTS (Downtime, Reliability, Pareto) ---
+        // (Standard Implementations from previous versions)
+        function renderDowntimeChart(probLogs) {
+            const ctx = document.getElementById('downtimeChart').getContext('2d');
+            if (downtimeChartInstance) downtimeChartInstance.destroy();
+
+            const downtimeByMonth = {};
+            probLogs.forEach(l => {
+                const dateVal = l.date || '';
+                const month = dateVal.substring(0, 7) || 'N/A';
+                if (!downtimeByMonth[month]) downtimeByMonth[month] = 0;
+                downtimeByMonth[month] += parseFloat(l.downtime || 0);
+            });
+
+            const labels = Object.keys(downtimeByMonth).sort();
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(231, 76, 60, 0.25)');
+            gradient.addColorStop(1, 'rgba(231, 76, 60, 0.01)');
+
+            downtimeChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Downtime (h)',
+                        data: labels.map(m => downtimeByMonth[m]),
+                        borderColor: '#e74c3c',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#e74c3c',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+
+
+        function renderProblemParetoChart(probLogs) {
+            const ctx = document.getElementById('problemParetoChart').getContext('2d');
+            if (problemParetoInstance) problemParetoInstance.destroy();
+            const problemStats = {};
+            probLogs.forEach(l => {
+                const p = l.problem || 'Unknown';
+                if (!problemStats[p]) problemStats[p] = 0;
+                problemStats[p] += parseFloat(l.downtime || 0);
+            });
+            const sorted = Object.entries(problemStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            problemParetoInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(i => i[0]),
+                    datasets: [{
+                        data: sorted.map(i => i[1]),
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'right', labels: { padding: 20, usePointStyle: true } }
+                    }
+                }
+            });
+        }
+
+        function renderReliabilityChart(probLogs) {
+            const ctx = document.getElementById('reliabilityChart').getContext('2d');
+            if (reliabilityChartInstance) reliabilityChartInstance.destroy();
+
+            const monthlyData = {};
+            probLogs.forEach(l => {
+                const dateVal = l.date || '';
+                const month = dateVal.substring(0, 7) || 'N/A';
+                if (!monthlyData[month]) monthlyData[month] = { failures: 0, downtime: 0 };
+                monthlyData[month].failures++;
+                monthlyData[month].downtime += parseFloat(l.downtime || 0);
+            });
+
+            const labels = Object.keys(monthlyData).sort();
+
+            // Helper to create datasets with consistent premium styling
+            const createDataset = (label, color, data, yAxisId = 'y') => {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                const baseColor = color.replace('1)', '');
+                gradient.addColorStop(0, baseColor + '0.2)');
+                gradient.addColorStop(1, baseColor + '0.01)');
+
+                return {
+                    label: label,
+                    data: data,
+                    borderColor: color,
+                    borderWidth: 3,
+                    fill: yAxisId === 'y', // Only fill for high-uptime background
+                    backgroundColor: gradient,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 8,
+                    yAxisID: yAxisId
+                };
+            };
+
+            const mttrData = labels.map(m => {
+                const d = monthlyData[m];
+                return d.failures > 0 ? (d.downtime / d.failures).toFixed(1) : 0;
+            });
+
+            const mtbfData = labels.map(m => {
+                const d = monthlyData[m];
+                // Use 30 days coverage for simplicity per month in chart
+                return d.failures > 0 ? ((30 * 24) / d.failures).toFixed(1) : (30 * 24);
+            });
+
+            const mttfData = labels.map(m => {
+                const d = monthlyData[m];
+                const uptimeHours = (30 * 24) - d.downtime;
+                return d.failures > 0 ? (uptimeHours / d.failures).toFixed(1) : uptimeHours;
+            });
+
+            reliabilityChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        createDataset('MTTR (Repair)', 'rgba(239, 68, 68, 1)', mttrData, 'y1'),
+                        createDataset('MTBF (Usage)', 'rgba(59, 130, 246, 1)', mtbfData, 'y'),
+                        createDataset('MTTF (Uptime)', 'rgba(16, 185, 129, 1)', mttfData, 'y')
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { size: 11, weight: 'bold' } } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear', display: true, position: 'left',
+                            beginAtZero: true, grid: { color: '#f1f5f9' },
+                            title: { display: true, text: 'Uptime (h)', font: { weight: 'bold' } }
+                        },
+                        y1: {
+                            type: 'linear', display: true, position: 'right',
+                            beginAtZero: true, grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Repair Time (h)', font: { weight: 'bold' }, color: '#ef4444' },
+                            ticks: { color: '#ef4444' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderRecentActivity(allLogs) {
+            const list = document.getElementById('recentActivitiesList');
+            list.innerHTML = '';
+            // Get last 6 logs
+            const history = allLogs.filter(l => l.type !== 'plan').slice(0, 6);
+            if (history.length === 0) {
+                list.innerHTML = '<li class="text-muted text-center py-5">هیچ چالاکییەک نییە</li>';
+                return;
+            }
+            history.forEach(log => {
+                const isMaint = log.type === 'maintenance';
+                const color = isMaint ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'linear-gradient(135deg, #ef4444, #b91c1c)';
+                const borderColor = isMaint ? '#3b82f6' : '#ef4444';
+
+                list.innerHTML += `
+                    <li class="activity-item" style="border-right-color: ${borderColor}">
+                        <div class="activity-icon" style="background: ${color}">
+                            <i class="bi bi-${isMaint ? 'gear-fill' : 'exclamation-octagon-fill'}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <span class="fw-bold text-dark small">${isMaint ? (log.partName || log.part) : (log.problem || 'کێشە')}</span>
+                                <span class="text-muted" style="font-size: 0.7rem">${log.date || ''}</span>
+                            </div>
+                            <div class="text-secondary opacity-75" style="font-size: 0.75rem">${isMaint ? 'چاکسازی بۆ ئەنجامدرا' : 'تۆمارکرا وەکو کێشە'}</div>
+                        </div>
+                    </li>`;
+            });
+        }
+
+        function renderPivotTable(pivotData, years) {
+            const pt = document.getElementById('pivotTable');
+            if (years.length === 0) {
+                pt.innerHTML = '<tbody><tr><td class="p-5 text-muted">هیچ زانیارییەکی ساڵانە نییە</td></tr></tbody>';
+                return;
+            }
+            let html = `<thead><tr><th class="text-end">ناوی پارچە (Part)</th>${years.map(y => `<th>${y}</th>`).join('')}<th>کۆی گشتی</th></tr></thead><tbody>`;
+            for (const [part, yData] of Object.entries(pivotData)) {
+                let total = 0;
+                html += `<tr><td class="pivot-row-header">${part}</td>`;
+                years.forEach(y => {
+                    const val = yData[y] || 0;
+                    total += val;
+                    html += `<td>${val || '-'}</td>`;
+                });
+                html += `<td class="total-row text-center">${total}</td></tr>`;
+            }
+            html += '</tbody>';
+            pt.innerHTML = html;
+        }
+
+        // --- TABLES (WITH DELETE PROTECTION) ---
+        function renderMaintTable(logs) {
+            const tbody = document.getElementById('maintenanceLogBody');
+            tbody.innerHTML = '';
+            document.getElementById('selectAll').checked = false;
+            document.getElementById('selectedCount').innerText = 0;
+            document.getElementById('btnDeleteSelected').style.display = 'none';
+
+            // Hide Select All if not Admin
+            const canDelete = (currentUser.role === 'admin');
+            if (!canDelete) document.getElementById('selectAll').style.display = 'none';
+
+            // Apply Sorting
+            const sortedLogs = [...logs].sort((a, b) => {
+                let valA = a[currentSort.column] || '';
+                let valB = b[currentSort.column] || '';
+
+                if (currentSort.column === 'date') {
+                    valA = new Date(valA).getTime();
+                    valB = new Date(valB).getTime();
+                } else if (currentSort.column === 'year') {
+                    valA = parseInt(valA) || (a.date ? new Date(a.date).getFullYear() : 0);
+                    valB = parseInt(valB) || (b.date ? new Date(b.date).getFullYear() : 0);
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+
+                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (sortedLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">هیچ لیستێک نییە</td></tr>';
+                return;
+            }
+
+            sortedLogs.forEach(log => {
+                const dateVal = log.date || '';
+                const year = dateVal.substring(0, 4) || '-';
+                const part = log.partName || log.part || '-';
+                const checkbox = canDelete ? `<input type="checkbox" class="log-checkbox" value="${log.id}" onchange="updateDeleteButton()">` : '';
+                const deleteBtn = canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteLog('${log.id}')"><i class="bi bi-trash"></i></button>` : '';
+                // Edit button allowed for Admin & Supervisor (but not Manager)
+                const canEdit = currentUser.role !== 'shalaw';
+                const editBtn = canEdit ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="editLog('${log.id}')"><i class="bi bi-pencil"></i></button>` : '';
+
+                const catLabel = (currentPartsConfig && currentPartsConfig[log.partCategory]) ? currentPartsConfig[log.partCategory].label : log.partCategory;
+
+                // Fetch current frequency from config for global synchronization
+                let freqDisplay = '-';
+                if (currentPartsConfig && currentPartsConfig[log.partCategory]) {
+                    const foundPart = currentPartsConfig[log.partCategory].parts.find(p => (p.name || p) === part);
+                    if (foundPart) freqDisplay = foundPart.freq || 1;
+                }
+
+                tbody.innerHTML += `<tr><td>${checkbox}</td><td>${dateVal}</td><td>${year}</td><td><span class="badge-category">${catLabel}</span></td><td><span class="badge-part">${part}</span></td><td class="fw-bold text-primary">${freqDisplay}</td><td class="small text-muted">${log.note || ''}</td><td>${editBtn}${deleteBtn}</td></tr>`;
+            });
+        }
+
+        function renderProbTable(logs) {
+            const tbody = document.getElementById('problemLogBody');
+            tbody.innerHTML = '';
+            const canDelete = (currentUser.role === 'admin');
+            const canEdit = currentUser.role !== 'shalaw';
+
+            logs.forEach(log => {
+                const deleteBtn = canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteLog('${log.id}')"><i class="bi bi-trash"></i></button>` : '';
+                const editBtn = canEdit ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="editLog('${log.id}')"><i class="bi bi-pencil"></i></button>` : '';
+                tbody.innerHTML += `<tr><td>${log.date}</td><td class="fw-bold text-danger">${log.problem}</td><td class="text-primary fw-bold">${log.storageCode || '-'}</td><td>${log.rootCause || '-'}</td><td><span class="badge bg-warning text-dark">${log.downtime || 0}</span></td><td>${log.solution || '-'}</td><td>${editBtn}${deleteBtn}</td></tr>`;
+            });
+        }
+
+        // --- UPDATED SCHEDULE TABLE RENDERER ---
+        function renderScheduleTable(maintLogs, planLogs) {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+
+            // 1. کۆکردنەوەی هەموو پارچەکان لە کۆنفیگ
+            const allParts = [];
+            if (currentPartsConfig) {
+                Object.values(currentPartsConfig).forEach(cat => {
+                    if (cat.parts) cat.parts.forEach(p => allParts.push(p.name || p));
+                });
+            }
+
+            // 2. دروستکردنی داتا بۆ هەر پارچەیەک
+            const partData = {};
+            allParts.forEach(pName => {
+                // Find default frequency from config
+                let defaultCycle = 365;
+                if (currentPartsConfig) {
+                    for (const cat of Object.values(currentPartsConfig)) {
+                        const found = cat.parts.find(pp => (pp.name || pp) === pName);
+                        if (found) {
+                            if (found.freq === 'N/A') defaultCycle = null;
+                            else defaultCycle = Math.round(365 / (parseFloat(found.freq) || 1));
+                            break;
+                        }
+                    }
+                }
+                partData[pName] = { lastMaint: null, cycle: defaultCycle, manualPlan: null };
+            });
+
+            // 3. دۆزینەوەی دوایین چاکسازی (Auto Calculation)
+            maintLogs.forEach(log => {
+                const p = log.partName || log.part;
+                if (partData[p]) {
+                    // ئەگەر ئەم داتایە نوێتر بوو لەوەی تۆمارکراوە، نوێی بکەرەوە
+                    if (!partData[p].lastMaint || new Date(log.date) > new Date(partData[p].lastMaint)) {
+                        partData[p].lastMaint = log.date;
+                        // Frequency is now GLOBALLY driven by currentPartsConfig (initialized in partData[p].cycle)
+                        // No override from log.cycleDays to ensure global sync
+                    }
+                }
+            });
+
+            // 4. دۆزینەوەی پلانی دەستی (Manual Plans)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            planLogs.forEach(log => {
+                const p = log.partName;
+                // ئەگەر پارچەکە لە لیستەکە نەبوو، زیادی بکە
+                if (!partData[p]) partData[p] = { lastMaint: null, cycle: 365, manualPlan: null };
+
+                const planDate = new Date(log.date);
+                if (planDate >= today) {
+                    // ئەگەر پلانی داهاتوو بوو، وەریبگرە
+                    if (!partData[p].manualPlan || planDate < new Date(partData[p].manualPlan.date)) {
+                        partData[p].manualPlan = log;
+                    }
+                }
+            });
+
+            // 5. دروستکردنی ڕیزەکان (Rows)
+            let hasData = false;
+
+            Object.keys(partData).sort().forEach(part => {
+                const data = partData[part];
+                let nextDate = null;
+                let typeHtml = '<span class="text-muted">-</span>';
+                let remainingHtml = '<span class="text-muted">-</span>';
+                let actionBtn = '';
+                let rowClass = '';
+
+                // ئەولەویەت بۆ پلانی دەستییە، ئەگەر نەبوو ئەوا ئۆتۆماتیک
+                if (data.manualPlan) {
+                    nextDate = new Date(data.manualPlan.date);
+                    typeHtml = '<span class="badge bg-primary">Manual</span>';
+                    // دوگمەی سڕینەوە بۆ ئەدمین
+                    if (currentUser.role === 'admin') {
+                        actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="deleteLog('${data.manualPlan.id}')" title="Delete Plan"><i class="bi bi-trash"></i></button>`;
+                    }
+                } else if (data.lastMaint && data.cycle !== null) {
+                    const last = new Date(data.lastMaint);
+                    nextDate = new Date(last);
+                    nextDate.setDate(last.getDate() + data.cycle); // زیادکردنی ماوەی خول
+                    typeHtml = '<span class="badge bg-secondary">Auto</span>';
+                }
+
+                // ئەگەر کاتی داهاتوو دیاریکراو بوو، پیشانی بدە
+                if (nextDate) {
+                    hasData = true;
+                    const diffTime = nextDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    // ڕەنگکردن بەپێی کات
+                    if (diffDays < 0) {
+                        rowClass = 'table-danger'; // سور (کات بەسەرچوو)
+                        remainingHtml = `<span class="fw-bold text-danger">${diffDays} ڕۆژی تێپەڕیوە</span>`;
+                    } else if (diffDays < 30) {
+                        rowClass = 'table-warning'; // پرتەقاڵی (نزیکە)
+                        remainingHtml = `<span class="fw-bold text-dark">${diffDays} ڕۆژی ماوە</span>`;
+                    } else {
+                        remainingHtml = `<span class="text-success fw-bold">${diffDays} ڕۆژی ماوە</span>`;
+                    }
+
+                    const formattedNextDate = nextDate.toISOString().split('T')[0];
+
+                    tbody.innerHTML += `
+                <tr class="${rowClass}">
+                    <td class="fw-bold">${part}</td>
+                    <td>${typeHtml}</td>
+                    <td>${data.lastMaint || '-'}</td>
+                    <td class="fw-bold" style="font-size:1.1em">${formattedNextDate}</td>
+                    <td>${remainingHtml}</td>
+                    <td>${actionBtn}</td>
+                </tr>
+            `;
+                } else if (data.lastMaint && data.cycle === null) {
+                    // Case for N/A frequency
+                    hasData = true;
+                    tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${part}</td>
+                    <td><span class="badge bg-light text-dark">N/A</span></td>
+                    <td>${data.lastMaint}</td>
+                    <td class="text-muted italic">No schedule</td>
+                    <td class="text-muted">-</td>
+                    <td></td>
+                </tr>
+            `;
+                }
+            });
+
+            if (!hasData) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">هیچ پلانێک نییە (پێویستە سەرەتا داتای چاکسازی تۆمار بکەیت)</td></tr>';
+            }
+        }
+
+
+        // --- HELPER FUNCTIONS FOR TIME CONVERSION ---
+        function timeToDecimal(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) {
+                const val = parseFloat(timeStr) || 0;
+                return val;
+            }
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours + (minutes / 60);
+        }
+
+        function decimalToTime(decimalVal) {
+            if (!decimalVal && decimalVal !== 0) return "00:00";
+            const hours = Math.floor(decimalVal);
+            const minutes = Math.round((decimalVal - hours) * 60);
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        function openBulkImportModal() {
+            document.getElementById('bulkImportText').value = "";
+            document.getElementById('previewTableContainer').style.display = "none";
+            document.getElementById('btnSaveBulk').disabled = true;
+            document.getElementById('importStatus').style.display = "none";
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bulkImportModal'));
+            modal.show();
+        }
+
+        function previewBulkData() {
+            const rawText = document.getElementById('bulkImportText').value.trim();
+            const separator = document.getElementById('importSeparator').value;
+            if (!rawText) return;
+
+            const lines = rawText.split('\n');
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = '';
+            let validCount = 0;
+            let splitter = separator === 'space' ? ' ' : (separator === 'comma' ? ',' : '\t');
+
+            lines.forEach((line) => {
+                if (!line.trim()) return;
+                let cols = line.replace(/\[/g, '').replace(/\]/g, '').split(splitter).filter(i => i.trim() !== '');
+                let finalCat = "general";
+                let catMatch = cols.length >= 3 ? cols[1].trim() : "";
+
+                // Smart Dropdown Generation
+                let catOptions = '';
+                let foundCatMatch = false;
+                if (currentPartsConfig) {
+                    for (const [key, val] of Object.entries(currentPartsConfig)) {
+                        let isSel = (catMatch && (key.toLowerCase() === catMatch.toLowerCase() || val.label.toLowerCase().includes(catMatch.toLowerCase())));
+                        if (isSel) foundCatMatch = true;
+                        catOptions += `<option value="${key}" ${isSel ? 'selected' : ''}>${val.label}</option>`;
+                    }
+                }
+                if (!foundCatMatch && catMatch) catOptions += `<option value="${catMatch}" selected style="color:red;">${catMatch} (New)</option>`;
+
+                tbody.innerHTML += `<tr>
+                    <td contenteditable="true" class="bg-white">${cols[0] || ''}</td>
+                    <td class="p-0"><select class="form-select form-select-sm border-0 h-100 text-primary fw-bold category-select" onchange="smartUpdateCategory(this)">${catOptions}</select></td>
+                    <td contenteditable="true" class="text-success bg-white fw-bold part-name-cell">${cols.length >= 3 ? cols[2] : (cols[1] || 'Unknown')}</td>
+                    <td class="p-0"><input type="number" class="form-control form-control-sm border-0 h-100 freq-input" value="${cols[3] || 1}" onchange="smartUpdateFreq(this)"></td>
+                    <td><span class="badge bg-success">Ready</span></td>
+                </tr>`;
+                validCount++;
+            });
+            document.getElementById('previewTableContainer').style.display = "block";
+            document.getElementById('btnSaveBulk').disabled = (validCount === 0);
+        }
+
+        function smartUpdateCategory(selectElement) {
+            const newValue = selectElement.value;
+            const allRows = Array.from(document.querySelectorAll('#bulkPreviewTable tbody tr'));
+            const startIndex = allRows.indexOf(selectElement.closest('tr'));
+            for (let i = startIndex + 1; i < allRows.length; i++) {
+                const rowSelect = allRows[i].querySelector('.category-select');
+                if (rowSelect) { rowSelect.value = newValue; rowSelect.style.backgroundColor = '#fff3cd'; setTimeout(() => rowSelect.style.backgroundColor = '', 500); }
+            }
+        }
+        function smartUpdateFreq(input) {
+            const val = input.value;
+            const pName = input.closest('tr').querySelector('.part-name-cell').innerText.trim().toLowerCase();
+            document.querySelectorAll('#bulkPreviewTable tbody tr').forEach(r => {
+                if (r.querySelector('.part-name-cell').innerText.trim().toLowerCase() === pName) {
+                    r.querySelector('.freq-input').value = val;
+                }
+            });
+        }
+
+        async function saveBulkData() {
+            const rows = document.querySelectorAll('#bulkPreviewTable tbody tr');
+            if (rows.length === 0) return;
+            const btn = document.getElementById('btnSaveBulk');
+            btn.disabled = true; btn.textContent = "Saving...";
+            const batch = db.batch();
+            rows.forEach(r => {
+                const cells = r.cells;
+                batch.set(db.collection('machine_logs').doc(), {
+                    date: cells[0].innerText.trim(),
+                    partCategory: r.querySelector('.category-select').value,
+                    partName: r.querySelector('.part-name-cell').innerText.trim(),
+                    quantity: 1,
+                    cycleDays: Math.round(365 / (parseFloat(r.querySelector('.freq-input').value) || 1)),
+                    type: 'maintenance',
+                    machineId: currentMachineId,
+                    createdAt: new Date().toISOString(),
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await batch.commit();
+            alert("Done!");
+            loadLogs(currentMachineId); // Refresh
+            bootstrap.Modal.getInstance(document.getElementById('bulkImportModal')).hide();
+            btn.disabled = false; btn.textContent = "Save";
+        }
+
+        // --- BULK DELETE ---
+        function toggleSelectAll() {
+            const chk = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.log-checkbox').forEach(c => c.checked = chk);
+            updateDeleteButton();
+        }
+        function updateDeleteButton() {
+            const count = document.querySelectorAll('.log-checkbox:checked').length;
+            const btn = document.getElementById('btnDeleteSelected');
+            document.getElementById('selectedCount').textContent = count;
+            btn.style.display = count > 0 ? 'block' : 'none';
+        }
+        async function deleteSelectedLogs() {
+            if (!confirm("Are you sure?")) return;
+            const chks = document.querySelectorAll('.log-checkbox:checked');
+            const batch = db.batch();
+            chks.forEach(c => batch.delete(db.collection('machine_logs').doc(c.value)));
+            await batch.commit();
+            alert("Deleted.");
+            loadLogs(currentMachineId); // Refresh
+        }
+
+        // --- SUBMITS ---
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editingLogId').value;
+            const type = document.getElementById('recordType').value;
+            const date = document.getElementById('recDate').value;
+            const note = document.getElementById('recNote').value;
+            const partCategory = document.getElementById('partCategory').value;
+
+            const baseData = {
+                machineId: currentMachineId,
+                type: type,
+                date: date,
+                note: note,
+            };
+
+            if (type === 'maintenance') {
+                const selectedParts = [];
+                if (id) {
+                    // Editing - just use the single partName select (or first checked)
+                    baseData.partCategory = partCategory;
+                    baseData.partName = document.getElementById('partName').value;
+                    selectedParts.push(baseData);
+                } else {
+                    // Adding new - can have multiple
+                    document.querySelectorAll('.part-checkbox:checked').forEach(cb => {
+                        const pName = cb.value;
+                        let freq = 1;
+                        if (currentPartsConfig && currentPartsConfig[partCategory]) {
+                            const part = currentPartsConfig[partCategory].parts.find(p => (p.name || p) === pName);
+                            if (part && part.freq !== undefined) freq = part.freq === 'N/A' ? 'N/A' : (parseFloat(part.freq) || 1);
+                        }
+                        const cycleDays = freq === 'N/A' ? null : Math.round(365 / (parseFloat(freq) || 1));
+
+                        selectedParts.push({
+                            ...baseData,
+                            partCategory: partCategory,
+                            partName: pName,
+                            cycleDays: cycleDays,
+                            createdAt: new Date().toISOString()
+                        });
+                    });
+                }
+
+                if (selectedParts.length === 0 && !id) {
+                    alert("تکایە لانی کەم پارچەیەک هەڵبژێرە");
+                    return;
+                }
+
+                if (id) {
+                    // Update single
+                    let freq = 1;
+                    if (currentPartsConfig && currentPartsConfig[partCategory]) {
+                        const part = currentPartsConfig[partCategory].parts.find(p => (p.name || p) === baseData.partName);
+                        if (part && part.freq !== undefined) freq = part.freq === 'N/A' ? 'N/A' : (parseFloat(part.freq) || 1);
+                    }
+                    baseData.cycleDays = freq === 'N/A' ? null : Math.round(365 / (parseFloat(freq) || 1));
+                    baseData.last_updated = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('machine_logs').doc(id).update(baseData);
+                    loadLogs(currentMachineId); // Refresh
+                } else {
+                    // Add multiple
+                    const batch = db.batch();
+                    selectedParts.forEach(p => {
+                        const docRef = db.collection('machine_logs').doc();
+                        batch.set(docRef, p);
+                    });
+                    await batch.commit();
+                    alert("بەسەرکەوتوویی تۆمارکرا");
+                    loadLogs(currentMachineId); // Refresh
+                    document.getElementById('recordForm').reset();
+                    document.getElementById('partCheckboxes').innerHTML = '<div class="text-muted small">هەڵبژێرە...</div>';
+                }
+            } else {
+                const solutionVal = document.getElementById('recSolution').value.trim();
+                if (!solutionVal) {
+                    alert('پێویستە ناوی ئەو کارمەندانە بنووسیت کە کێشەکەیان چارەسەر کردووە');
+                    return;
+                }
+                baseData.problem = document.getElementById('recProblem').value;
+                baseData.storageCode = document.getElementById('recStorageCode').value;
+                baseData.downtime = timeToDecimal(document.getElementById('recDowntime').value);
+                baseData.solution = solutionVal;
+                baseData.rootCause = document.getElementById('recRootCause').value;
+                if (id) { baseData.last_updated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection('machine_logs').doc(id).update(baseData); }
+                else { baseData.createdAt = new Date().toISOString(); baseData.last_updated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection('machine_logs').add(baseData); }
+                loadLogs(currentMachineId); // Refresh
+            }
+            bootstrap.Modal.getInstance(document.getElementById('addRecordModal')).hide();
+        });
+
+        document.getElementById('addMachineForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newMachineName').value.trim();
+            const dept = document.getElementById('newMachineDept').value;
+            if (!name) return;
+
+            await db.collection('machines').add({
+                name: name,
+                department: dept,
+                commissionDate: document.getElementById('newMachineDate')?.value || new Date().toISOString().split('T')[0],
+                partsConfig: defaultPartsConfig,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            bootstrap.Modal.getInstance(document.getElementById('addMachineModal')).hide();
+            loadMachines();
+        });
+
+        document.getElementById('planForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                machineId: currentMachineId,
+                type: 'plan',
+                partCategory: document.getElementById('planCategory').value,
+                partName: document.getElementById('planPart').value,
+                date: document.getElementById('planDate').value,
+                note: document.getElementById('planNote').value,
+                createdAt: new Date().toISOString(),
+                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection('machine_logs').add(data);
+            loadLogs(currentMachineId); // Refresh
+            bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
+        });
+
+        async function editLog(id) {
+            const log = globalLogsCache.find(l => l.id === id);
+            if (!log) return;
+
+            document.getElementById('editingLogId').value = id;
+            document.getElementById('recordType').value = log.type;
+            document.getElementById('recDate').value = log.date;
+            document.getElementById('recNote').value = log.note || '';
+
+            const isMaint = log.type === 'maintenance';
+            document.querySelectorAll('.maintenance-field').forEach(e => e.style.display = isMaint ? 'block' : 'none');
+            document.querySelectorAll('.problem-field').forEach(e => e.style.display = isMaint ? 'none' : 'block');
+
+            if (isMaint) {
+                updateCategoryDropdown();
+                document.getElementById('partCategory').value = log.partCategory;
+                updateSubParts();
+                document.getElementById('partName').value = log.partName;
+                // Frequency is now implied by the configuration of the part
+            } else {
+                document.getElementById('recProblem').value = log.problem || '';
+                document.getElementById('recStorageCode').value = log.storageCode || '';
+                document.getElementById('recDowntime').value = decimalToTime(log.downtime);
+                document.getElementById('recSolution').value = log.solution || '';
+                document.getElementById('recRootCause').value = log.rootCause || '';
+            }
+
+            document.getElementById('recordModalHeader').className = isMaint ? "modal-header bg-primary text-white" : "modal-header bg-danger text-white";
+            document.getElementById('recordModalTitle').textContent = isMaint ? "Edit Maintenance Record" : "Edit Problem Record";
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('addRecordModal')).show();
+        }
+
+        // --- ADMIN: EDIT MACHINE NAME & DELETE ---
+        async function openManageMachinesModal() {
+            const tbody = document.getElementById('machinesListBody');
+            tbody.innerHTML = '<tr><td>Loading...</td></tr>';
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('manageMachinesModal'));
+            modal.show();
+            const snap = await db.collection('machines').get();
+            tbody.innerHTML = '';
+
+            const isAdmin = currentUser.role === 'admin';
+
+            snap.forEach(doc => {
+                const m = doc.data();
+                const editBtn = isAdmin ? `<button class="btn btn-sm btn-primary me-2" onclick="editMachineName('${doc.id}', '${m.name}')">Edit Name</button>` : '';
+                const delBtn = isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteMachine('${doc.id}')"><i class="bi bi-trash"></i></button>` : '';
+
+                tbody.innerHTML += `<tr>
+                    <td>${m.name}</td>
+                    <td>${m.department}</td>
+                    <td>${editBtn}${delBtn}</td>
+                </tr>`;
+            });
+        }
+
+        async function editMachineName(id, oldName) {
+            const newName = prompt("Enter new machine name:", oldName);
+            if (newName && newName !== oldName) {
+                await db.collection('machines').doc(id).update({ name: newName, last_updated: firebase.firestore.FieldValue.serverTimestamp() });
+                alert("Machine name updated.");
+                openManageMachinesModal(); // Refresh
+                loadMachines(); // Refresh Dropdown
+            }
+        }
+
+        async function deleteMachine(id) { if (confirm("Delete this machine and all its logs?")) { await db.collection('machines').doc(id).delete(); openManageMachinesModal(); loadMachines(); } }
+        async function deleteLog(id) { if (confirm("Delete record?")) { await db.collection('machine_logs').doc(id).delete(); loadLogs(currentMachineId); } }
+
+        // --- NEW: DEPARTMENT TOTALS LOGIC ---
+        function openDeptTotalsModal() {
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deptTotalsModal'));
+            modal.show();
+            loadDepartmentTotals();
+        }
+
+        async function loadDepartmentTotals() {
+            const tbody = document.getElementById('deptTotalsBody');
+            tbody.innerHTML = '<tr><td colspan="6"><div class="spinner-border text-primary" role="status"></div> Loading...</td></tr>';
+
+            const filterType = document.getElementById('deptTotalFilter').value;
+
+            try {
+                // 1. Get Machines (Use Cache)
+                let machineSnap;
+                if (machinesCache) {
+                    machineSnap = machinesCache;
+                } else {
+                    machineSnap = await db.collection('machines').get();
+                    machinesCache = machineSnap;
+                }
+
+                const machineDeptMap = {};
+                const deptStats = {};
+
+                machineSnap.forEach(doc => {
+                    const m = doc.data();
+                    const dept = m.department || 'Unknown';
+                    machineDeptMap[doc.id] = dept;
+
+                    if (!deptStats[dept]) {
+                        deptStats[dept] = {
+                            machineIds: new Set(),
+                            problemCount: 0,
+                            totalDowntime: 0,
+                            problemMap: {}
+                        };
+                    }
+                    deptStats[dept].machineIds.add(doc.id);
+                });
+
+                // 2. Get Problem Logs with Server-Side Filtering
+                let logQuery = db.collection('machine_logs').where('type', '==', 'problem');
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+
+                if (filterType === 'this_year') {
+                    logQuery = logQuery.where('date', '>=', `${currentYear}-01-01`);
+                } else if (filterType === 'last_30') {
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    logQuery = logQuery.where('date', '>=', thirtyDaysAgo.toISOString().split('T')[0]);
+                }
+
+                const logSnap = await logQuery.get();
+
+                logSnap.forEach(doc => {
+                    const log = doc.data();
+                    // Double check date locally if it's 'all' or for secondary validation
+                    const d = log.date ? new Date(log.date) : null;
+                    if (!d) return;
+
+                    const dept = machineDeptMap[log.machineId] || 'Unknown';
+                    if (deptStats[dept]) {
+                        deptStats[dept].problemCount++;
+                        deptStats[dept].totalDowntime += parseFloat(log.downtime || 0);
+
+                        const pName = log.problem || 'Unknown';
+                        if (!deptStats[dept].problemMap[pName]) deptStats[dept].problemMap[pName] = 0;
+                        deptStats[dept].problemMap[pName]++;
+                    }
+                });
+
+                // 3. Render
+                tbody.innerHTML = '';
+                const sortedDepts = Object.keys(deptStats).sort();
+
+                let globalMach = 0;
+                let globalIssues = 0;
+                let globalDown = 0;
+
+                if (sortedDepts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">هیچ زانیارییەک نییە بۆ ئەم ماوەیە</td></tr>';
+                }
+
+                sortedDepts.forEach(dept => {
+                    const s = deptStats[dept];
+                    const machCount = s.machineIds.size;
+                    const mttr = s.problemCount > 0 ? (s.totalDowntime / s.problemCount).toFixed(1) : 0;
+
+                    globalMach += machCount;
+                    globalIssues += s.problemCount;
+                    globalDown += s.totalDowntime;
+
+                    let topIssue = '-';
+                    let maxCount = 0;
+                    for (const [p, c] of Object.entries(s.problemMap)) {
+                        if (c > maxCount) { maxCount = c; topIssue = p; }
+                    }
+
+                    const issueBadge = maxCount > 0 ? `<span class="badge bg-light text-dark border fw-normal">${topIssue} <strong class="text-danger ms-1">${maxCount}</strong></span>` : '-';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 fw-bold text-dark">${dept}</td>
+                            <td class="text-center"><span class="badge bg-info-subtle text-info border border-info-subtle px-3 rounded-pill">${machCount}</span></td>
+                            <td class="text-center fw-bold text-danger">${s.problemCount}</td>
+                            <td class="text-center"><span class="fw-bold text-secondary">${s.totalDowntime.toFixed(1)}</span> <small class="text-muted">h</small></td>
+                            <td class="text-center">${mttr} <small class="text-muted">h</small></td>
+                            <td class="text-center">${issueBadge}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('modalGlobalMachines').innerText = globalMach;
+                document.getElementById('modalGlobalIssues').innerText = globalIssues;
+                document.getElementById('modalGlobalDowntime').innerText = globalDown.toFixed(1);
+
+            } catch (err) {
+                console.error("Dept Totals Error:", err);
+
+                // Index Error Handling
+                if (err.message && err.message.includes('index')) {
+                    console.error("🚨 FIRESTORE INDEX REQUIRED: Click the link above in the console to create it.");
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            بۆ پیشاندانی داتاکان پێویستە 'Index' دروست بکرێت. 
+                            <br><small class="text-muted">تکایە سەیری Console بکە و کلیک لە لینکەکە بکە.</small>
+                        </div>
+                    </td></tr>`;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Error loading data: ${err.message}</td></tr>`;
+                }
+            }
+        }
+
+        // --- HELPERS ---
+        function openAddRecordModal(type) {
+            document.getElementById('recordForm').reset();
+            document.getElementById('recordType').value = type;
+            document.getElementById('editingLogId').value = "";
+            document.getElementById('recDate').valueAsDate = new Date();
+            const isMaint = type === 'maintenance';
+            document.querySelectorAll('.maintenance-field').forEach(e => e.style.display = isMaint ? 'block' : 'none');
+            document.querySelectorAll('.problem-field').forEach(e => e.style.display = isMaint ? 'none' : 'block');
+            document.getElementById('recordModalHeader').className = isMaint ? "modal-header bg-primary text-white" : "modal-header bg-danger text-white";
+            document.getElementById('recordModalTitle').textContent = isMaint ? "تۆماری چاکسازی" : "تۆماری کێشە";
+            if (isMaint) updateCategoryDropdown();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('addRecordModal')).show();
+        }
+        function updateCategoryDropdown() {
+            const s = document.getElementById('partCategory'); s.innerHTML = '<option value="">هەڵبژێرە...</option>';
+            if (currentPartsConfig) Object.entries(currentPartsConfig).forEach(([k, v]) => s.innerHTML += `<option value="${k}">${v.label}</option>`);
+        }
+        function updateSubParts() {
+            const k = document.getElementById('partCategory').value;
+            const s = document.getElementById('partName');
+            const checkboxContainer = document.getElementById('partCheckboxes');
+
+            s.innerHTML = '<option value="">هەڵبژێرە</option>';
+            checkboxContainer.innerHTML = '<div class="text-muted small">هەڵبژێرە...</div>';
+            s.disabled = !k;
+
+            if (k && currentPartsConfig[k]) {
+                checkboxContainer.innerHTML = `
+                    <div class="form-check mb-2 border-bottom pb-1">
+                        <input class="form-check-input" type="checkbox" id="selectAllParts" onchange="togglePartSelectAll(this)">
+                        <label class="form-check-label fw-bold" for="selectAllParts">دیاریکردنی هەمووی</label>
+                    </div>
+                `;
+                currentPartsConfig[k].parts.forEach((p, index) => {
+                    const pName = p.name || p;
+                    s.innerHTML += `<option value="${pName}">${pName}</option>`;
+                    checkboxContainer.innerHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input part-checkbox" type="checkbox" value="${pName}" id="partCheck_${index}">
+                            <label class="form-check-label" for="partCheck_${index}">${pName}</label>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function togglePartSelectAll(el) {
+            document.querySelectorAll('.part-checkbox').forEach(cb => cb.checked = el.checked);
+        }
+
+        let currentSort = { column: 'date', direction: 'desc' };
+
+        function sortMaintenanceTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            // Update UI icons (optional but helpful)
+            updateDashboard();
+        }
+        function calculateKPIs(pLogs, mLogs) {
+            const filterType = document.getElementById('dashboardDateFilter').value;
+            const failures = pLogs.length;
+            const totalDowntimeHours = pLogs.reduce((a, b) => a + (parseFloat(b.downtime) || 0), 0);
+
+            // Calculate Time Span (Days)
+            let daysSpan = 1;
+            const now = new Date();
+
+            if (filterType === 'last_30') {
+                daysSpan = 30;
+            } else if (filterType === 'this_month') {
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                daysSpan = Math.max(1, (now - startOfMonth) / (1000 * 60 * 60 * 24));
+            } else if (filterType === 'this_year') {
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                daysSpan = Math.max(1, (now - startOfYear) / (1000 * 60 * 60 * 24));
+            } else {
+                // All time: find earliest log date from pLogs AND mLogs
+                let earliest = now.getTime();
+                const all = [...pLogs, ...mLogs];
+                if (all.length > 0) {
+                    all.forEach(l => {
+                        const d = new Date(l.date).getTime();
+                        if (d < earliest) earliest = d;
+                    });
+                    daysSpan = Math.max(1, (now - earliest) / (1000 * 60 * 60 * 24));
+                } else {
+                    daysSpan = 1;
+                }
+            }
+
+            // Calculations
+            // MTTR (Mean Time To Repair) = Total Downtime / Failures
+            const mttr = failures > 0 ? (totalDowntimeHours / failures) : 0;
+
+            // Uptime (Days)
+            const downtimeDays = totalDowntimeHours / 24;
+            const uptimeDays = Math.max(0, daysSpan - downtimeDays);
+
+            // MTTF (Mean Time To Failure) = Uptime / Failures
+            // If no failures, it is effectively the entire uptime so far
+            const mttf = failures > 0 ? (uptimeDays / failures) : uptimeDays;
+
+            // MTBF (Mean Time Between Failures) = Total Time / Failures
+            const mtbf = failures > 0 ? (daysSpan / failures) : daysSpan;
+
+            // Update DOM
+            document.getElementById('kpiMTTR').textContent = mttr.toFixed(1);
+            document.getElementById('kpiMTBF').textContent = mtbf.toFixed(1);
+            document.getElementById('kpiMTTF').textContent = mttf.toFixed(1);
+            document.getElementById('kpiDowntime').textContent = totalDowntimeHours.toFixed(1);
+        }
+
+        // ==========================================
+        //  MANAGE PARTS LOGIC (ADMIN ONLY)
+        // ==========================================
+
+        function openManagePartsModal() {
+            // Only render if Admin or Supervisor (Security Check)
+            if (!['admin', 'supervisor'].includes(currentUser.role)) {
+                alert("Only Admin and Supervisors can manage parts.");
+                return;
+            }
+            renderManagePartsUI();
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managePartsModal'));
+            modal.show();
+        }
+
+        function renderManagePartsUI() {
+            const container = document.getElementById('partsConfigList');
+            container.innerHTML = '';
+
+            if (!currentPartsConfig) {
+                container.innerHTML = '<p class="text-muted">No configuration loaded.</p>';
+                return;
+            }
+
+            // Loop through Categories
+            for (const [catKey, val] of Object.entries(currentPartsConfig)) {
+
+                // Generate row for each Part
+                const partsHtml = val.parts.map(p => {
+                    const pName = p.name || p;
+                    const pFreq = p.freq || 1;
+                    return `
+                <div class="row g-2 align-items-center mb-2 bg-white border rounded p-2 mx-0">
+                    <div class="col-6">
+                        <span class="fw-bold text-secondary">${pName}</span>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text p-1" style="font-size:0.7rem">Times/Yr</span>
+                            <input type="text" class="form-control px-1" value="${pFreq}" onchange="updatePartFreq('${catKey}', '${pName}', this.value)" placeholder="N/A">
+                        </div>
+                    </div>
+                    <div class="col-2 text-end">
+                        <i class="bi bi-pencil-square text-primary me-2" style="cursor:pointer;" onclick="editPartName('${catKey}', '${pName}')" title="Rename Part"></i>
+                        <i class="bi bi-x-circle-fill text-danger" style="cursor:pointer;" onclick="removePart('${catKey}', '${pName}')" title="Delete Part"></i>
+                    </div>
+                </div>
+            `;
+                }).join('');
+
+                // HTML for the Category Box
+                const html = `
+            <div class="part-group-item bg-light border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <strong class="text-primary fs-5">${val.label}</strong>
+                        <span class="text-muted small">(${catKey})</span>
+                        <button class="btn btn-sm btn-link text-decoration-none p-0 ms-2" onclick="editCategoryLabel('${catKey}')">
+                            <i class="bi bi-pencil"></i> Rename
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeCategory('${catKey}')">
+                        <i class="bi bi-trash"></i> Delete Category
+                    </button>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="small text-muted fw-bold">Parts & Frequencies:</h6>
+                    <div class="parts-list-container">
+                        ${partsHtml || '<p class="text-muted small">No parts added.</p>'}
+                    </div>
+                </div>
+
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="newPartInput-${catKey}" placeholder="New Part Name...">
+                    <button class="btn btn-success" onclick="addNewPart('${catKey}')">
+                        <i class="bi bi-plus-lg"></i> Add Part
+                    </button>
+                </div>
+            </div>
+        `;
+                container.innerHTML += html;
+            }
+        }
+
+        // --- ACTIONS ---
+
+        function addNewCategory() {
+            const label = document.getElementById('newCatLabel').value.trim();
+
+            if (!label) return alert("Please enter Category Name.");
+            if (currentPartsConfig[label]) return alert("This Category already exists!");
+
+            // Create new category using label as key
+            currentPartsConfig[label] = { label: label, parts: [] };
+
+            // Clear input and re-render
+            document.getElementById('newCatLabel').value = "";
+            renderManagePartsUI();
+        }
+
+        function removeCategory(key) {
+            if (confirm(`Delete category "${currentPartsConfig[key].label}" and all its parts?`)) {
+                delete currentPartsConfig[key];
+                renderManagePartsUI();
+            }
+        }
+
+        function editCategoryLabel(key) {
+            const oldLabel = currentPartsConfig[key].label;
+            const newLabel = prompt("Rename Category:", oldLabel);
+            if (newLabel && newLabel !== oldLabel) {
+                currentPartsConfig[key].label = newLabel;
+                renderManagePartsUI();
+            }
+        }
+
+        function addNewPart(catKey) {
+            const input = document.getElementById(`newPartInput-${catKey}`);
+            const val = input.value.trim();
+            if (!val) return alert("Please enter a part name.");
+
+            // Check duplicate
+            const exists = currentPartsConfig[catKey].parts.find(p => (p.name || p) === val);
+            if (exists) return alert("Part already exists in this category.");
+
+            currentPartsConfig[catKey].parts.push({ name: val, freq: 1 });
+            renderManagePartsUI();
+        }
+
+        function removePart(catKey, partName) {
+            if (confirm(`Remove part "${partName}"?`)) {
+                const idx = currentPartsConfig[catKey].parts.findIndex(p => (p.name || p) === partName);
+                if (idx > -1) {
+                    currentPartsConfig[catKey].parts.splice(idx, 1);
+                    renderManagePartsUI();
+                }
+            }
+        }
+
+        function editPartName(catKey, oldName) {
+            const newName = prompt("Rename Part:", oldName);
+            if (newName && newName !== oldName) {
+                const part = currentPartsConfig[catKey].parts.find(p => (p.name || p) === oldName);
+                if (part) {
+                    if (typeof part === 'string') {
+                        const idx = currentPartsConfig[catKey].parts.indexOf(oldName);
+                        currentPartsConfig[catKey].parts[idx] = { name: newName, freq: 1 };
+                    } else {
+                        part.name = newName;
+                    }
+                    renderManagePartsUI();
+                }
+            }
+        }
+
+        function updatePartFreq(catKey, partName, newFreq) {
+            const partsArr = currentPartsConfig[catKey].parts;
+            const idx = partsArr.findIndex(p => (p.name || p) === partName);
+            if (idx > -1) {
+                const val = newFreq.toUpperCase() === 'N/A' ? 'N/A' : newFreq;
+                if (typeof partsArr[idx] === 'string') {
+                    partsArr[idx] = { name: partName, freq: val };
+                } else {
+                    partsArr[idx].freq = val;
+                }
+            }
+        }
+
+        async function saveMachineParts() {
+            if (!currentMachineId) return;
+            const btn = document.querySelector('#managePartsModal .modal-footer .btn-primary');
+            const originalText = btn.textContent;
+            btn.textContent = "Saving...";
+            btn.disabled = true;
+
+            try {
+                await db.collection('machines').doc(currentMachineId).update({
+                    partsConfig: currentPartsConfig
+                });
+                alert("Configuration Saved Successfully!");
+                bootstrap.Modal.getInstance(document.getElementById('managePartsModal')).hide();
+
+                // Refresh Dashboard & Tables with new frequencies
+                updateDashboard();
+
+                // Refresh Dropdowns in Main UI
+                updateCategoryDropdown();
+                document.getElementById('partName').innerHTML = ''; // Clear part select
+            } catch (e) {
+                alert("Error saving: " + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        //  MISSING SCHEDULE FUNCTIONS
+        // ==========================================
+
+        function openPlanModal() {
+            // 1. Reset the form
+            document.getElementById('planForm').reset();
+
+            // 2. Populate Category Dropdown
+            const catSelect = document.getElementById('planCategory');
+            catSelect.innerHTML = '<option value="">هەڵبژێرە...</option>';
+
+            if (currentPartsConfig) {
+                Object.entries(currentPartsConfig).forEach(([key, val]) => {
+                    catSelect.innerHTML += `<option value="${key}">${val.label}</option>`;
+                });
+            }
+
+            // 3. Reset Part Dropdown
+            document.getElementById('planPart').innerHTML = '<option value="">سەرەتا بەش هەڵبژێرە</option>';
+            document.getElementById('planPart').disabled = true;
+
+            // 4. Open Modal
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('planModal')).show();
+        }
+
+        function updatePlanSubParts() {
+            const catKey = document.getElementById('planCategory').value;
+            const partSelect = document.getElementById('planPart');
+            partSelect.innerHTML = ''; // Clear existing
+
+            if (!catKey || !currentPartsConfig || !currentPartsConfig[catKey]) {
+                partSelect.disabled = true;
+                partSelect.innerHTML = '<option value="">سەرەتا بەش هەڵبژێرە</option>';
+                return;
+            }
+
+            partSelect.disabled = false;
+            currentPartsConfig[catKey].parts.forEach(p => {
+                partSelect.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+        }
+
+        function printSchedule() {
+            window.print();
+        }
+
+        // --- MACHINE MANAGEMENT FUNCTIONS ---
+
+        function openAddMachineModal() {
+            // Clear previous input
+            document.getElementById('newMachineName').value = '';
+            document.getElementById('newMachineDept').value = 'Production';
+
+            // Show the modal
+            const myModal = new bootstrap.Modal(document.getElementById('addMachineModal'));
+            myModal.show();
+        }
+
+        function saveNewMachine() {
+            // Trigger form submission
+            document.getElementById('addMachineForm').requestSubmit();
+        }
+    </script>
+</body>
+
+</html>

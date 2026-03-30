@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK – Backup Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0d0d14;
+            color: #e2e8f0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top Bar ── */
+        .topbar {
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+        }
+
+        .topbar-logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .topbar h1 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .topbar p {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meta-badge {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-badge span {
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+        }
+
+        .btn-load {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+
+        .btn-load:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        /* ── Layout ── */
+        .layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── Drop Zone ── */
+        .drop-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            margin: 32px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: rgba(106, 17, 203, 0.6);
+            background: rgba(106, 17, 203, 0.05);
+        }
+
+        .drop-zone i {
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .drop-zone h2 {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+
+        .drop-zone p {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-title {
+            padding: 12px 14px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .sidebar-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .collection-item {
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            cursor: pointer;
+            border-radius: 0;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .collection-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .collection-item.active {
+            background: rgba(106, 17, 203, 0.15);
+            border-left-color: #7c3aed;
+        }
+
+        .collection-item i {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .collection-item.active i {
+            color: #a78bfa;
+        }
+
+        .coll-name {
+            font-size: 0.82rem;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .coll-count {
+            font-size: 0.68rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            padding: 2px 7px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .collection-item.active .coll-count {
+            background: rgba(124, 58, 237, 0.3);
+            color: #c4b5fd;
+        }
+
+        /* ── Doc List ── */
+        .doc-list-panel {
+            width: 280px;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header h3 {
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .search-box input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .search-box input:focus {
+            border-color: rgba(124, 58, 237, 0.5);
+        }
+
+        .doc-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .doc-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.15s;
+            border-left: 2px solid transparent;
+        }
+
+        .doc-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .doc-item.active {
+            background: rgba(106, 17, 203, 0.1);
+            border-left-color: #7c3aed;
+        }
+
+        .doc-id {
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: #a78bfa;
+            margin-bottom: 3px;
+        }
+
+        .doc-preview {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.4);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Detail Panel ── */
+        .detail-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .detail-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #a78bfa;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            padding: 5px 12px;
+        }
+
+        .field-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .field-row {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .field-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .field-key {
+            padding: 8px 12px 8px 0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: #64748b;
+            width: 180px;
+            vertical-align: top;
+        }
+
+        .field-val {
+            padding: 8px 0;
+            font-size: 0.78rem;
+            color: #e2e8f0;
+            word-break: break-all;
+        }
+
+        .val-string {
+            color: #86efac;
+        }
+
+        .val-number {
+            color: #fbbf24;
+        }
+
+        .val-bool {
+            color: #60a5fa;
+        }
+
+        .val-null {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .val-date {
+            color: #f0abfc;
+        }
+
+        /* Subcollection */
+        .sub-section {
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .sub-header {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #a78bfa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sub-header .sub-count {
+            background: rgba(124, 58, 237, 0.2);
+            border-radius: 99px;
+            padding: 1px 8px;
+            font-size: 0.68rem;
+            color: #c4b5fd;
+        }
+
+        .sub-content {
+            padding: 12px;
+        }
+
+        .sub-doc {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .sub-doc:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .sub-doc-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: #7c3aed;
+            margin-bottom: 4px;
+        }
+
+        .sub-doc-preview {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Tag chips */
+        .chip {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 99px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .chip-daily {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .chip-other {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+
+        .chip-maintenance {
+            background: rgba(96, 165, 250, 0.15);
+            color: #60a5fa;
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.25);
+        }
+
+        .empty i {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-logo"><i class="bi bi-database-fill"></i></div>
+        <div>
+            <h1>Backup Viewer</h1>
+            <p>ASOBRICK Factory · Database Explorer</p>
+        </div>
+        <div class="topbar-right" id="topbarMeta" style="display:none;">
+            <div class="meta-badge"><i class="bi bi-calendar3"></i> Exported: <span id="metaDate">—</span></div>
+            <div class="meta-badge"><i class="bi bi-person"></i> By: <span id="metaBy">—</span></div>
+            <div class="meta-badge"><i class="bi bi-files"></i> Collections: <span id="metaColls">—</span></div>
+        </div>
+        <button class="btn-load" onclick="document.getElementById('fileInput').click()">
+            <i class="bi bi-folder2-open"></i> Open Backup
+        </button>
+        <input type="file" id="fileInput" accept=".json" style="display:none" onchange="loadFile(event)">
+    </div>
+
+    <!-- Main Layout -->
+    <div class="layout" id="mainLayout">
+
+        <!-- Drop Zone (shown before file loaded) -->
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+            ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <i class="bi bi-cloud-arrow-down-fill"></i>
+            <h2>Drop backup file here</h2>
+            <p>or click to open · supports asobrick_backup_*.json</p>
+        </div>
+
+        <!-- Sidebar: Collections -->
+        <div class="sidebar" id="sidebar" style="display:none;">
+            <div class="sidebar-title">Collections</div>
+            <div class="sidebar-list" id="collectionList"></div>
+        </div>
+
+        <!-- Doc List -->
+        <div class="doc-list-panel" id="docListPanel" style="display:none;">
+            <div class="panel-header">
+                <i class="bi bi-collection" style="color:#7c3aed;"></i>
+                <h3 id="panelTitle">—</h3>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by ID or field..." oninput="filterDocs()">
+            </div>
+            <div class="doc-list" id="docList"></div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="detail-panel" id="detailPanel" style="display:none;">
+            <div id="detailContent">
+                <div class="empty"><i class="bi bi-arrow-left-circle"></i>Select a document</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let backupData = null;
+        let currentCollection = null;
+        let currentDocs = [];
+
+        const COLLECTION_ICONS = {
+            employees: 'bi-people-fill',
+            projects: 'bi-briefcase-fill',
+            notifications: 'bi-bell-fill',
+            machines: 'bi-cpu-fill',
+            machine_logs: 'bi-tools',
+            molds: 'bi-grid-3x3',
+            notes: 'bi-journal-text',
+            manuals: 'bi-book-half',
+            dailyReports: 'bi-file-earmark-text',
+            annual_daily_records: 'bi-calendar3-range',
+            annual_report_config: 'bi-gear-wide-connected',
+            settings: 'bi-gear-fill',
+            users: 'bi-person-circle',
+        };
+
+        // ── File Loading ──────────────────────────────────────────────
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            readFile(file);
+        }
+
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    backupData = JSON.parse(e.target.result);
+                    initViewer();
+                } catch (err) {
+                    alert('Error reading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+        function onDragLeave(e) { document.getElementById('dropZone').classList.remove('dragover'); }
+        function onDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) readFile(file);
+        }
+
+        // ── Init Viewer ───────────────────────────────────────────────
+        function initViewer() {
+            document.getElementById('dropZone').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'flex';
+            document.getElementById('docListPanel').style.display = 'flex';
+            document.getElementById('detailPanel').style.display = 'block';
+            document.getElementById('topbarMeta').style.display = 'flex';
+
+            const meta = backupData._meta || {};
+            document.getElementById('metaDate').textContent = meta.exportedAt
+                ? new Date(meta.exportedAt).toLocaleString('en-GB') : '?';
+            document.getElementById('metaBy').textContent = meta.exportedBy || '?';
+
+            const collections = Object.keys(backupData).filter(k => k !== '_meta');
+            document.getElementById('metaColls').textContent = collections.length;
+
+            buildSidebar(collections);
+            if (collections.length > 0) selectCollection(collections[0]);
+        }
+
+        // ── Sidebar ───────────────────────────────────────────────────
+        function buildSidebar(collections) {
+            const list = document.getElementById('collectionList');
+            list.innerHTML = collections.map(coll => {
+                const data = backupData[coll];
+                const count = typeof data === 'object' ? Object.keys(data).length : '—';
+                const icon = COLLECTION_ICONS[coll] || 'bi-folder-fill';
+                return `
+                <div class="collection-item" id="coll-${coll}" onclick="selectCollection('${coll}')">
+                    <i class="bi ${icon}"></i>
+                    <span class="coll-name">${coll}</span>
+                    <span class="coll-count">${count}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function selectCollection(coll) {
+            currentCollection = coll;
+            document.querySelectorAll('.collection-item').forEach(el => el.classList.remove('active'));
+            const el = document.getElementById(`coll-${coll}`);
+            if (el) el.classList.add('active');
+
+            document.getElementById('panelTitle').textContent = coll;
+            document.getElementById('searchInput').value = '';
+
+            const data = backupData[coll];
+            currentDocs = typeof data === 'object' && data !== null ? Object.values(data) : [];
+            renderDocList(currentDocs);
+            document.getElementById('detailContent').innerHTML = '<div class="empty"><i class="bi bi-arrow-left-circle"></i>Select a document</div>';
+        }
+
+        // ── Doc List ──────────────────────────────────────────────────
+        function renderDocList(docs) {
+            const list = document.getElementById('docList');
+            if (!docs.length) {
+                list.innerHTML = '<div class="empty"><i class="bi bi-inbox"></i>No documents</div>';
+                return;
+            }
+            list.innerHTML = docs.map((doc, idx) => {
+                const id = doc._id || doc.id || `doc_${idx}`;
+                const preview = getPreview(doc);
+                return `<div class="doc-item" id="docitem-${idx}" onclick="selectDoc(${idx})">
+                <div class="doc-id">${id}</div>
+                <div class="doc-preview">${preview}</div>
+            </div>`;
+            }).join('');
+        }
+
+        function getPreview(doc) {
+            const skip = ['_id', 'id', '_sub_workRecords', 'dailyWork', 'otherWork', 'maintenanceLogs', 'parts', 'history', 'partsConfig', 'partNames'];
+            const nameField = doc.name || doc.title || doc.username || '';
+            if (nameField) return escHtml(nameField);
+            for (const [k, v] of Object.entries(doc)) {
+                if (skip.includes(k)) continue;
+                if (typeof v === 'string' && v.length > 0 && v.length < 60) return `${k}: ${escHtml(v)}`;
+                if (typeof v === 'number') return `${k}: ${v}`;
+            }
+            return Object.keys(doc).filter(k => !skip.includes(k)).slice(0, 3).join(', ');
+        }
+
+        function filterDocs() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            if (!q) { renderDocList(currentDocs); return; }
+            const filtered = currentDocs.filter(doc => {
+                return JSON.stringify(doc).toLowerCase().includes(q);
+            });
+            renderDocList(filtered);
+        }
+
+        // ── Document Detail ───────────────────────────────────────────
+        let activeDocIdx = null;
+
+        function selectDoc(idx) {
+            document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('active'));
+            const el = document.getElementById(`docitem-${idx}`);
+            if (el) el.classList.add('active');
+
+            const filteredDocs = getFilteredDocs();
+            renderDetail(filteredDocs[idx]);
+        }
+
+        function getFilteredDocs() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            if (!q) return currentDocs;
+            return currentDocs.filter(doc => JSON.stringify(doc).toLowerCase().includes(q));
+        }
+
+        function renderDetail(doc) {
+            const id = doc._id || doc.id || '?';
+            const subKeys = Object.keys(doc).filter(k => k.startsWith('_sub_'));
+            const regularKeys = Object.keys(doc).filter(k => !k.startsWith('_sub_') && k !== '_id');
+
+            let html = `
+            <div class="detail-header">
+                <div class="detail-id"># ${escHtml(id)}</div>
+            </div>
+            <table class="field-table">`;
+
+            for (const key of regularKeys) {
+                const val = doc[key];
+                html += `<tr class="field-row">
+                <td class="field-key">${escHtml(key)}</td>
+                <td class="field-val">${renderValue(key, val)}</td>
+            </tr>`;
+            }
+            html += `</table>`;
+
+            // Subcollections
+            for (const subKey of subKeys) {
+                const subDocs = doc[subKey] || [];
+                const label = subKey.replace('_sub_', '');
+                html += `
+                <div class="sub-section">
+                    <div class="sub-header" onclick="toggleSub(this)">
+                        <i class="bi bi-chevron-down"></i>
+                        <i class="bi bi-collection"></i> ${label}
+                        <span class="sub-count">${subDocs.length} docs</span>
+                    </div>
+                    <div class="sub-content">`;
+
+                for (const sd of subDocs.slice(0, 200)) {
+                    const sdId = sd._id || '?';
+                    const type = sd.type || '';
+                    const date = sd.date || '';
+                    const rate = sd.rate !== undefined ? `rate: ${sd.rate}%` : '';
+                    const name = sd.name || sd.title || '';
+                    const preview = [date, name || type, rate].filter(Boolean).join(' · ');
+                    const typeChip = type ? `<span class="chip chip-${type}">${type}</span>` : '';
+                    html += `
+                    <div class="sub-doc">
+                        <div class="sub-doc-id">${escHtml(sdId)}</div>
+                        <div class="sub-doc-preview">${typeChip} ${escHtml(preview)}</div>
+                        ${sd.note ? `<div class="sub-doc-preview" style="margin-top:3px; color:rgba(255,255,255,0.3);">${escHtml(sd.note.substring(0, 80))}</div>` : ''}
+                    </div>`;
+                }
+                if (subDocs.length > 200) {
+                    html += `<div class="empty" style="padding:10px;">...and ${subDocs.length - 200} more</div>`;
+                }
+                html += `</div></div>`;
+            }
+
+            document.getElementById('detailContent').innerHTML = html;
+        }
+
+        function toggleSub(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.bi-chevron-down, .bi-chevron-right');
+            if (content.style.display === 'none') {
+                content.style.display = '';
+                icon.className = 'bi bi-chevron-down';
+            } else {
+                content.style.display = 'none';
+                icon.className = 'bi bi-chevron-right';
+            }
+        }
+
+        function renderValue(key, val) {
+            if (val === null || val === undefined) return '<span class="val-null">null</span>';
+            if (typeof val === 'boolean') return `<span class="val-bool">${val}</span>`;
+            if (typeof val === 'number') return `<span class="val-number">${val}</span>`;
+            if (typeof val === 'string') {
+                // Detect ISO date
+                if (/^\d{4}-\d{2}-\d{2}T/.test(val)) {
+                    return `<span class="val-date">${escHtml(new Date(val).toLocaleString('en-GB'))}</span>`;
+                }
+                return `<span class="val-string">"${escHtml(val)}"</span>`;
+            }
+            if (Array.isArray(val)) {
+                if (val.length === 0) return '<span class="val-null">[ ]</span>';
+                return `<span class="val-null">[Array · ${val.length} items]</span>`;
+            }
+            if (typeof val === 'object') {
+                const keys = Object.keys(val);
+                if (keys.length === 0) return '<span class="val-null">{ }</span>';
+                return `<span class="val-null">{Object · ${keys.length} keys}</span>`;
+            }
+            return escHtml(String(val));
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+
+</html>

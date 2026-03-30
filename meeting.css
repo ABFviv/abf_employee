@@ -1,0 +1,243 @@
+        body {
+            font-family: 'Outfit', 'Noto Sans Arabic', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Header Styling */
+        .header-bar {
+            background: rgba(3, 72, 92, 0.9);
+            /* #b7154e */
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 24px 48px;
+            border-radius: 35px;
+            margin-bottom: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 20px 40px -31px rgba(30, 0, 255, 0.921);
+        }
+
+        .header-title h1 {
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #ffe3e3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.8rem;
+        }
+
+        .header-title small {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            color: #1e293b;
+            padding: 12px 24px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-back:hover {
+            transform: translateY(-3px);
+            background: white;
+            color: #000000;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Modern Card & Table UI --- */
+        .card-custom {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-bottom: 2px solid #f1f5f9;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 24px 30px;
+        }
+
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            margin-top: -10px;
+        }
+
+        .table-custom thead th {
+            border-bottom: none;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 1rem 1.2rem;
+            background: transparent;
+        }
+
+        .table-custom tbody tr {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .table-custom tbody tr:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.06);
+            border-color: #e2e8f0;
+        }
+
+        .table-custom tbody td {
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1.2rem;
+            vertical-align: middle;
+            color: #334155;
+        }
+
+        .table-custom tbody td:first-child {
+            border-radius: 0 12px 12px 0;
+            border-right: 1px solid #f1f5f9;
+        }
+
+        .table-custom tbody td:last-child {
+            border-radius: 12px 0 0 12px;
+            border-left: 1px solid #f1f5f9;
+        }
+
+        @media print {
+
+            /* Hide the main container and backdrop */
+            body>.container,
+            .modal-backdrop {
+                display: none !important;
+            }
+
+            @page {
+                size: portrait;
+                margin: 0.5cm;
+            }
+
+            /* Force static positioning and visible overflow on body and html to enable pagination */
+            html,
+            body {
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Make the modal act like normal document flow */
+            .modal {
+                position: static !important;
+                overflow: visible !important;
+                display: block !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+
+            .modal-dialog {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                position: static !important;
+                overflow: visible !important;
+                display: block !important;
+                align-items: flex-start !important;
+                min-height: 0 !important;
+                transform: none !important;
+            }
+
+            .modal-content,
+            .modal-body {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                position: static !important;
+                overflow: visible !important;
+            }
+
+            /* Hide everything inside the modal EXCEPT the printable area */
+            .modal-header,
+            .modal-footer {
+                display: none !important;
+            }
+
+            #printableMeetingArea,
+            #printableMeetingArea * {
+                visibility: visible;
+                color: black !important;
+                border-color: #333 !important;
+            }
+
+            /* Page break prevention rules inside the tables */
+            table,
+            tr,
+            td,
+            th,
+            tbody,
+            thead,
+            tfoot {
+                page-break-inside: avoid !important;
+            }
+
+            /* Make textareas expand rather than scroll in print */
+            textarea.input-print {
+                height: auto !important;
+                border: none !important;
+                resize: none;
+                overflow: hidden;
+                box-shadow: none !important;
+                background-color: transparent !important;
+            }
+
+            .badge {
+                border: none !important;
+                padding: 0 !important;
+                font-weight: normal !important;
+            }
+
+            table th {
+                background-color: #f8f9fa !important;
+                /* light gray for headers */
+            }
+
+            .d-print-none {
+                display: none !important;
+            }
+        }

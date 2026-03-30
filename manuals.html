@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - مانوەڵەکان</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #388e3c;
+            --secondary: #66bb6a;
+            --glass: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', 'Noto Sans Arabic', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Mesh Background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 10% 10%, rgba(56, 142, 60, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(102, 187, 106, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 10% 90%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+            z-index: -1;
+            animation: backgroundFlow 30s ease infinite alternate;
+        }
+
+        @keyframes backgroundFlow {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            100% {
+                transform: scale(1.2) translate(20px, 20px);
+            }
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .header-bar {
+            background: rgba(117, 183, 100, 0.6);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            padding: 24px 48px;
+            border-radius: 35px;
+            margin-bottom: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-title h1 {
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #388e3c 0%, #66bb6a 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.8rem;
+        }
+
+        .btn-header {
+            background: white;
+            color: var(--text-main);
+            padding: 12px 25px;
+            border-radius: 18px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-header:hover {
+            transform: scale(1.05) translate(-5px, -2px);
+            box-shadow: 0 15px 35px -5px rgba(247, 151, 30, 0.25);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .user-badge {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* SOP Grid Styles */
+        .sop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        .sop-card {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 35px 25px;
+            position: relative;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+            --dept-color: var(--primary);
+            --dept-gradient: linear-gradient(135deg, #f7971e, #ffd200);
+        }
+
+        .sop-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: var(--dept-color);
+            opacity: 0.3;
+            transition: opacity 0.4s;
+        }
+
+        .sop-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 30px 60px -12px rgba(var(--dept-color-rgb), 0.2);
+            border-color: var(--dept-color);
+        }
+
+        .sop-card:hover::before {
+            opacity: 1;
+        }
+
+        .sop-icon-outer {
+            width: 85px;
+            height: 85px;
+            background: white;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08);
+        }
+
+        .sop-card:hover .sop-icon-outer {
+            transform: rotate(12deg) scale(1.15);
+            background: var(--dept-color);
+        }
+
+        .sop-icon {
+            font-size: 2.8rem;
+            background: var(--dept-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.6s;
+        }
+
+        .sop-card:hover .sop-icon {
+            -webkit-text-fill-color: white;
+            filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.4));
+        }
+
+        .sop-title {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .sop-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 7px 18px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+        }
+
+        .sop-card:hover .sop-badge {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--dept-color);
+            border-color: var(--dept-color);
+        }
+
+        /* Manuals List */
+        .manual-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            position: relative;
+        }
+
+        .manual-card:hover {
+            transform: scale(1.02);
+            background: white;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary);
+        }
+
+        .manual-icon-box {
+            width: 55px;
+            height: 55px;
+            background: #f8fafc;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: all 0.3s;
+        }
+
+        .manual-card:hover .manual-icon-box {
+            background: var(--primary);
+            color: white;
+            transform: rotate(-5deg);
+        }
+
+        .manual-info {
+            flex-grow: 1;
+        }
+
+        .manual-name {
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .manual-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        /* FAB */
+        .btn-fab {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            width: 70px;
+            height: 70px;
+            border-radius: 24px;
+            font-size: 32px;
+            background: var(--primary);
+            border: none;
+            box-shadow: 0 15px 35px rgba(247, 151, 30, 0.4);
+            display: none;
+            z-index: 1000;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-fab:hover {
+            transform: translateY(-5px) rotate(90deg);
+            background: #e68a19;
+        }
+
+        /* Modal */
+        .modal-content {
+            border-radius: 35px;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+            padding: 30px;
+            border: none;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 40px;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 18px;
+            padding: 14px 22px;
+            border: 2px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: white;
+            border-radius: 18px;
+            padding: 14px 35px;
+            font-weight: 800;
+            border: none;
+            box-shadow: 0 10px 20px -5px rgba(247, 151, 30, 0.3);
+        }
+
+        /* Search Box */
+        .search-container {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 5px 20px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 30px;
+        }
+
+        .search-container .form-control {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Action Buttons */
+        .btn-open {
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            padding: 8px 18px;
+            font-weight: 700;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        /* --- Global Footer Styling --- */
+        .global-footer {
+            margin-top: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .teg-logo-footer {
+            height: 60px;
+            width: auto;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15));
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .teg-logo-footer:hover {
+            transform: scale(1.1) rotate(-2deg);
+        }
+
+        .copyright-text {
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast-container position-fixed top-0 start-0 p-3" style="z-index: 2000;"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header-bar">
+            <div class="d-flex align-items-center gap-3">
+                <div
+                    style="background: white; width: 55px; height: 55px; border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(0,0,0,0.05);">
+                    <i class="bi bi-journal-bookmark-fill" style="font-size: 1.8rem; color: #1b5e20;"></i>
+                </div>
+                <div>
+                    <h1 class="header-title m-0"
+                        style="font-size: 2.2rem; background: linear-gradient(135deg, #388e3c, #66bb6a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                        مانوەڵەکان</h1>
+                    <small style="opacity: 0.9; font-weight: 700; color: #475569;">TECHNICAL MANUALS & DOCUMENTS</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-badge" id="userInfo">
+                    <i class="bi bi-person-fill" style="color: var(--primary);"></i>
+                    <span>User</span>
+                </div>
+                <button id="btnSync" class="btn-header" onclick="loadData()" style="color: var(--primary);">
+                    <i class="bi bi-cloud-arrow-down-fill"></i> Sync
+                </button>
+                <a href="dashboard.html" class="btn-header">
+                    <i class="bi bi-arrow-right-circle-fill"></i> گەڕانەوە
+                </a>
+            </div>
+        </div>
+
+        <!-- View 1: Departments -->
+        <div id="view-departments">
+            <div class="sop-grid" id="deptGrid">
+                <div class="col-12 text-center text-muted py-5">
+                    <div class="spinner-border" style="color: var(--primary);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 1.5: Sub-categories (Electrical Only) -->
+        <div id="view-subcategories" style="display: none;">
+            <div class="d-flex mb-4">
+                <button class="btn btn-header" onclick="showDepartments()">
+                    <i class="bi bi-arrow-right-circle"></i> گەڕانەوە
+                </button>
+            </div>
+            <div class="sop-grid">
+                <div class="sop-card" onclick="openSubDepartment('LINE 1')"
+                    style="--dept-color: #ef4444; --dept-color-rgb: 239, 68, 68; --dept-gradient: linear-gradient(135deg, #ef4444, #f87171);">
+                    <div class="sop-icon-outer"><i class="bi bi-lightning-charge sop-icon"></i></div>
+                    <div class="sop-title">هێڵی یەک (LINE 1)</div>
+                    <div class="sop-badge" id="count-line1">0 فایل</div>
+                </div>
+                <div class="sop-card" onclick="openSubDepartment('LINE 2')"
+                    style="--dept-color: #ef4444; --dept-color-rgb: 239, 68, 68; --dept-gradient: linear-gradient(135deg, #ef4444, #f87171);">
+                    <div class="sop-icon-outer"><i class="bi bi-lightning-charge sop-icon"></i></div>
+                    <div class="sop-title">هێڵی دوو (LINE 2)</div>
+                    <div class="sop-badge" id="count-line2">0 فایل</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 2: Manuals List -->
+        <div id="view-manuals" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <button class="btn btn-header" onclick="showDepartments()">
+                    <i class="bi bi-arrow-right-circle"></i> گەڕانەوە
+                </button>
+                <h4 class="m-0 fw-bold text-primary" id="currentDeptTitle"></h4>
+                <div style="width: 100px;"></div>
+            </div>
+
+            <div class="search-container d-flex align-items-center">
+                <i class="bi bi-search text-muted me-2"></i>
+                <input type="text" class="form-control" id="manualSearch" placeholder="گەڕان لەم بەشە..."
+                    onkeyup="filterManuals()">
+            </div>
+
+            <div class="row g-3" id="manualsGrid"></div>
+        </div>
+
+        <div class="global-footer">
+            <img src="teg_logo.png" alt="TEG Logo" class="teg-logo-footer">
+            <div class="copyright-text">&copy; 2026 Aso brick Factory System</div>
+        </div>
+    </div>
+
+    <!-- Admin FAB -->
+    <button class="btn btn-fab" id="addBtn" onclick="openModal()">
+        <i class="bi bi-plus"></i>
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="manualModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalTitle">زیادکردنی کتێب</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="manualForm">
+                        <input type="hidden" id="manualId">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">ناونیشان</label>
+                            <input type="text" class="form-control" id="inpTitle" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">بەش</label>
+                            <select class="form-select" id="inpDept" required onchange="toggleSubDeptField()"></select>
+                        </div>
+                        <div class="mb-4" id="subDeptField" style="display: none;">
+                            <label class="form-label fw-bold">Sub-category (Electrical Only)</label>
+                            <select class="form-select" id="inpSubDept">
+                                <option value="LINE 1">هێڵی یەک (LINE 1)</option>
+                                <option value="LINE 2" selected>هێڵی دوو (LINE 2)</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">لینک (URL)</label>
+                            <input type="url" class="form-control" id="inpLink" placeholder="Google Drive Link..."
+                                required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">جۆر</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="typeOption" id="typePdf" value="pdf"
+                                    checked>
+                                <label class="btn btn-outline-secondary" for="typePdf"
+                                    style="border-radius: 12px 0 0 12px; padding: 12px;">PDF</label>
+                                <input type="radio" class="btn-check" name="typeOption" id="typeVideo" value="video">
+                                <label class="btn btn-outline-secondary" for="typeVideo"
+                                    style="border-radius: 0 12px 12px 0; padding: 12px;">Video</label>
+                            </div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="button" class="btn btn-primary btn-save"
+                                onclick="saveManual()">پاشەکەوتکردن</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNodAq9MikVHaQRr4EZVfsbXp4SOfxDKQ",
+            authDomain: "abf6-96dcf.firebaseapp.com",
+            projectId: "abf6-96dcf",
+            storageBucket: "abf6-96dcf.firebasestorage.app",
+            messagingSenderId: "405357996484",
+            appId: "1:405357996484:web:b335cdf768ba415f3e9c91"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const originalCollection = db.collection.bind(db);
+        db.collection = function (path) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const line = (currentUser && currentUser.line) ? currentUser.line : 'line2';
+            if (line === 'line1') {
+                const parts = path.split('/');
+                parts[0] = parts[0] + '_line1';
+                return originalCollection(parts.join('/'));
+            }
+            return originalCollection(path);
+        };
+
+        const departments = [
+            { id: 'crushing', label: 'هاڕین', icon: 'bi-hammer', color: '#3b82f6', grad: 'linear-gradient(135deg, #3b82f6, #60a5fa)' },
+            { id: 'prep', label: 'ئامادەکردن', icon: 'bi-tornado', color: '#10b981', grad: 'linear-gradient(135deg, #10b981, #34d399)' },
+            { id: 'cutting', label: 'بڕین', icon: 'bi-scissors', color: '#f43f5e', grad: 'linear-gradient(135deg, #f43f5e, #fb7185)' },
+            { id: 'setting', label: 'بارکردن', icon: 'bi-bricks', color: '#8b5cf6', grad: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' },
+            { id: 'dryer', label: 'درایەر', icon: 'bi-brightness-high', color: '#06b6d4', grad: 'linear-gradient(135deg, #06b6d4, #22d3ee)' },
+            { id: 'kiln', label: 'فڕن', icon: 'bi-fire', color: '#f97316', grad: 'linear-gradient(135deg, #f97316, #fb923c)' },
+            { id: 'unloading', label: 'داگرتن', icon: 'bi-box-seam', color: '#6366f1', grad: 'linear-gradient(135deg, #6366f1, #818cf8)' },
+            { id: 'electrical-ac', label: 'کارەبا', icon: 'bi-lightning-charge', color: '#ef4444', grad: 'linear-gradient(135deg, #ef4444, #f87171)' },
+            { id: 'mechanical', label: 'میکانیک', icon: 'bi-gear-wide-connected', color: '#64748b', grad: 'linear-gradient(135deg, #64748b, #94a3b8)' }
+        ];
+
+        let currentUser = null;
+        let allManuals = [];
+        let currentDeptId = null;
+        let currentSubDept = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stored = JSON.parse(localStorage.getItem('currentUser'));
+            currentUser = stored;
+            if (currentUser) {
+                document.getElementById('userInfo').querySelector('span').innerText = currentUser.username;
+            }
+
+            const allowedRoles = ['admin', 'manager', 'supervisor'];
+            if (!currentUser || (!allowedRoles.includes(currentUser.role) &&
+                currentUser.username !== 'cutemp' &&
+                currentUser.username !== 'unemp' &&
+                currentUser.username !== 'electrical' &&
+                currentUser.username !== 'setemp')) {
+                document.querySelector('.container').innerHTML = `<div class="text-center py-5"><h4>Access Denied</h4></div>`;
+                return;
+            }
+
+            if (['admin', 'manager'].includes(currentUser.role)) {
+                document.getElementById('addBtn').style.display = 'flex';
+            }
+
+            const select = document.getElementById('inpDept');
+            departments.forEach(d => select.innerHTML += `<option value="${d.id}">${d.label}</option>`);
+
+            loadData();
+        });
+
+        async function loadData() {
+            const btn = document.getElementById('btnSync');
+            if (btn) { btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Syncing...'; btn.disabled = true; }
+
+            try {
+                // ✨ SESSION CACHING ✨ - Cache manuals to reduce redundant reads
+                // Manuals rarely change, so longer cache duration
+                const cachedManuals = sessionStorage.getItem('cached_manuals');
+                const cacheTimestamp = sessionStorage.getItem('manuals_cache_timestamp');
+                const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+                const now = Date.now();
+                const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION;
+
+                if (cacheValid && cachedManuals) {
+                    allManuals = JSON.parse(cachedManuals);
+                    console.log('✅ Using cached manuals - NO FIREBASE READS!');
+                } else {
+                    console.log('📡 Fetching manuals from Firebase...');
+                    const snap = await db.collection('manuals').orderBy('createdAt', 'desc').get();
+                    allManuals = [];
+                    snap.forEach(doc => allManuals.push({ id: doc.id, ...doc.data() }));
+
+                    // Save to cache
+                    sessionStorage.setItem('cached_manuals', JSON.stringify(allManuals));
+                    sessionStorage.setItem('manuals_cache_timestamp', now.toString());
+                    console.log(`✅ Cached ${allManuals.length} manuals`);
+                }
+
+                if (!currentDeptId) renderDepartments(); else renderManuals(currentDeptId);
+            } catch (error) {
+                console.error("Error loading manuals:", error);
+                showToast("Failed to load manuals", "danger");
+            } finally {
+                if (btn) { btn.innerHTML = '<i class="bi bi-cloud-check"></i> Sync'; btn.disabled = false; }
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 0, 0';
+        }
+
+        function renderDepartments() {
+            document.getElementById('view-departments').style.display = 'block';
+            document.getElementById('view-manuals').style.display = 'none';
+            document.getElementById('view-subcategories').style.display = 'none';
+            currentDeptId = null;
+            currentSubDept = null;
+
+            const grid = document.getElementById('deptGrid');
+            grid.innerHTML = '';
+
+            departments.forEach(dept => {
+                const count = allManuals.filter(m => m.department === dept.id).length;
+                const card = document.createElement('div');
+                card.className = 'sop-card';
+                card.style.setProperty('--dept-color', dept.color);
+                card.style.setProperty('--dept-color-rgb', hexToRgb(dept.color));
+                card.style.setProperty('--dept-gradient', dept.grad);
+                card.onclick = () => openDepartment(dept.id);
+
+                card.innerHTML = `
+                    <div class="sop-icon-outer">
+                        <i class="bi ${dept.icon} sop-icon"></i>
+                    </div>
+                    <div class="sop-title">${dept.label}</div>
+                    <div class="sop-badge">${count} فایل</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openDepartment(deptId) {
+            if (deptId === 'electrical' || deptId === 'electrical-ac') {
+                showElectricalSubcategories();
+                return;
+            }
+            currentDeptId = deptId;
+            const deptInfo = departments.find(d => d.id === deptId);
+            document.getElementById('view-departments').style.display = 'none';
+            document.getElementById('view-subcategories').style.display = 'none';
+            document.getElementById('view-manuals').style.display = 'block';
+            document.getElementById('currentDeptTitle').innerHTML = `<i class="bi ${deptInfo.icon}" style="color:${deptInfo.color}"></i> ${deptInfo.label}`;
+            renderManuals(deptId);
+        }
+
+        function showElectricalSubcategories() {
+            currentDeptId = 'electrical-ac';
+            currentSubDept = null;
+            document.getElementById('view-departments').style.display = 'none';
+            document.getElementById('view-manuals').style.display = 'none';
+            document.getElementById('view-subcategories').style.display = 'block';
+
+            // Update counts for subcategories
+            const line1Count = allManuals.filter(m => (m.department === 'electrical' || m.department === 'electrical-ac') && m.subDept === 'LINE 1').length;
+            const line2Count = allManuals.filter(m => (m.department === 'electrical' || m.department === 'electrical-ac') && (m.subDept === 'LINE 2' || !m.subDept)).length;
+
+            document.getElementById('count-line1').innerText = `${line1Count} فایل`;
+            document.getElementById('count-line2').innerText = `${line2Count} فایل`;
+        }
+
+        function openSubDepartment(subDept) {
+            currentSubDept = subDept;
+            const deptId = 'electrical-ac';
+            const deptInfo = departments.find(d => d.id === deptId);
+            document.getElementById('view-subcategories').style.display = 'none';
+            document.getElementById('view-manuals').style.display = 'block';
+            document.getElementById('currentDeptTitle').innerHTML = `<i class="bi ${deptInfo.icon}" style="color:${deptInfo.color}"></i> ${deptInfo.label} (${subDept})`;
+            renderManuals(deptId, subDept);
+        }
+
+        function showDepartments() { renderDepartments(); }
+
+        function renderManuals(deptId, subDept = null) {
+            const grid = document.getElementById('manualsGrid');
+            grid.innerHTML = '';
+
+            let filteredManuals = allManuals.filter(m => m.department === deptId || (deptId === 'electrical-ac' && m.department === 'electrical'));
+
+            if ((deptId === 'electrical-ac' || deptId === 'electrical') && subDept) {
+                if (subDept === 'LINE 2') {
+                    // Include LINE 2 OR items with NO subDept (defaults to LINE 2)
+                    filteredManuals = filteredManuals.filter(m => m.subDept === 'LINE 2' || !m.subDept);
+                } else {
+                    filteredManuals = filteredManuals.filter(m => m.subDept === subDept);
+                }
+            }
+            const isAdmin = ['admin', 'manager'].includes(currentUser.role);
+
+            if (filteredManuals.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center text-muted mt-5"><h5>هیچ فایلێک لەم بەشە نییە</h5></div>';
+                return;
+            }
+
+            filteredManuals.forEach(m => {
+                const icon = m.type === 'video' ? 'bi-play-circle-fill text-danger' : 'bi-file-earmark-pdf-fill text-primary';
+                const card = `
+                    <div class="col-md-6 manual-item">
+                        <div class="manual-card">
+                            <div class="manual-icon-box"><i class="bi ${icon}"></i></div>
+                            <div class="manual-info">
+                                <h6 class="manual-name">${m.title}</h6>
+                                <span class="manual-type">${m.type}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="${m.link}" target="_blank" class="btn-open">کردنەوە</a>
+                                ${isAdmin ? `
+                                <div class="btn-group">
+                                    <button class="btn btn-sm text-secondary" onclick="editManual('${m.id}')"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm text-danger" onclick="deleteManual('${m.id}')"><i class="bi bi-trash"></i></button>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        function openModal() {
+            document.getElementById('manualForm').reset();
+            document.getElementById('manualId').value = '';
+            document.getElementById('modalTitle').textContent = 'زیادکردنی کتێب';
+            if (currentDeptId) document.getElementById('inpDept').value = currentDeptId;
+            if (currentSubDept) document.getElementById('inpSubDept').value = currentSubDept;
+            toggleSubDeptField();
+            new bootstrap.Modal(document.getElementById('manualModal')).show();
+        }
+
+        function toggleSubDeptField() {
+            const dept = document.getElementById('inpDept').value;
+            const field = document.getElementById('subDeptField');
+            field.style.display = (dept === 'electrical' || dept === 'electrical-ac') ? 'block' : 'none';
+        }
+
+        function editManual(id) {
+            const m = allManuals.find(x => x.id === id);
+            if (!m) return;
+            document.getElementById('manualId').value = m.id;
+            document.getElementById('inpTitle').value = m.title;
+            document.getElementById('inpDept').value = m.department;
+            if (m.department === 'electrical' || m.department === 'electrical-ac') {
+                document.getElementById('inpSubDept').value = m.subDept || 'LINE 2';
+            }
+            toggleSubDeptField();
+            document.getElementById('inpLink').value = m.link;
+            document.querySelector(`input[name="typeOption"][value="${m.type}"]`).checked = true;
+            document.getElementById('modalTitle').textContent = 'دەستکاریکردن';
+            new bootstrap.Modal(document.getElementById('manualModal')).show();
+        }
+
+        async function saveManual() {
+            const id = document.getElementById('manualId').value;
+            const data = {
+                title: document.getElementById('inpTitle').value,
+                department: document.getElementById('inpDept').value,
+                link: document.getElementById('inpLink').value,
+                type: document.querySelector('input[name="typeOption"]:checked').value,
+                updatedAt: new Date().toISOString(),
+                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (data.department === 'electrical' || data.department === 'electrical-ac') {
+                data.subDept = document.getElementById('inpSubDept').value;
+            }
+            if (!data.title || !data.link) { showToast('تکایە هەموو زانیاریەکان پڕبکەوە', 'warning'); return; }
+            try {
+                if (id) await db.collection('manuals').doc(id).update(data);
+                else { data.createdAt = new Date().toISOString(); await db.collection('manuals').add(data); }
+                bootstrap.Modal.getInstance(document.getElementById('manualModal')).hide();
+
+                // Clear cache since we modified data
+                sessionStorage.removeItem('cached_manuals');
+                sessionStorage.removeItem('manuals_cache_timestamp');
+
+                loadData(); // Refresh
+                showToast('سەرکەوتووبوو', 'success');
+            } catch (e) { showToast('هەڵە ڕوویدا', 'danger'); }
+        }
+
+        async function deleteManual(id) {
+            if (confirm('دڵنیایت؟')) {
+                try {
+                    await db.collection('manuals').doc(id).delete();
+
+                    // Clear cache since we modified data
+                    sessionStorage.removeItem('cached_manuals');
+                    sessionStorage.removeItem('manuals_cache_timestamp');
+
+                    loadData(); // Refresh
+                    showToast('سڕایەوە', 'success');
+                } catch (e) { showToast('هەڵە', 'danger'); }
+            }
+        }
+
+        function filterManuals() {
+            const term = document.getElementById('manualSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.manual-item');
+            items.forEach(item => { item.style.display = item.innerText.toLowerCase().includes(term) ? '' : 'none'; });
+        }
+
+        function showToast(msg, type) {
+            const container = document.querySelector('.toast-container');
+            const el = document.createElement('div');
+            el.className = `toast show align-items-center text-white bg-${type} border-0`;
+            el.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div></div>`;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+    </script>
+</body>
+
+</html>

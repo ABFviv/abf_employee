@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOBRICK - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --sidebar-width: 280px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ffffff 0%, #3d3838 50%, #000000 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* --- Header with Glassmorphism --- */
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 25px 35px;
+            border-radius: 24px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-logo {
+            height: 60px;
+            border-radius: 16px;
+            background: white;
+            padding: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .header-logo:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        .header-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.95;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* --- Menu Button  --- */
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.3rem;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            animation: alert-jump 2s infinite;
+        }
+
+        @keyframes alert-jump {
+            0% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+            }
+
+            20% {
+                transform: translateY(-3px) scale(1.1);
+                box-shadow: 0 0 0 4px rgba(255, 59, 48, 0);
+            }
+
+            40% {
+                transform: translateY(0) scale(1.1);
+                box-shadow: 0 0 0 6px rgba(255, 59, 48, 0);
+            }
+
+            60% {
+                transform: translateY(-1.5px) scale(1.05);
+            }
+
+            80% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+            }
+        }
+
+        /* --- Sidebar --- */
+        .offcanvas {
+            border-radius: 0;
+            width: 300px;
+            background: #ffffff;
+        }
+
+        .offcanvas-header {
+            background: linear-gradient(135deg, #030303 0%, #66636f 100%);
+            color: white;
+            padding: 32px 24px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offcanvas-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .offcanvas-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .offcanvas-body {
+            padding: 20px 0;
+            background: #fafafa;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            margin: 4px 12px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .sidebar-link:hover::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+        }
+
+        .sidebar-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-link i {
+            font-size: 1.25rem;
+            margin-left: 12px;
+            width: 24px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-link:hover i {
+            transform: scale(1.1);
+        }
+
+        /* --- Dashboard Grid with Premium Cards --- */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            padding: 0 10px;
+        }
+
+        .nav-card {
+            background: rgba(255, 253, 253, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 36px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.5) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .nav-card:hover::before {
+            opacity: 1;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            margin-bottom: 24px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-card:hover .icon-box {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .card-employees .icon-box {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .card-maintenance .icon-box {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .card-manuals .icon-box {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .card-notes .icon-box {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .card-reports .icon-box {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #764ba2;
+        }
+
+        .card-sop .icon-box {
+            background: linear-gradient(135deg, #ffd200 0%, #f7971e 100%);
+            color: white;
+        }
+
+        .card-annual .icon-box {
+            background: linear-gradient(135deg, #FF4081 0%, #ff2b2b 100%);
+            /* Purple gradient */
+            color: white;
+            padding: 10px;
+        }
+
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            letter-spacing: -0.3px;
+        }
+
+        .card-desc {
+            font-size: 1rem;
+            color: #6c757d;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .card-annual .icon-box {
+            background: linear-gradient(135deg, #ff41b0 0%, #b7154e 100%);
+            /* Violet Theme */
+            color: white;
+        }
+
+
+
+        /* Locked card styling */
+        .nav-card[style*="opacity: 0.5"] {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-card[style*="opacity: 0.5"]:hover {
+            transform: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- Footer Styling --- */
+        .dashboard-footer {
+            margin-top: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .teg-logo-footer {
+            height: 60px;
+            width: auto;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .teg-logo-footer:hover {
+            transform: scale(1.1) rotate(-2deg);
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.3));
+        }
+
+        .copyright-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header">
+            <div>
+                <h5 class="offcanvas-title fw-bold">ASOBRICK</h5>
+                <small class="opacity-75" id="menuUserInfo">Loading...</small>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0 pt-3">
+            <nav class="nav flex-column">
+                <a class="sidebar-link active" href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a class="sidebar-link" href="employees.html"><i class="bi bi-people"></i> Employees</a>
+                <a class="sidebar-link" href="maintenance.html"><i class="bi bi-tools"></i> Maintenance</a>
+                <a class="sidebar-link" href="manuals.html"><i class="bi bi-book"></i> Manuals</a>
+                <a class="sidebar-link" href="notes.html"><i class="bi bi-journal-text"></i> Notes</a>
+                <a class="sidebar-link" href="reports.html"><i class="bi bi-file-text"></i> Reports</a>
+                <hr class="mx-3 my-2">
+                <a class="sidebar-link text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i>
+                    Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container-fluid dashboard-container">
+
+        <div class="header">
+            <div class="header-brand">
+                <img src="logo.png" alt="ASOBRICK Logo" class="header-logo">
+                <div>
+                    <h1 class="header-title">ASOBRICK FACTORY</h1>
+                    <p class="header-subtitle" id="headerSubtitle">سیستەمی سەرەکی</p>
+                </div>
+            </div>
+
+            <button class="menu-btn position-relative" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#sidebarMenu">
+                <i class="bi bi-list fs-4"></i>
+                <span class="dashboard-notification-badge" id="dashboardNotificationCount"
+                    style="display: none;">0</span>
+            </button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div onclick="window.location.href='employees.html'" class="nav-card card-employees">
+                <div class="icon-box"><i class="bi bi-people-fill"></i></div>
+                <div class="card-title">Employees</div>
+                <div class="card-desc">بەڕێوەبردنی کارمەندان و هەڵسەنگاندن</div>
+            </div>
+            <div onclick="window.location.href='maintenance.html'" class="nav-card card-maintenance">
+                <div class="icon-box"><i class="bi bi-gear-wide-connected"></i></div>
+                <div class="card-title">Maintenance</div>
+                <div class="card-desc">چاکسازی ئامێرەکان و تۆماری کێشەکان</div>
+            </div>
+
+            <div onclick="window.location.href='manuals.html'" class="nav-card card-manuals">
+                <div class="icon-box"><i class="bi bi-book-half"></i></div>
+                <div class="card-title">Manuals</div>
+                <div class="card-desc"> ڕێنماییەکان</div>
+            </div>
+
+            <div onclick="window.location.href='notes.html'" class="nav-card card-notes">
+                <div class="icon-box"><i class="bi bi-journal-check"></i></div>
+                <div class="card-title">Daily Notes</div>
+                <div class="card-desc">تۆماری تێبینی و ئاگادارکردنەوەکان</div>
+            </div>
+            <div onclick="window.location.href='reports.html'" class="nav-card card-reports">
+                <div class="icon-box"><i class="bi bi-file-earmark-bar-graph"></i></div>
+                <div class="card-title">Reports</div>
+                <div class="card-desc">ڕاپۆرتی ڕۆژانە و ئامارەکان</div>
+            </div>
+            <div onclick="window.location.href='sop_report.html'" class="nav-card card-sop">
+                <div class="icon-box">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                            stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M9 2H15V6H9V2Z" fill="white" />
+                        <text x="12" y="11.5" font-family="Inter, Arial, sans-serif" font-size="4.5" font-weight="900"
+                            text-anchor="middle" fill="white" style="letter-spacing: 0.5px;">S.O.P</text>
+                        <path d="M7 15H13" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M7 18H11" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                        <!-- Gear -->
+                        <path
+                            d="M21.5 17.5C21.5 18.1 21.3 18.6 21 19L22 20L21 21L20 20C19.6 20.3 19.1 20.5 18.5 20.5C17.9 20.5 17.4 20.3 17 20L16 21L15 20L16 19C15.7 18.6 15.5 18.1 15.5 17.5C15.5 16.9 15.7 16.4 16 16L15 15L16 14L17 15C17.4 14.7 17.9 14.5 18.5 14.5C19.1 14.5 19.6 14.7 20 15L21 14L22 15L21 16C21.3 16.4 21.5 16.9 21.5 17.5Z"
+                            fill="white" />
+                        <circle cx="18.5" cy="17.5" r="1" fill="#f7971e" />
+                    </svg>
+                </div>
+                <div class="card-title">SOP Report</div>
+                <div class="card-desc">Standard Operating Procedures</div>
+            </div>
+            <div onclick="window.location.href='annual_report.html'" class="nav-card card-annual">
+                <div class="icon-box"><i class="bi bi-calendar3-range"></i></div>
+                <div class="card-title">Annual Report</div>
+                <div class="card-desc">ڕاپۆڕتی ساڵانە</div>
+            </div>
+            <div onclick="window.location.href='mold_maintenance.html'" class="nav-card card-maintenance"
+                style="background: linear-gradient(145deg, #ffffff, #f0f0f0);">
+                <div class="icon-box"
+                    style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white;">
+                    <i class="bi bi-grid-3x3"></i>
+                </div>
+                <div class="card-title">Mold Maintenance</div>
+                <div class="card-desc">چاکسازی قاڵب</div>
+            </div>
+            <div onclick="window.location.href='meeting.html'" class="nav-card">
+                <div class="icon-box"
+                    style="background: linear-gradient(135deg, #023b4e 0%, #556270 100%); color: white;">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <div class="card-title">Meetings</div>
+                <div class="card-desc">کۆبوونەوەکان</div>
+            </div>
+            <div onclick="window.location.href='esp32_control.html'" class="nav-card">
+                <div class="icon-box"
+                    style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white;">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+                <div class="card-title">ESP32 Control</div>
+                <div class="card-desc">کۆنتڕۆڵکردنی ئامێری ESP32</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-footer">
+        <img src="teg_logo.png" alt="TEG Logo" class="teg-logo-footer">
+        <div class="copyright-text">&copy; 2026 Aso brick Factory System</div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check Login
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) window.location.href = 'index.html';
+
+        // Display User Info in Menu
+        document.getElementById('menuUserInfo').textContent = `${currentUser.username} (${currentUser.role})`;
+
+        // Display Current Line
+        const lineText = currentUser.line === 'line1' ? 'هێڵی ١ - Line 1' : 'هێڵی ٢ - Line 2';
+        const lineBadgeColor = currentUser.line === 'line1' ? 'bg-success' : 'bg-primary';
+        document.getElementById('headerSubtitle').innerHTML += ` | <span class="badge ${lineBadgeColor}">${lineText}</span>`;
+
+        // Role-based card access control
+        document.addEventListener('DOMContentLoaded', () => {
+            const rolePermissions = {
+                'hr': ['reports'],
+                'manager': ['employees', 'manuals', 'sop_report', 'annual_report', 'meeting'],
+                'supervisor': ['employees', 'maintenance', 'manuals', 'notes', 'reports', 'sop_report', 'meeting'], // annual_report removed found below
+                'admin': ['employees', 'maintenance', 'manuals', 'notes', 'reports', 'sop_report', 'annual_report', 'mold_maintenance', 'meeting', 'esp32_control']
+            };
+
+            let allowedPages = [];
+
+            // Special access for specific usernames (check these FIRST before role-based)
+            if (currentUser.username === 'mechanic') {
+                allowedPages = ['employees', 'manuals', 'notes', 'sop_report'];
+            } else if (currentUser.username === 'cutemp') {
+                allowedPages = ['employees', 'manuals', 'notes', 'reports', 'sop_report'];
+            } else if (currentUser.username === 'unemp') {
+                allowedPages = ['employees', 'manuals', 'notes', 'sop_report'];
+            } else if (currentUser.username === 'electrical') {
+                allowedPages = ['employees', 'manuals', 'notes', 'sop_report'];
+            } else if (currentUser.username === 'setemp') {
+                allowedPages = ['manuals', 'notes', 'reports', 'sop_report'];
+            } else if (currentUser.username === 'kilnemp') {
+                allowedPages = ['reports', 'sop_report'];
+            } else {
+                // Use role-based permissions for other users
+                allowedPages = rolePermissions[currentUser.role] || [];
+            }
+
+            // Debug logging
+            console.log('Current User:', currentUser.username);
+            console.log('User Role:', currentUser.role);
+            console.log('Allowed Pages:', allowedPages);
+
+            // Annual Report specific access for supervisors
+            const annualAllowedUsers = ['himat', 'samdar', 'hemn', 'kiln'];
+            if (annualAllowedUsers.includes(currentUser.username)) {
+                // Ensure annual_report isn't added twice if they somehow already have it (though supervisor role doesn't have it now)
+                if (!allowedPages.includes('annual_report')) {
+                    allowedPages.push('annual_report');
+                }
+            }
+
+            // Mold Maintenance specific access for himat and shalaw
+            const moldAllowedUsers = ['himat', 'shalaw'];
+            if (moldAllowedUsers.includes(currentUser.username)) {
+                if (!allowedPages.includes('mold_maintenance')) {
+                    allowedPages.push('mold_maintenance');
+                }
+            }
+
+            // Get all navigation cards
+            const cards = document.querySelectorAll('.nav-card');
+            cards.forEach(card => {
+                const onclick = card.getAttribute('onclick');
+                if (onclick) {
+                    const page = onclick.match(/window\.location\.href='(\w+)\.html'/)?.[1];
+                    let isAllowed = allowedPages.includes(page);
+
+                    console.log(`Checking page: ${page}, isAllowed: ${isAllowed}`);
+
+                    // Specific USER restrictions (Shalaw & Sarezh blocked from reports)
+                    const username = currentUser.username.toLowerCase();
+                    if (page === 'reports' && (username === 'shalaw' || username === 'sarezh')) {
+                        isAllowed = false;
+                    }
+
+                    if (page && !isAllowed) {
+                        // Disable the card
+                        card.style.opacity = '0.5';
+                        card.style.cursor = 'not-allowed';
+                        card.style.filter = 'grayscale(80%)';
+
+                        // Add locked icon
+                        const iconBox = card.querySelector('.icon-box');
+                        if (iconBox) {
+                            iconBox.innerHTML = '<i class="bi bi-lock-fill"></i>';
+                        }
+
+                        // Change onclick to show alert
+                        card.setAttribute('onclick', `alert('بەردەست نییە - Not Available\\nتۆ ڕێگەت نییە بۆ ئەم بەشە')`);
+                    }
+                }
+            });
+
+            // Fetch Notifications for Dashboard Badge
+            if (currentUser) {
+                fetchUnreadNotificationsCount();
+            }
+        });
+
+        // Initialize Firebase Notification Fetching
+        async function fetchUnreadNotificationsCount() {
+            try {
+                // Determine target roles/departments for current user
+                let notificationsQuery = db.collection('notifications').where('status', '==', 'pending');
+
+                // Fetch the snapshot
+                const snapshot = await notificationsQuery.get();
+                let unreadCount = 0;
+
+                snapshot.forEach(doc => {
+                    const n = { id: doc.id, ...doc.data() };
+
+                    // Same filtering logic as in employees.html
+                    if (currentUser.role === 'admin') {
+                        unreadCount++;
+                    } else if (currentUser.role === 'supervisor') {
+                        if (n.targetDepartment === currentUser.department) unreadCount++;
+                        else if (currentUser.username === 'himat' && n.targetDepartment === 'dryer') unreadCount++;
+                        else if (currentUser.username === 'shalaw' && n.targetDepartment === 'mechanical') unreadCount++;
+                    }
+                });
+
+                // Update UI badge
+                const badge = document.getElementById('dashboardNotificationCount');
+                if (badge) {
+                    if (unreadCount > 0) {
+                        badge.innerHTML = '<i class="bi bi-exclamation-lg"></i>';
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+
+                // Listen for real-time changes
+                notificationsQuery.onSnapshot(snapshot => {
+                    let liveUnreadCount = 0;
+                    snapshot.forEach(doc => {
+                        const n = { id: doc.id, ...doc.data() };
+                        if (currentUser.role === 'admin') {
+                            liveUnreadCount++;
+                        } else if (currentUser.role === 'supervisor') {
+                            if (n.targetDepartment === currentUser.department) liveUnreadCount++;
+                            else if (currentUser.username === 'himat' && n.targetDepartment === 'dryer') liveUnreadCount++;
+                            else if (currentUser.username === 'shalaw' && n.targetDepartment === 'mechanical') liveUnreadCount++;
+                        }
+                    });
+
+                    if (badge) {
+                        if (liveUnreadCount > 0) {
+                            badge.innerHTML = '<i class="bi bi-exclamation-lg"></i>';
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error fetching notification count:", error);
+            }
+        }
+
+        // Logout Logic
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>
