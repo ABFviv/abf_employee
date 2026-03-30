@@ -23,30 +23,7 @@
         <img src="logo.png" alt="ASOBRICK" class="splash-logo">
     </div>
 
-    <!-- Login Page -->
-    <div class="login-container" id="loginPage">
-        <div class="login-card">
-            <div class="text-center mb-4">
-                <img src="https://z-cdn-media.chatglm.cn/files/588e3070-4da2-4621-a23a-c3797a169aba_Aso-Brick-Factory.jpg?auth_key=1863555089-bc9d1e326da44c9cb276be8d7a836996-0-f6131313ba165c0b30ea85ee637714fe"
-                    alt="ASOBRICK FACTORY" class="login-logo">
-                <h3 class="red-accent">سیستەمی بەڕێوبردنی کارمەند</h3>
-                <p class="text-muted">تکایە بچۆ ژوورەوە بۆ بەردەوامبوون</p>
-            </div>
-            <form id="loginForm">
-                <div class="mb-3">
-                    <label for="username" class="form-label">ناوی بەکارهێنەر</label>
-                    <input type="text" class="form-control" id="username" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">وشەی تێپەڕ</label>
-                    <input type="password" class="form-control" id="password" required>
-                </div>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">چوونە ژوورەوە</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <!-- Dashboard -->
     <div class="dashboard-container" id="dashboardPage">
@@ -1894,8 +1871,7 @@
 
         // Setup event listeners
         function setupEventListeners() {
-            // Login form
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
 
             // Logout button
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
@@ -2288,42 +2264,11 @@
             }
         }
 
-        // Handle login
-        function handleLogin(e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (users[username] && users[username].password === password) {
-                const userInfo = users[username];
-                currentUser = {
-                    username: username,
-                    role: userInfo.role,
-                    department: userInfo.department,
-                    displayName: userInfo.displayName || username
-                };
-
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                showDashboard();
-                showNotification('چوونەژوورەوە سەرکەوتوو بوو', 'success');
-            } else {
-                showNotification('ناوی بەکارهێنەر یاخوود وشەی تێپەڕ هەڵەیە', 'danger');
-            }
-        }
-
         // Handle logout
         function handleLogout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
-            document.getElementById('loginPage').style.display = 'flex';
-            document.getElementById('dashboardPage').style.display = 'none';
-            document.getElementById('workRecordsPage').style.display = 'none';
-            document.getElementById('projectsPage').style.display = 'none';
-            document.getElementById('notificationsPage').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            showNotification('چوونەوە دەرەوە سەرکەوتوو بوو', 'success');
+            window.location.href = 'index.html';
         }
 
         // Refresh data - Clear cache and reload from Firebase
@@ -2340,7 +2285,6 @@
 
         // Show dashboard
         async function showDashboard() {
-            document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardPage').style.display = 'block';
             document.getElementById('workRecordsPage').style.display = 'none';
             document.getElementById('projectsPage').style.display = 'none';
